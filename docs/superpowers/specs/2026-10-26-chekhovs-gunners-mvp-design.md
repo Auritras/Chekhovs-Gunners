@@ -142,6 +142,7 @@ interface AnalysisResult {
   unfired: string[];        // setup ids, computed in code
   tension: number[];        // one value per chapter, computed in code
   failedChapters: number[];
+  uncertain: string[];      // setup/payoff ids whose status may be wrong because of a failed chapter
   droppedQuotes: number;    // removed by verifyQuotes
 }
 ```
@@ -162,9 +163,13 @@ interface AnalysisResult {
    chapter, or same chapter with the payoff quote appearing after the setup
    quote) are dropped, as are links to unknown ids. Unmatched setups become
    `unfired`.
-6. **Tension (code):** for chapter *n*, the sum of `importance` of setups
+6. **Uncertainty (code):** if any chapter failed, an unfired setup is marked
+   uncertain when a failed chapter comes after it (its payoff may be there), and
+   an unlinked payoff is marked uncertain when a failed chapter comes before it
+   (its setup may be there).
+7. **Tension (code):** for chapter *n*, the sum of `importance` of setups
    introduced in chapters ≤ *n* that have not fired by the end of chapter *n*.
-7. Results render in the Report and Story tabs.
+8. Results render in the Report and Story tabs.
 
 Chapters run one after another, so a 5-chapter story takes roughly 20–40
 seconds; the progress bar shows which chapter is running. Full novels only add
@@ -197,6 +202,7 @@ more extract calls; the ledger stays compact (~30–50 tokens per setup).
 | Unreadable file (scanned PDF, corrupt `.docx`) | Message suggesting the writer paste the text instead |
 | No chapter headings | Split into ~1,500-word parts and tell the user |
 | Invalid JSON from the model | Retry up to 2 times; then mark that chapter failed and continue with the ledger unchanged |
+| Any chapter failed | Banner "Chapter *k* couldn't be analysed — some results may be wrong" with a **Retry chapter *k*** button that re-runs chapter *k* onwards (earlier chapters come from the cache). Uncertain items are drawn dashed/grey on the arc map and in the issue list and counted separately in the summary |
 | Per-minute rate limit (429) | Backoff and retry; progress shows "waiting for Gemini…" |
 | Daily quota used up (429) | Stop, show the quota message, offer the cached sample |
 | Text over ~25,000 words | Warning, analysis still runs |
@@ -204,24 +210,31 @@ more extract calls; the ledger stays compact (~30–50 tokens per setup).
 
 ## 8. Security
 
-- `GEMINI_API_KEY` lives in `.env.local` locally and in Vercel environment
-  settings. `.env.example` is committed; `.env*.local` is git-ignored.
+- **Two Google Cloud projects, two keys, two quotas.** `GEMINI_API_KEY`
+  (production project) is set only in Vercel and serves judges and visitors.
+  `GEMINI_API_KEY_DEV` (development project) lives only in local `.env.local`
+  and is used for local development and the prompt-check script.
+  `.env.example` is committed; `.env*.local` is git-ignored.
 - API routes validate request bodies with Zod and enforce size limits.
 
 ## 9. Testing and metrics
 
 - **Unit tests (Vitest):** chapterize, ledger, cache keys, verifyQuotes,
-  resolve (earlier-chapter rule, unknown ids, unfired), tension. No AI needed.
+  resolve (earlier-chapter rule, unknown ids, unfired), uncertainty marking in
+  both directions, tension. No AI needed.
 - **Answer keys:** each sample story ships with `answer-key.json` listing every
   planted setup, its payoff (or none), written by the story writer.
-- **Prompt-check script:** runs each sample story 5 times through the real API
-  and reports averages for:
+- **Prompt-check script:** uses only `GEMINI_API_KEY_DEV` and refuses to run
+  without it. It caches results on disk with the same keys as the browser cache,
+  so unchanged prompts cost nothing. It runs each sample story 5 times and
+  reports averages for:
   - **Recall:** planted setups found / planted setups.
   - **Wrong finds:** setups and matches not in the answer key.
   - **Unfired accuracy:** planted unfired guns correctly flagged.
   - **Verifier drop rate:** quotes dropped / quotes returned.
   Run after any prompt change. The latest numbers go in the README with the
   date, model and prompt version.
+- **Prompt freeze:** no prompt changes during evaluation, 17–19 Nov 2026.
 - **End-to-end check:** before submission, open the deployed app and run a
   sample and an uploaded `.docx` through the full flow.
 
