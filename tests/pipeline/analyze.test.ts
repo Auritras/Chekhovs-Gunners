@@ -130,6 +130,31 @@ describe("analyze", () => {
     expect(out.result.unfired).toEqual([]);
   });
 
+  it("treats cached values that fail to parse as cache misses", async () => {
+    const { deps, calls } = makeDeps(
+      (_r, n) =>
+        n === 1
+          ? ch1
+          : n === 2
+            ? { setups: [], payoffs: [{ quote: "opened the cellar with the rusty key", summary: "used", firesSetupId: null }] }
+            : empty,
+      () => ({ matches: [{ setupId: "c1-s1", payoffId: "c2-p1", reasoning: "same key" }] }),
+    );
+    const sets: string[] = [];
+    deps.cache = {
+      get: async () => ({ setups: "corrupt", matches: 42 }),
+      set: async (k) => {
+        sets.push(k);
+      },
+    };
+    const out = await analyze(chapters, deps);
+    expect(calls.extract).toHaveLength(3);
+    expect(calls.match).toHaveLength(1);
+    expect(sets).toHaveLength(4);
+    if (out.status !== "ok") throw new Error("expected ok");
+    expect(out.result.matches).toHaveLength(1);
+  });
+
   it("makes zero extract calls on a second run", async () => {
     const { deps, calls } = makeDeps((_r, n) => (n === 1 ? ch1 : empty));
     await analyze(chapters, deps);

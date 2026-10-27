@@ -1,5 +1,10 @@
 import type { AnalysisResult, Chapter, Match, Payoff, Setup } from "@/lib/types";
-import type { ExtractRequest, MatchRequest, RawExtraction, RawMatches } from "@/lib/ai/schemas";
+import {
+  RawExtraction,
+  RawMatches,
+  type ExtractRequest,
+  type MatchRequest,
+} from "@/lib/ai/schemas";
 import { extractCacheKey, matchCacheKey, type CacheStore } from "@/lib/cache";
 import { toLedger, toMatchSetups } from "@/lib/ledger";
 import { verifyQuotes } from "@/lib/analysis/verifyQuotes";
@@ -91,7 +96,9 @@ export async function analyze(
     emit({ stage: "extract", chapter: chapter.index, of: chapters.length });
     const ledger = toLedger(setups);
     const key = await extractCacheKey(chapter.text, ledger, promptVersions.extract, model);
-    let raw = (await deps.cache.get(key)) as RawExtraction | undefined;
+    // A cached value that no longer parses (old shape, corrupted storage) is a miss.
+    const cached = RawExtraction.safeParse(await deps.cache.get(key));
+    let raw: RawExtraction | undefined = cached.success ? cached.data : undefined;
     if (!raw) {
       try {
         raw = await withRetry(() => deps.extract({ chapter, ledger }));
@@ -142,7 +149,8 @@ export async function analyze(
     };
     try {
       const key = await matchCacheKey(body, promptVersions.match, model);
-      let raw = (await deps.cache.get(key)) as RawMatches | undefined;
+      const cached = RawMatches.safeParse(await deps.cache.get(key));
+      let raw: RawMatches | undefined = cached.success ? cached.data : undefined;
       if (!raw) {
         raw = await withRetry(() => deps.match(body));
         await deps.cache.set(key, raw);
