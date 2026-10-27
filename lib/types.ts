@@ -20,6 +20,8 @@ export interface Setup {
   chapter: number;
   quote: string;
   start: number;
+  /** Exclusive end offset in the chapter text, filled in by code. */
+  end: number;
   kind: SetupKind;
   summary: string;
   importance: 1 | 2 | 3;
@@ -30,6 +32,8 @@ export interface Payoff {
   chapter: number;
   quote: string;
   start: number;
+  /** Exclusive end offset in the chapter text, filled in by code. */
+  end: number;
   summary: string;
   firesSetupId?: string;
 }

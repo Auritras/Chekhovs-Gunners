@@ -47,25 +47,34 @@ export function normalise(s: string): string {
 export function verifyQuotes<T extends { quote: string }>(
   items: T[],
   chapterText: string,
-): { kept: (T & { start: number })[]; dropped: number } {
+): { kept: (T & { start: number; end: number })[]; dropped: number } {
   const chapter = normaliseWithMap(chapterText);
-  const kept: (T & { start: number })[] = [];
+  const kept: (T & { start: number; end: number })[] = [];
   let dropped = 0;
 
   for (const item of items) {
     const needle = normalise(item.quote);
     let idx = -1;
+    let matched = "";
     if (needle.length >= MIN_QUOTE_LENGTH) {
       // Prefer the quote without its own wrapping quote marks, so start
       // points at the first real character; fall back to the full text.
       const stripped = needle.replace(/^["']+|["']+$/g, "").trim();
       if (stripped.length >= MIN_QUOTE_LENGTH) {
         idx = chapter.text.indexOf(stripped);
+        matched = stripped;
       }
-      if (idx === -1) idx = chapter.text.indexOf(needle);
+      if (idx === -1) {
+        idx = chapter.text.indexOf(needle);
+        matched = needle;
+      }
     }
     if (idx === -1) dropped++;
-    else kept.push({ ...item, start: chapter.map[idx] });
+    else kept.push({
+        ...item,
+        start: chapter.map[idx],
+        end: chapter.map[idx + matched.length - 1] + 1,
+      });
   }
   return { kept, dropped };
 }

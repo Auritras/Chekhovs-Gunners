@@ -15,6 +15,7 @@ describe("verifyQuotes", () => {
     const { kept, dropped } = verifyQuotes([{ quote: q }], text);
     expect(dropped).toBe(0);
     expect(kept[0].start).toBe(text.indexOf(q));
+    expect(text.slice(kept[0].start, kept[0].end)).toBe(q);
   });
 
   it("keeps messy variants and points start at the D", () => {
@@ -29,6 +30,8 @@ describe("verifyQuotes", () => {
       const { kept, dropped } = verifyQuotes([{ quote }], chapter);
       expect(dropped, quote).toBe(0);
       expect(kept[0].start, quote).toBe(d);
+      const e = chapter.indexOf("ever") + 4;
+      expect(kept[0].end, quote).toBe(quote.includes(".") ? e + 1 : e);
     }
   });
 
