@@ -22,6 +22,7 @@ export interface GenAiLike {
   };
 }
 
+export const DEFAULT_MODEL = "gemini-2.5-flash";
 const MAX_ATTEMPTS = 3;
 const DEFAULT_RETRY_MS = 15_000;
 
@@ -125,6 +126,6 @@ export function providerFromEnv(): ModelProvider {
       "Missing Gemini API key: set GEMINI_API_KEY (production) or GEMINI_API_KEY_DEV (local development).",
     );
   }
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
   return new GeminiProvider({ apiKey, model });
 }
