@@ -68,4 +68,29 @@ describe("chapterize", () => {
     expect(r.chapters.map((c) => c.title)).toEqual(["I", "III"]);
     expect(r.chapters.map((c) => c.index)).toEqual([1, 2]);
   });
+
+  it("auto-splits single-newline paragraphs at line breaks", () => {
+    const line = words(100);
+    const r = chapterize(Array(40).fill(line).join("\n"));
+    expect(r.autoSplit).toBe(true);
+    expect(r.chapters).toHaveLength(3);
+    for (const c of r.chapters) {
+      expect(c.text.split("\n").every((l) => l === line)).toBe(true);
+    }
+  });
+
+  it("auto-splits one huge line at sentence ends", () => {
+    const sentence = `${words(20)}.`;
+    const r = chapterize(Array(200).fill(sentence).join(" "));
+    expect(r.wordCount).toBe(4000);
+    expect(r.autoSplit).toBe(true);
+    expect(r.chapters.length).toBeGreaterThanOrEqual(3);
+    for (const c of r.chapters) {
+      const n = c.text.split(/\s+/).length;
+      expect(n).toBeGreaterThan(1000);
+      expect(n).toBeLessThan(2000);
+      expect(c.text.endsWith(".")).toBe(true);
+      expect(c.text.split(" ").length % 20).toBe(0);
+    }
+  });
 });

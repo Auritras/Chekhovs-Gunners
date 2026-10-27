@@ -34,13 +34,38 @@ function finalize(raw: { title: string; text: string }[]): Chapter[] {
     .map((c, i) => ({ index: i + 1, title: c.title, text: c.text }));
 }
 
+type Unit = { text: string; sep: string };
+
+// Split into units no larger than the target where possible: blank-line
+// paragraphs first, then single lines, then sentences.
+function splitUnits(text: string, level = 0): Unit[] {
+  const splitters: [RegExp, string][] = [
+    [/\n\s*\n/, "\n\n"],
+    [/\n/, "\n"],
+    [/(?<=[.!?])\s+/, " "],
+  ];
+  if (level >= splitters.length) return [{ text, sep: "" }];
+  const [re, sep] = splitters[level];
+  const pieces = text.split(re).map((p) => p.trim()).filter(Boolean);
+  const out: Unit[] = [];
+  for (const piece of pieces) {
+    if (countWords(piece) > AUTO_SPLIT_WORDS && level + 1 < splitters.length) {
+      out.push(...splitUnits(piece, level + 1));
+    } else {
+      out.push({ text: piece, sep: "" });
+    }
+    out[out.length - 1].sep = sep;
+  }
+  return out;
+}
+
 function autoSplit(text: string): Chapter[] {
-  const paras = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
-  const parts: string[][] = [];
-  let cur: string[] = [];
+  const units = splitUnits(text);
+  const parts: Unit[][] = [];
+  let cur: Unit[] = [];
   let curWords = 0;
-  for (const p of paras) {
-    const w = countWords(p);
+  for (const u of units) {
+    const w = countWords(u.text);
     if (cur.length > 0 && curWords + w > AUTO_SPLIT_WORDS) {
       const over = curWords + w - AUTO_SPLIT_WORDS;
       const under = AUTO_SPLIT_WORDS - curWords;
@@ -50,7 +75,7 @@ function autoSplit(text: string): Chapter[] {
         curWords = 0;
       }
     }
-    cur.push(p);
+    cur.push(u);
     curWords += w;
     if (curWords >= AUTO_SPLIT_WORDS) {
       parts.push(cur);
@@ -59,7 +84,9 @@ function autoSplit(text: string): Chapter[] {
     }
   }
   if (cur.length > 0) parts.push(cur);
-  return finalize(parts.map((ps, i) => ({ title: `Part ${i + 1}`, text: ps.join("\n\n") })));
+  const join = (us: Unit[]) =>
+    us.map((u, i) => (i < us.length - 1 ? u.text + u.sep : u.text)).join("");
+  return finalize(parts.map((us, i) => ({ title: `Part ${i + 1}`, text: join(us) })));
 }
 
 export function chapterize(text: string): {
