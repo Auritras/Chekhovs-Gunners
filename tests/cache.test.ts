@@ -22,11 +22,14 @@ describe("keys", () => {
     expect(await extractCacheKey("text", ledger, "v1", "m2")).not.toBe(k);
   });
   it("match key is stable and sensitive", async () => {
-    const body = { setups: ledger, payoffs: [{ id: "p", chapter: 3, summary: "s", quote: "q" }] };
+    const setups = ledger.map((e) => ({ ...e, quote: `quote ${e.id}` }));
+    const body = { setups, payoffs: [{ id: "p", chapter: 3, summary: "s", quote: "q" }] };
     const k = await matchCacheKey(body, "v1", "m");
     expect(k.startsWith("cg:m:")).toBe(true);
     expect(await matchCacheKey(body, "v1", "m")).toBe(k);
     expect(await matchCacheKey({ ...body, payoffs: [] }, "v1", "m")).not.toBe(k);
+    const requoted = [setups[0], { ...setups[1], quote: "other" }];
+    expect(await matchCacheKey({ ...body, setups: requoted }, "v1", "m")).not.toBe(k);
     expect(await matchCacheKey(body, "v2", "m")).not.toBe(k);
     expect(await matchCacheKey(body, "v1", "m2")).not.toBe(k);
   });

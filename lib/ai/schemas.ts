@@ -66,8 +66,12 @@ export const ExtractRequest = z.object({
 });
 export type ExtractRequest = z.infer<typeof ExtractRequest>;
 
+/** A setup offered to the match pass: its ledger entry plus its quote, so the model can judge order within a chapter. */
+export const MatchSetup = LedgerEntry.extend({ quote: z.string() });
+export type MatchSetup = z.infer<typeof MatchSetup>;
+
 export const MatchRequest = z.object({
-  setups: z.array(LedgerEntry).max(MAX_MATCH_SETUPS),
+  setups: z.array(MatchSetup).max(MAX_MATCH_SETUPS),
   payoffs: z
     .array(
       z.object({

@@ -70,7 +70,7 @@ describe("routes", () => {
   });
   it("meta", async () => {
     const j = await (await meta()).json();
-    expect(j.promptVersions).toEqual({ extract: "x1", match: "m1" });
+    expect(j.promptVersions).toEqual({ extract: "x2", match: "m2" });
     expect(typeof j.model).toBe("string");
   });
 });

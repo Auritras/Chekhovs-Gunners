@@ -103,6 +103,33 @@ describe("analyze", () => {
     expect(progress[0]).toEqual({ stage: "extract", chapter: 1, of: 3 });
   });
 
+  it("links a same-chapter setup and later payoff in a one-chapter story via the match pass", async () => {
+    const story: Chapter[] = [
+      {
+        index: 1,
+        title: "Part 1",
+        text: "A loaded pistol lay on the mantel. Hours later she fired the pistol from the mantel at the intruder.",
+      },
+    ];
+    const { deps, calls } = makeDeps(
+      () => ({
+        setups: [{ quote: "A loaded pistol lay on the mantel.", kind: "object", summary: "pistol", importance: 3 }],
+        payoffs: [{ quote: "she fired the pistol from the mantel", summary: "pistol fired", firesSetupId: null }],
+      }),
+      () => ({ matches: [{ setupId: "c1-s1", payoffId: "c1-p1", reasoning: "the pistol is used" }] }),
+    );
+    const out = await analyze(story, deps);
+    expect(calls.match).toHaveLength(1);
+    expect(calls.match[0].setups).toEqual([
+      { id: "c1-s1", chapter: 1, kind: "object", summary: "pistol", quote: "A loaded pistol lay on the mantel." },
+    ]);
+    if (out.status !== "ok") throw new Error("expected ok");
+    expect(out.result.matches).toEqual([
+      { setupId: "c1-s1", payoffId: "c1-p1", reasoning: "the pistol is used", source: "match" },
+    ]);
+    expect(out.result.unfired).toEqual([]);
+  });
+
   it("makes zero extract calls on a second run", async () => {
     const { deps, calls } = makeDeps((_r, n) => (n === 1 ? ch1 : empty));
     await analyze(chapters, deps);

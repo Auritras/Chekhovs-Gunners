@@ -48,7 +48,7 @@ flowchart TD
   PROV --> GEM(("Gemini API"))
 ```
 
-The Gemini key never reaches the browser. Prompts are versioned (`x1` extract, `m1` match); the version, model and ledger are part of every cache key, so a prompt change invalidates old results automatically.
+The Gemini key never reaches the browser. Prompts are versioned (`x2` extract, `m2` match); the version, model and ledger are part of every cache key, so a prompt change invalidates old results automatically.
 
 ## Local setup
 
@@ -89,7 +89,7 @@ Sample stories ship with writer-made answer keys (`samples/<slug>/answer-key.jso
 | --- | --- | --- | --- | --- | --- |
 | the-locked-drawer | not yet measured | not yet measured | not yet measured | not yet measured | not yet measured |
 
-Produce it with `npm run prompt-check` (needs `GEMINI_API_KEY_DEV`). The latest numbers will be recorded here with the date, model and prompt versions (currently extract `x1`, match `m1`).
+Produce it with `npm run prompt-check` (needs `GEMINI_API_KEY_DEV`). The latest numbers will be recorded here with the date, model and prompt versions (currently extract `x2`, match `m2`).
 
 **Prompt freeze:** no prompt changes during evaluation, 17-19 Nov 2026.
 

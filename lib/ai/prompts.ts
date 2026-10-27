@@ -1,8 +1,8 @@
 import type { ExtractRequest, MatchRequest } from "@/lib/ai/schemas";
 
 /** Bump on every prompt edit: it is part of the cache key. */
-export const EXTRACT_PROMPT_VERSION = "x1";
-export const MATCH_PROMPT_VERSION = "m1";
+export const EXTRACT_PROMPT_VERSION = "x2";
+export const MATCH_PROMPT_VERSION = "m2";
 
 export function buildExtractPrompt(req: ExtractRequest): string {
   const { chapter, ledger } = req;
@@ -25,7 +25,9 @@ object, trait, secret, promise, skill, relationship, other.
 Format: id | chapter | kind | summary
 ${ledgerLines}
 
-If a passage in THIS chapter fulfils a ledger setup, report it as a payoff and set "firesSetupId" to that exact ledger id. Use only ids from the ledger above, copied exactly. If a payoff does not fulfil a ledger setup (for example it fulfils a setup planted in this same chapter), set "firesSetupId" to null. Never invent ids.
+If a passage in THIS chapter fulfils a ledger setup, report it as a payoff and set "firesSetupId" to that exact ledger id. Use only ids from the ledger above, copied exactly. Never invent ids.
+
+A payoff may also fulfil a setup planted EARLIER IN THIS SAME CHAPTER: report both the setup and the later payoff, and say in the payoff's "summary" which setup it fulfils. Such setups have no ledger id yet, so set "firesSetupId" to null; they are linked in a later step. Set "firesSetupId" to null for any payoff that does not fulfil a ledger setup.
 
 ## Rules for quotes
 - Every item needs a "quote": 8 to 40 words copied EXACTLY, character for character, from the chapter text below.
@@ -51,7 +53,9 @@ ${chapter.text}
 
 export function buildMatchPrompt(req: MatchRequest): string {
   const setupLines = req.setups.length
-    ? req.setups.map((s) => `${s.id} | chapter ${s.chapter} | ${s.kind} | ${s.summary}`).join("\n")
+    ? req.setups
+        .map((s) => `${s.id} | chapter ${s.chapter} | ${s.kind} | ${s.summary} | "${s.quote}"`)
+        .join("\n")
     : "(none)";
   const payoffLines = req.payoffs.length
     ? req.payoffs
@@ -62,7 +66,7 @@ export function buildMatchPrompt(req: MatchRequest): string {
   return `You are a careful literary editor. Below are setups (planted expectations) and payoffs (moments of fulfilment) found in a story. Decide which payoffs fulfil which setups.
 
 ## Setups
-Format: id | chapter | kind | summary
+Format: id | chapter | kind | summary | quote
 ${setupLines}
 
 ## Payoffs
@@ -71,7 +75,8 @@ ${payoffLines}
 
 ## Rules
 - Link only ids listed above, copied exactly. Never invent ids.
-- A payoff may only fulfil a setup from an EARLIER chapter (the setup's chapter number must be lower than the payoff's).
+- A payoff may only fulfil a setup from an earlier chapter or the same chapter: the setup's chapter number must be lower than or equal to the payoff's.
+- Within the same chapter, the payoff must come AFTER the setup in the text. Use the two quotes to judge the order; if you cannot tell that the payoff comes later, do not link them.
 - Only link when the payoff clearly fulfils that specific setup. Weak or speculative links are worse than none.
 - A payoff fulfils at most one setup; a setup may have several payoffs.
 - For each link give "reasoning": one sentence explaining why the payoff fulfils the setup.

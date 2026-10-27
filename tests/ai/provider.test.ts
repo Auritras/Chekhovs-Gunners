@@ -147,10 +147,12 @@ describe("prompts", () => {
 
   it("match prompt lists ids", () => {
     const p = buildMatchPrompt({
-      setups: [{ id: "s1", chapter: 1, kind: "object", summary: "gun" }],
+      setups: [{ id: "s1", chapter: 1, kind: "object", summary: "gun", quote: "a pistol on the mantel" }],
       payoffs: [{ id: "p1", chapter: 4, summary: "fired", quote: "the gun went off" }],
     });
     expect(p).toContain("s1");
     expect(p).toContain("p1");
+    expect(p).toContain('"a pistol on the mantel"');
+    expect(p).toContain("lower than or equal to");
   });
 });

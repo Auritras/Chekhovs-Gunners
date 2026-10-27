@@ -62,9 +62,14 @@ describe("ExtractRequest", () => {
 });
 
 describe("MatchRequest", () => {
-  it("rejects 401 setups", () => {
-    const setups = Array.from({ length: 401 }, (_, i) => entry(i));
+  it("rejects 401 setups and accepts 400 (setups carry their quote)", () => {
+    const setups = Array.from({ length: 401 }, (_, i) => ({ ...entry(i), quote: "q" }));
     expect(MatchRequest.safeParse({ setups, payoffs: [] }).success).toBe(false);
+    expect(MatchRequest.safeParse({ setups: setups.slice(0, 400), payoffs: [] }).success).toBe(true);
+  });
+
+  it("requires a quote on each setup", () => {
+    expect(MatchRequest.safeParse({ setups: [entry(1)], payoffs: [] }).success).toBe(false);
   });
 
   it("rejects 401 payoffs and accepts 400", () => {

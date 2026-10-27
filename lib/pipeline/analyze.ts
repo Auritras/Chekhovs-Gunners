@@ -1,7 +1,7 @@
 import type { AnalysisResult, Chapter, Match, Payoff, Setup } from "@/lib/types";
 import type { ExtractRequest, MatchRequest, RawExtraction, RawMatches } from "@/lib/ai/schemas";
 import { extractCacheKey, matchCacheKey, type CacheStore } from "@/lib/cache";
-import { toLedger } from "@/lib/ledger";
+import { toLedger, toMatchSetups } from "@/lib/ledger";
 import { verifyQuotes } from "@/lib/analysis/verifyQuotes";
 import { computeTension } from "@/lib/analysis/tension";
 import {
@@ -130,7 +130,7 @@ export async function analyze(
   if (unfiredIds.size > 0 && unlinkedIds.size > 0) {
     emit({ stage: "match" });
     const body: MatchRequest = {
-      setups: toLedger(setups.filter((s) => unfiredIds.has(s.id))),
+      setups: toMatchSetups(setups.filter((s) => unfiredIds.has(s.id))),
       payoffs: payoffs
         .filter((p) => unlinkedIds.has(p.id))
         .map((p) => ({ id: p.id, chapter: p.chapter, summary: p.summary, quote: p.quote })),
