@@ -155,4 +155,18 @@ describe("prompts", () => {
     expect(p).toContain('"a pistol on the mantel"');
     expect(p).toContain("lower than or equal to");
   });
+
+  it("keeps multi-line quotes and summaries on one prompt line", () => {
+    const m = buildMatchPrompt({
+      setups: [{ id: "s1", chapter: 1, kind: "object", summary: "a\n gun", quote: "the pistol\n\n  lay there" }],
+      payoffs: [{ id: "p1", chapter: 2, summary: "it\tfired", quote: "she\r\nfired it" }],
+    });
+    expect(m).toContain('s1 | chapter 1 | object | a gun | "the pistol lay there"');
+    expect(m).toContain('p1 | chapter 2 | it fired | "she fired it"');
+    const x = buildExtractPrompt({
+      chapter: { index: 2, title: "Two", text: "Body." },
+      ledger: [{ id: "s1", chapter: 1, kind: "object", summary: "a\n\ngun" }],
+    });
+    expect(x).toContain("s1 | 1 | object | a gun");
+  });
 });

@@ -4,10 +4,15 @@ import type { ExtractRequest, MatchRequest } from "@/lib/ai/schemas";
 export const EXTRACT_PROMPT_VERSION = "x2";
 export const MATCH_PROMPT_VERSION = "m2";
 
+/** Collapse whitespace so a quote or summary stays on its one line in a one-item-per-line list. */
+export function oneLine(s: string): string {
+  return s.replace(/\s+/g, " ").trim();
+}
+
 export function buildExtractPrompt(req: ExtractRequest): string {
   const { chapter, ledger } = req;
   const ledgerLines = ledger.length
-    ? ledger.map((e) => `${e.id} | ${e.chapter} | ${e.kind} | ${e.summary}`).join("\n")
+    ? ledger.map((e) => `${e.id} | ${e.chapter} | ${e.kind} | ${oneLine(e.summary)}`).join("\n")
     : "(empty: no setups have been recorded yet)";
 
   return `You are a careful literary editor analysing a story for "Chekhov's guns": narrative setups that create an expectation, and the payoffs that later fulfil them.
@@ -54,12 +59,15 @@ ${chapter.text}
 export function buildMatchPrompt(req: MatchRequest): string {
   const setupLines = req.setups.length
     ? req.setups
-        .map((s) => `${s.id} | chapter ${s.chapter} | ${s.kind} | ${s.summary} | "${s.quote}"`)
+        .map(
+          (s) =>
+            `${s.id} | chapter ${s.chapter} | ${s.kind} | ${oneLine(s.summary)} | "${oneLine(s.quote)}"`,
+        )
         .join("\n")
     : "(none)";
   const payoffLines = req.payoffs.length
     ? req.payoffs
-        .map((p) => `${p.id} | chapter ${p.chapter} | ${p.summary} | "${p.quote}"`)
+        .map((p) => `${p.id} | chapter ${p.chapter} | ${oneLine(p.summary)} | "${oneLine(p.quote)}"`)
         .join("\n")
     : "(none)";
 
