@@ -74,6 +74,21 @@ describe("scoreRun", () => {
     expect(scoreRun(r, key).wrongMatches).toBe(1);
   });
 
+  it("accepts any listed payoff chapter when payoffChapters is given", () => {
+    const k: AnswerKey = { setups: [{ ...key.setups[1], payoffChapters: [3, 4] }] };
+    const clock = setup("s1", 1, "the clock was eleven minutes fast all her childhood");
+    const at = (ch: number) =>
+      result({
+        setups: [clock],
+        payoffs: [payoff("p1", ch)],
+        matches: [{ setupId: "s1", payoffId: "p1", reasoning: "", source: "match" }],
+      });
+    expect(scoreRun(at(3), k).wrongMatches).toBe(0);
+    expect(scoreRun(at(4), k).wrongMatches).toBe(0);
+    expect(scoreRun(at(2), k).wrongMatches).toBe(1);
+    expect(scoreRun(at(3), key).wrongMatches).toBe(1); // without the list only chapter 4 counts
+  });
+
   it("requires equal chapters and handles an empty result", () => {
     const r = result({ setups: [setup("s1", 2, "The brass key hung round her neck on a green ribbon")] });
     const s = scoreRun(r, key);
@@ -120,5 +135,8 @@ describe("answer keys match their stories", () => {
     const k = JSON.parse(readFileSync("samples/the-locked-drawer/answer-key.json", "utf8")) as AnswerKey;
     expect(k.setups).toHaveLength(5);
     expect(k.setups.filter((s) => s.payoffChapter === null)).toHaveLength(1);
+    const accepted = Object.fromEntries(k.setups.map((s) => [s.id, s.payoffChapters]));
+    expect(accepted.clock).toEqual([3, 4]);
+    expect(accepted.whistle).toEqual([3, 4]);
   });
 });

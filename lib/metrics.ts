@@ -1,8 +1,24 @@
 import type { AnalysisResult } from "@/lib/types";
 import { normalise } from "@/lib/analysis/verifyQuotes";
 
+export interface AnswerKeySetup {
+  id: string;
+  chapter: number;
+  quoteHint: string;
+  /** The chapter of the main payoff, or null when the setup never fires. */
+  payoffChapter: number | null;
+  /** Every chapter where a matched payoff counts as correct (e.g. early echoes). Overrides payoffChapter when present. */
+  payoffChapters?: number[];
+}
+
 export interface AnswerKey {
-  setups: { id: string; chapter: number; quoteHint: string; payoffChapter: number | null }[];
+  setups: AnswerKeySetup[];
+}
+
+/** Chapters in which a payoff for this key setup is acceptable. */
+export function acceptablePayoffChapters(k: AnswerKeySetup): number[] {
+  if (k.payoffChapters) return k.payoffChapters;
+  return k.payoffChapter === null ? [] : [k.payoffChapter];
 }
 
 export interface RunScore {
@@ -62,7 +78,8 @@ export function scoreRun(result: AnalysisResult, key: AnswerKey): RunScore {
     if (!setup) continue;
     const k = key.setups.find((kk) => hits(setup, kk));
     if (!k) continue; // already counted as a wrong setup
-    if (payoffChapter.get(m.payoffId) !== k.payoffChapter) wrongMatches++;
+    const ch = payoffChapter.get(m.payoffId);
+    if (ch === undefined || !acceptablePayoffChapters(k).includes(ch)) wrongMatches++;
   }
 
   const unfiredKeys = key.setups.filter((k) => k.payoffChapter === null);

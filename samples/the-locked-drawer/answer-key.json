@@ -1,9 +1,9 @@
 {
   "setups": [
     { "id": "key", "chapter": 1, "quoteHint": "The brass key to it had hung round her father's neck on a faded green ribbon", "payoffChapter": 3 },
-    { "id": "clock", "chapter": 1, "quoteHint": "It was eleven minutes fast. It had been eleven minutes fast her whole childhood", "payoffChapter": 4 },
+    { "id": "clock", "chapter": 1, "quoteHint": "It was eleven minutes fast. It had been eleven minutes fast her whole childhood", "payoffChapter": 4, "payoffChapters": [3, 4] },
     { "id": "flare-gun", "chapter": 1, "quoteHint": "Her father had kept it loaded for emergencies on the water", "payoffChapter": null },
-    { "id": "whistle", "chapter": 2, "quoteHint": "Three notes, always the same. Down, down, up.", "payoffChapter": 4 },
+    { "id": "whistle", "chapter": 2, "quoteHint": "Three notes, always the same. Down, down, up.", "payoffChapter": 4, "payoffChapters": [3, 4] },
     { "id": "fear-of-deck", "chapter": 2, "quoteHint": "She had not stood on a boat's open deck since she was nine", "payoffChapter": 4 }
   ],
   "payoffsWithoutSetup": [
