@@ -1,0 +1,311 @@
+"use client";
+
+import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { AnalysisResult, Payoff, Setup } from "@/lib/types";
+import { layoutArcs, type ArcNode } from "@/lib/view/arcLayout";
+
+const PAD_X = 14;
+const TOP = 14;
+const DANGLE_ZONE = 44;
+const LABEL_ZONE = 26;
+const STAGGER_MS = 70;
+const MAX_STAGGER_MS = 1800;
+const DRAW_MS = 900;
+
+function nodeLabel(node: ArcNode, item: Setup | Payoff | undefined, chapterTitle: string): string {
+  const what = node.kind === "setup" ? "Setup" : "Payoff";
+  const state = node.uncertain
+    ? "uncertain"
+    : { fired: "fired", unfired: "never fired", linked: "pays off a setup", unlinked: "no setup found" }[
+        node.state
+      ];
+  return `${what} in ${chapterTitle}, ${state}: ${item?.summary ?? ""}`;
+}
+
+export default function ArcMap({ result }: { result: AnalysisResult }) {
+  const uid = useId();
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState<number | null>(null);
+  const [active, setActive] = useState<string | null>(null);
+
+  useLayoutEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const measure = () => setWidth(Math.max(280, Math.round(el.clientWidth)));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const byId = useMemo(() => {
+    const m = new Map<string, Setup | Payoff>();
+    for (const s of result.setups) m.set(s.id, s);
+    for (const p of result.payoffs) m.set(p.id, p);
+    return m;
+  }, [result]);
+  const setupById = useMemo(() => new Map(result.setups.map((s) => [s.id, s])), [result]);
+  const chapterTitle = (n: number) =>
+    result.chapters.find((c) => c.index === n)?.title || `Chapter ${n}`;
+
+  const plotW = (width ?? 0) - PAD_X * 2;
+  const layout = useMemo(() => (width ? layoutArcs(result, plotW) : null), [result, width, plotW]);
+  const maxArc = Math.round(Math.min(240, Math.max(120, plotW * 0.3)));
+  const base = TOP + maxArc;
+  const height = base + DANGLE_ZONE + LABEL_ZONE;
+  const band = result.chapters.length ? plotW / result.chapters.length : plotW;
+
+  const related = useMemo(() => {
+    if (!active) return null;
+    const ids = new Set([active]);
+    for (const m of result.matches) {
+      if (m.setupId === active) ids.add(m.payoffId);
+      if (m.payoffId === active) ids.add(m.setupId);
+    }
+    return ids;
+  }, [active, result.matches]);
+
+  const activeItem = active ? byId.get(active) : undefined;
+  const activeNode = active ? layout?.nodes.find((n) => n.id === active) : undefined;
+  const uncertain = new Set(result.uncertain);
+  const failed = new Set(result.failedChapters);
+
+  const arcs = layout
+    ? [...layout.arcs].sort((a, b) => a.x1 - b.x1 || a.x2 - b.x2)
+    : [];
+  const stagger = arcs.length > 1 ? Math.min(STAGGER_MS, MAX_STAGGER_MS / (arcs.length - 1)) : 0;
+  const dangleDelay = (arcs.length ? stagger * (arcs.length - 1) + DRAW_MS * 0.7 : 0) + 100;
+
+  const unfiredNodes = layout?.nodes.filter((n) => n.kind === "setup" && n.state === "unfired") ?? [];
+
+  return (
+    <section aria-labelledby={`${uid}-h`} className="flex flex-col gap-4">
+      <div>
+        <h2 id={`${uid}-h`} className="font-display text-3xl">
+          Arc map
+        </h2>
+        <p className="mt-1 max-w-[62ch] text-sm text-ink-soft">
+          Each arc runs from a setup to the moment it pays off. Red threads hang from the guns that
+          never fire.
+        </p>
+      </div>
+
+      {/* Surtitle: the line behind whichever mark is under the pointer or focus. */}
+      <div aria-live="polite" className="min-h-[7.5rem] border-y border-line py-3 sm:min-h-[6.5rem]">
+        {activeItem && activeNode ? (
+          <>
+            <p className="text-sm text-ink-soft">
+              {activeNode.kind === "setup" ? "Setup" : "Payoff"} in {chapterTitle(activeItem.chapter)}
+              {activeNode.uncertain && ", may be affected by a failed chapter"}
+            </p>
+            <blockquote className="mt-1 font-serif text-lg italic leading-snug">
+              “{activeItem.quote}”
+            </blockquote>
+            <p className="mt-1 text-sm text-ink-soft">{activeItem.summary}</p>
+          </>
+        ) : (
+          <p className="pt-2 font-serif italic text-muted">
+            Hover over or focus a mark to read the line behind it.
+          </p>
+        )}
+      </div>
+
+      <div ref={boxRef} className="w-full">
+        {layout && width && (
+          <svg
+            width={width}
+            height={height}
+            viewBox={`0 0 ${width} ${height}`}
+            className="block overflow-visible"
+            role="group"
+            aria-label="Arc map of setups and payoffs"
+          >
+            <defs>
+              <pattern
+                id={`${uid}-hatch`}
+                width="6"
+                height="6"
+                patternUnits="userSpaceOnUse"
+                patternTransform="rotate(45)"
+              >
+                <line x1="0" y1="0" x2="0" y2="6" stroke="var(--muted)" strokeWidth="1" opacity="0.35" />
+              </pattern>
+            </defs>
+
+            <g transform={`translate(${PAD_X} 0)`}>
+              {/* Chapter bands */}
+              {layout.chapterTicks.map((t, i) => (
+                <g key={t.chapter}>
+                  <title>{t.title}</title>
+                  {failed.has(t.chapter) ? (
+                    <rect x={t.x} y={TOP} width={band} height={base - TOP + DANGLE_ZONE} fill={`url(#${uid}-hatch)`} />
+                  ) : (
+                    i % 2 === 1 && (
+                      <rect x={t.x} y={TOP} width={band} height={base - TOP + DANGLE_ZONE} fill="var(--ink)" opacity="0.03" />
+                    )
+                  )}
+                  <line x1={t.x} x2={t.x} y1={TOP} y2={base + DANGLE_ZONE} stroke="var(--line)" strokeWidth="1" />
+                  <text
+                    x={t.x + band / 2}
+                    y={base + DANGLE_ZONE + 18}
+                    textAnchor="middle"
+                    className="font-sans tabular-nums"
+                    fontSize="12"
+                    fill={failed.has(t.chapter) ? "var(--muted)" : "var(--ink-soft)"}
+                  >
+                    {t.chapter}
+                  </text>
+                </g>
+              ))}
+              <line x1={plotW} x2={plotW} y1={TOP} y2={base + DANGLE_ZONE} stroke="var(--line)" strokeWidth="1" />
+
+              {/* Stage floor */}
+              <line x1={0} x2={plotW} y1={base} y2={base} stroke="var(--ink)" strokeWidth="1.25" />
+
+              {/* Arcs */}
+              {arcs.map((a, i) => {
+                const dx = a.x2 - a.x1;
+                const rx = Math.max(Math.abs(dx) / 2, 3);
+                const ry = Math.min(Math.max(Math.abs(a.height), 6) * 0.85, maxArc - 6);
+                const sweep = dx >= 0 ? 1 : 0;
+                const x2 = Math.abs(dx) < 6 ? a.x1 + (dx >= 0 ? 6 : -6) : a.x2;
+                const d = `M ${a.x1} ${base} A ${rx} ${ry} 0 0 ${sweep} ${x2} ${base}`;
+                const shaky = uncertain.has(a.setupId) || uncertain.has(a.payoffId);
+                const importance = setupById.get(a.setupId)?.importance ?? 2;
+                const dim = related && !(related.has(a.setupId) && related.has(a.payoffId));
+                return (
+                  <path
+                    key={`${a.setupId}-${a.payoffId}`}
+                    d={d}
+                    pathLength={shaky ? undefined : 1}
+                    fill="none"
+                    stroke={shaky ? "var(--muted)" : "var(--brass)"}
+                    strokeWidth={0.75 + importance * 0.6}
+                    strokeDasharray={shaky ? "4 4" : undefined}
+                    strokeLinecap="round"
+                    strokeOpacity={dim ? 0.18 : 1}
+                    className={shaky ? "arc-fade" : "arc-draw"}
+                    style={{
+                      animationDelay: `${Math.round(i * stagger)}ms`,
+                    }}
+                  />
+                );
+              })}
+
+              {/* Dangling threads under guns that never fire */}
+              {unfiredNodes.map((n) => {
+                const len = 12 + (setupById.get(n.id)?.importance ?? 1) * 9;
+                const d = `M ${n.x} ${base} C ${n.x + 2} ${base + len * 0.4}, ${n.x - 3} ${base + len * 0.7}, ${n.x + 1} ${base + len}`;
+                const dim = related && !related.has(n.id);
+                return (
+                  <path
+                    key={`dangle-${n.id}`}
+                    d={d}
+                    pathLength={n.uncertain ? undefined : 1}
+                    fill="none"
+                    stroke={n.uncertain ? "var(--muted)" : "var(--curtain)"}
+                    strokeWidth="2"
+                    strokeDasharray={n.uncertain ? "3 3" : undefined}
+                    strokeLinecap="round"
+                    strokeOpacity={dim ? 0.18 : 1}
+                    className={n.uncertain ? "arc-fade" : "arc-draw"}
+                    style={{
+                      animationDelay: `${Math.round(dangleDelay)}ms`,
+                      animationDuration: "500ms",
+                    }}
+                  />
+                );
+              })}
+
+              {/* Nodes */}
+              {layout.nodes.map((n) => {
+                const item = byId.get(n.id);
+                const isActive = active === n.id;
+                const dim = related && !related.has(n.id);
+                const label = nodeLabel(n, item, chapterTitle(item?.chapter ?? 0));
+                let mark: React.ReactNode;
+                if (n.kind === "setup") {
+                  const fill = n.uncertain ? "var(--paper)" : n.state === "unfired" ? "var(--curtain)" : "var(--ink)";
+                  mark = (
+                    <circle
+                      cx={n.x}
+                      cy={base}
+                      r={isActive ? 6.5 : 4.5}
+                      fill={fill}
+                      stroke={n.uncertain ? "var(--muted)" : "var(--paper)"}
+                      strokeWidth={n.uncertain ? 1.5 : 1.25}
+                      strokeDasharray={n.uncertain ? "2 2" : undefined}
+                    />
+                  );
+                } else {
+                  const s = isActive ? 6.5 : 4.5;
+                  const linked = n.state === "linked" && !n.uncertain;
+                  mark = (
+                    <path
+                      d={`M ${n.x} ${base - s} L ${n.x + s} ${base} L ${n.x} ${base + s} L ${n.x - s} ${base} Z`}
+                      fill={linked ? "var(--brass)" : "var(--paper)"}
+                      stroke={n.uncertain ? "var(--muted)" : linked ? "var(--paper)" : "var(--ink-soft)"}
+                      strokeWidth="1.25"
+                      strokeDasharray={n.uncertain ? "2 2" : undefined}
+                    />
+                  );
+                }
+                return (
+                  <g
+                    key={n.id}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={label}
+                    aria-pressed={isActive}
+                    className="cursor-pointer outline-none [&:focus-visible>circle:first-child]:stroke-[var(--focus)]"
+                    style={{ opacity: dim ? 0.3 : 1, transition: "opacity 160ms" }}
+                    onMouseEnter={() => setActive(n.id)}
+                    onMouseLeave={() => setActive((cur) => (cur === n.id ? null : cur))}
+                    onFocus={() => setActive(n.id)}
+                    onBlur={() => setActive((cur) => (cur === n.id ? null : cur))}
+                    onClick={() => setActive(n.id)}
+                  >
+                    {/* Generous invisible hit area for pointers and the focus ring. */}
+                    <circle cx={n.x} cy={base} r={11} fill="transparent" strokeWidth="2" />
+                    {mark}
+                  </g>
+                );
+              })}
+            </g>
+          </svg>
+        )}
+      </div>
+
+      <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-soft" aria-label="Legend">
+        <li className="flex items-center gap-2">
+          <svg width="14" height="14" aria-hidden><circle cx="7" cy="7" r="4.5" fill="var(--ink)" /></svg>
+          Setup
+        </li>
+        <li className="flex items-center gap-2">
+          <svg width="14" height="14" aria-hidden><path d="M7 2.5 L11.5 7 L7 11.5 L2.5 7 Z" fill="var(--brass)" /></svg>
+          Payoff
+        </li>
+        <li className="flex items-center gap-2">
+          <svg width="26" height="14" aria-hidden><path d="M2 12 A 11 9 0 0 1 24 12" fill="none" stroke="var(--brass)" strokeWidth="2" /></svg>
+          Fired
+        </li>
+        <li className="flex items-center gap-2">
+          <svg width="14" height="18" aria-hidden><circle cx="7" cy="4.5" r="4" fill="var(--curtain)" /><path d="M7 5 L7 17" stroke="var(--curtain)" strokeWidth="2" strokeLinecap="round" /></svg>
+          Never fired
+        </li>
+        {result.uncertain.length > 0 && (
+          <li className="flex items-center gap-2">
+            <svg width="26" height="14" aria-hidden><path d="M2 7 L24 7" stroke="var(--muted)" strokeWidth="2" strokeDasharray="3 3" /></svg>
+            Uncertain
+          </li>
+        )}
+        {result.failedChapters.length > 0 && (
+          <li className="flex items-center gap-2">
+            <svg width="16" height="14" aria-hidden><rect width="16" height="14" fill={`url(#${uid}-hatch)`} stroke="var(--line)" /></svg>
+            Failed chapter
+          </li>
+        )}
+      </ul>
+    </section>
+  );
+}

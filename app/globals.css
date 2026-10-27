@@ -1,26 +1,200 @@
 @import "tailwindcss";
 
+/*
+  Palette: a playhouse at night.
+  paper   — programme stock the story is printed on
+  ink     — type and setups
+  curtain — the house curtain; also means "never fired"
+  brass   — stage brass; a gun that fired, a payoff that landed
+  muted   — anything we're unsure about
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --paper: #efe6d2;
+  --paper-deep: #e4d8bf;
+  --surface: #f7f1e3;
+  --ink: #1d1714;
+  --ink-soft: #5a4f47;
+  --muted: #8d8378;
+  --line: #cbbd9f;
+  --curtain: #8c1c22;
+  --curtain-deep: #5e1015;
+  --curtain-ink: #f5ead4;
+  --brass: #96731f;
+  --brass-tint: rgba(196, 151, 46, 0.22);
+  --curtain-tint: rgba(140, 28, 34, 0.12);
+  --focus: #1f4fbf;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --paper: #17110f;
+    --paper-deep: #211816;
+    --surface: #1e1714;
+    --ink: #eee3cc;
+    --ink-soft: #b9ab95;
+    --muted: #857a6e;
+    --line: #3d322c;
+    --curtain: #d2444b;
+    --curtain-deep: #4a0c11;
+    --curtain-ink: #f3e5cb;
+    --brass: #d6b25b;
+    --brass-tint: rgba(214, 178, 91, 0.2);
+    --curtain-tint: rgba(210, 68, 75, 0.18);
+    --focus: #8fb2ff;
   }
 }
 
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-curtain: var(--curtain);
+  --color-curtain-deep: var(--curtain-deep);
+  --color-curtain-ink: var(--curtain-ink);
+  --color-brass: var(--brass);
+  --color-focus: var(--focus);
+  --font-sans: var(--font-instrument);
+  --font-display: var(--font-fell);
+  --font-serif: var(--font-literata);
+}
+
+html {
+  color-scheme: light dark;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-instrument), system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* The house curtain: pleats from a repeating gradient, scalloped hem from a mask. */
+.curtain {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.22) 0,
+      rgba(0, 0, 0, 0) 18px,
+      rgba(255, 255, 255, 0.06) 30px,
+      rgba(0, 0, 0, 0) 42px,
+      rgba(0, 0, 0, 0.22) 60px
+    ),
+    linear-gradient(180deg, var(--curtain-deep), var(--curtain) 85%);
+  color: var(--curtain-ink);
+  -webkit-mask:
+    radial-gradient(14px 12px at 50% 0, #000 98%, transparent) 0 100% / 28px 12px repeat-x,
+    linear-gradient(#000, #000) 0 0 / 100% calc(100% - 11px) no-repeat;
+  mask:
+    radial-gradient(14px 12px at 50% 0, #000 98%, transparent) 0 100% / 28px 12px repeat-x,
+    linear-gradient(#000, #000) 0 0 / 100% calc(100% - 11px) no-repeat;
+}
+@media (prefers-color-scheme: dark) {
+  .curtain {
+    background:
+      repeating-linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.3) 0,
+        rgba(0, 0, 0, 0) 18px,
+        rgba(255, 255, 255, 0.04) 30px,
+        rgba(0, 0, 0, 0) 42px,
+        rgba(0, 0, 0, 0.3) 60px
+      ),
+      linear-gradient(180deg, #2c070a, #6d1419 85%);
+  }
+}
+
+/* Arc map: trajectories draw in once, in story order. */
+.arc-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: arc-draw 900ms cubic-bezier(0.55, 0.05, 0.25, 1) forwards;
+}
+.arc-fade {
+  opacity: 0;
+  animation: arc-fade 600ms ease-out forwards;
+}
+@keyframes arc-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes arc-fade {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Footlights in the progress row. */
+.footlight-live {
+  animation: footlight 1.4s ease-in-out infinite;
+}
+@keyframes footlight {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* Story marks. */
+.mark {
+  background: none;
+  color: inherit;
+  padding: 0.05em 0;
+  border-radius: 2px;
+  scroll-margin-block: 30vh;
+}
+.mark-setup-fired {
+  text-decoration: underline 2px var(--brass);
+  text-underline-offset: 3px;
+}
+.mark-setup-unfired {
+  background: var(--curtain-tint);
+  text-decoration: underline wavy 1.5px var(--curtain);
+  text-underline-offset: 4px;
+  text-decoration-skip-ink: none;
+}
+.mark-payoff-linked {
+  background: var(--brass-tint);
+}
+.mark-payoff-unlinked {
+  text-decoration: underline dotted 2px var(--ink-soft);
+  text-underline-offset: 3px;
+}
+.mark-uncertain {
+  background: none;
+  text-decoration: underline dashed 1.5px var(--muted);
+  text-underline-offset: 4px;
+}
+.mark-target {
+  outline: 2px solid var(--curtain);
+  outline-offset: 3px;
+  animation: mark-flash 1.6s ease-out 1;
+}
+@keyframes mark-flash {
+  0% {
+    outline-color: transparent;
+    box-shadow: 0 0 0 10px var(--curtain-tint);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arc-draw,
+  .arc-fade,
+  .footlight-live,
+  .mark-target {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
 }

@@ -81,7 +81,7 @@ export default function InputPanel({
 
   return (
     <section className="flex flex-col gap-3">
-      <label htmlFor={`${id}-text`} className="font-medium">
+      <label htmlFor={`${id}-text`} className="font-display text-2xl">
         Your story
       </label>
       <textarea
@@ -90,19 +90,19 @@ export default function InputPanel({
         onChange={(e) => setText(e.target.value)}
         rows={14}
         placeholder="Paste your story here, or upload a file."
-        className="w-full rounded border border-gray-300 p-3 text-base"
+        className="w-full resize-y rounded-sm border border-line bg-surface p-4 font-serif text-base leading-relaxed text-ink placeholder:text-muted focus:border-ink focus:outline-none"
       />
-      <p aria-live="polite" className="text-sm text-gray-600">
+      <p aria-live="polite" className="text-sm text-ink-soft tabular-nums">
         {words.toLocaleString("en-US")} {words === 1 ? "word" : "words"}
       </p>
       {error && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-curtain">
           {error}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-1">
-          <label htmlFor={`${id}-file`} className="text-sm">
+          <label htmlFor={`${id}-file`} className="text-sm text-ink-soft">
             Upload a file (.txt, .md, .docx, .pdf)
           </label>
           <input
@@ -111,19 +111,19 @@ export default function InputPanel({
             accept=".txt,.md,.docx,.pdf"
             onChange={onFile}
             disabled={busy}
-            className="text-sm"
+            className="max-w-full text-sm file:mr-3 file:rounded-sm file:border file:border-ink file:bg-transparent file:px-3 file:py-1.5 file:text-ink hover:file:bg-ink hover:file:text-paper"
           />
         </div>
         {samples.length > 0 && (
           <div className="flex flex-col gap-1">
-            <label htmlFor={`${id}-sample`} className="text-sm">
+            <label htmlFor={`${id}-sample`} className="text-sm text-ink-soft">
               Or try a sample
             </label>
             <select
               id={`${id}-sample`}
               defaultValue=""
               onChange={onSample}
-              className="rounded border border-gray-300 p-1 text-sm"
+              className="rounded-sm border border-line bg-surface px-2 py-1.5 text-sm text-ink"
             >
               <option value="">Choose a sample…</option>
               {samples.map((s) => (
@@ -138,7 +138,7 @@ export default function InputPanel({
           type="button"
           onClick={() => onAnalyse(text)}
           disabled={!canAnalyse}
-          className="ml-auto rounded bg-black px-4 py-2 text-white disabled:opacity-40"
+          className="w-full rounded-sm bg-curtain px-6 py-2.5 font-display text-xl text-curtain-ink transition-colors hover:bg-curtain-deep disabled:cursor-not-allowed disabled:opacity-40 sm:ml-auto sm:w-auto"
         >
           Analyse
         </button>
