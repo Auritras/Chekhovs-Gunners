@@ -51,7 +51,7 @@ describe("stores", () => {
   });
   it("survives a throwing localStorage", async () => {
     const c = localStorageCache();
-    const set = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("full"); });
+    const set = vi.spyOn(localStorage, "setItem").mockImplementation(() => { throw new Error("full"); });
     await expect(c.set("never-stored", 1)).resolves.toBeUndefined();
     expect(await c.get("never-stored")).toBeUndefined();
     set.mockRestore();
