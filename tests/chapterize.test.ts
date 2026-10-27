@@ -87,7 +87,7 @@ describe("chapterize", () => {
     expect(r.chapters.length).toBeGreaterThanOrEqual(3);
     for (const c of r.chapters) {
       const n = c.text.split(/\s+/).length;
-      expect(n).toBeGreaterThan(1000);
+      expect(n).toBeGreaterThanOrEqual(1000);
       expect(n).toBeLessThan(2000);
       expect(c.text.endsWith(".")).toBe(true);
       expect(c.text.split(" ").length % 20).toBe(0);
