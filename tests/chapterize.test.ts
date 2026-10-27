@@ -79,6 +79,44 @@ describe("chapterize", () => {
     }
   });
 
+  it("keeps *** separators as ordinary text when real headings exist", () => {
+    const r = chapterize("Chapter 1\nFirst.\n\n***\n\nStill one.\n\nChapter 2\nSecond.\n\n* * *\n\nStill two.");
+    expect(r.chapters.map((c) => c.title)).toEqual(["Chapter 1", "Chapter 2"]);
+    expect(r.chapters[0].text).toBe("First.\n\n***\n\nStill one.");
+    expect(r.chapters[1].text).toBe("Second.\n\n* * *\n\nStill two.");
+  });
+
+  it("keeps separators as text alongside markdown and roman headings too", () => {
+    expect(chapterize("# One\nA.\n***\nB.").chapters.map((c) => c.title)).toEqual(["One"]);
+    expect(chapterize("I\nA.\n* * *\nB.\nII\nC.").chapters.map((c) => c.title)).toEqual(["I", "II"]);
+  });
+
+  it("sub-splits a headed chapter over 8,000 words into titled parts", () => {
+    const para = words(100);
+    const long = Array(170).fill(para).join("\n\n"); // 17,000 words
+    const r = chapterize(`Chapter 1\nShort opening chapter.\n\nChapter 2\n${long}\n\nChapter 3\nThe end.`);
+    expect(r.autoSplit).toBe(false);
+    expect(r.chapters.map((c) => c.title)).toEqual([
+      "Chapter 1",
+      "Chapter 2 (part 1)",
+      "Chapter 2 (part 2)",
+      "Chapter 2 (part 3)",
+      "Chapter 3",
+    ]);
+    expect(r.chapters.map((c) => c.index)).toEqual([1, 2, 3, 4, 5]);
+    const parts = r.chapters.slice(1, 4);
+    for (const c of parts) {
+      expect(c.text.split(/\s+/).length).toBeLessThanOrEqual(8000);
+      expect(c.text.split(/\n\s*\n/).every((p) => p === para)).toBe(true);
+    }
+    expect(parts.reduce((sum, c) => sum + c.text.split(/\s+/).length, 0)).toBe(17000);
+  });
+
+  it("leaves a headed chapter of exactly 8,000 words whole", () => {
+    const r = chapterize(`Chapter 1\n${Array(80).fill(words(100)).join("\n\n")}`);
+    expect(r.chapters.map((c) => c.title)).toEqual(["Chapter 1"]);
+  });
+
   it("auto-splits one huge line at sentence ends", () => {
     const sentence = `${words(20)}.`;
     const r = chapterize(Array(200).fill(sentence).join(" "));

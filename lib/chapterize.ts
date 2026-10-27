@@ -11,6 +11,8 @@ const SEPARATOR_RE = /^\s*(\*\*\*|\* \* \*)\s*$/;
 const ROMAN_RE = /^\s*(XL|X{0,3}(IX|IV|V?I{0,3}))\.?\s*$/;
 
 const AUTO_SPLIT_WORDS = 1500;
+/** Headed chapters longer than this are sub-split so each part fits one model request. */
+const MAX_CHAPTER_WORDS = 8000;
 const OPENING_MIN_WORDS = 50;
 
 const countWords = (s: string) => s.split(/\s+/).filter(Boolean).length;
@@ -38,7 +40,7 @@ type Unit = { text: string; sep: string };
 
 // Split into units no larger than the target where possible: blank-line
 // paragraphs first, then single lines, then sentences.
-function splitUnits(text: string, level = 0): Unit[] {
+function splitUnits(text: string, target: number, level = 0): Unit[] {
   const splitters: [RegExp, string][] = [
     [/\n\s*\n/, "\n\n"],
     [/\n/, "\n"],
@@ -49,8 +51,8 @@ function splitUnits(text: string, level = 0): Unit[] {
   const pieces = text.split(re).map((p) => p.trim()).filter(Boolean);
   const out: Unit[] = [];
   for (const piece of pieces) {
-    if (countWords(piece) > AUTO_SPLIT_WORDS && level + 1 < splitters.length) {
-      out.push(...splitUnits(piece, level + 1));
+    if (countWords(piece) > target && level + 1 < splitters.length) {
+      out.push(...splitUnits(piece, target, level + 1));
     } else {
       out.push({ text: piece, sep: "" });
     }
@@ -59,16 +61,17 @@ function splitUnits(text: string, level = 0): Unit[] {
   return out;
 }
 
-function autoSplit(text: string): Chapter[] {
-  const units = splitUnits(text);
+/** Group units into parts of about `target` words, breaking only between units. */
+function splitByWords(text: string, target: number): string[] {
+  const units = splitUnits(text, target);
   const parts: Unit[][] = [];
   let cur: Unit[] = [];
   let curWords = 0;
   for (const u of units) {
     const w = countWords(u.text);
-    if (cur.length > 0 && curWords + w > AUTO_SPLIT_WORDS) {
-      const over = curWords + w - AUTO_SPLIT_WORDS;
-      const under = AUTO_SPLIT_WORDS - curWords;
+    if (cur.length > 0 && curWords + w > target) {
+      const over = curWords + w - target;
+      const under = target - curWords;
       if (over > under) {
         parts.push(cur);
         cur = [];
@@ -77,7 +80,7 @@ function autoSplit(text: string): Chapter[] {
     }
     cur.push(u);
     curWords += w;
-    if (curWords >= AUTO_SPLIT_WORDS) {
+    if (curWords >= target) {
       parts.push(cur);
       cur = [];
       curWords = 0;
@@ -86,7 +89,25 @@ function autoSplit(text: string): Chapter[] {
   if (cur.length > 0) parts.push(cur);
   const join = (us: Unit[]) =>
     us.map((u, i) => (i < us.length - 1 ? u.text + u.sep : u.text)).join("");
-  return finalize(parts.map((us, i) => ({ title: `Part ${i + 1}`, text: join(us) })));
+  return parts.map(join);
+}
+
+function autoSplit(text: string): Chapter[] {
+  return finalize(
+    splitByWords(text, AUTO_SPLIT_WORDS).map((t, i) => ({ title: `Part ${i + 1}`, text: t })),
+  );
+}
+
+/** Split any chapter over MAX_CHAPTER_WORDS into near-equal parts titled "<title> (part k)". */
+function subSplitLong(chapters: { title: string; text: string }[]): { title: string; text: string }[] {
+  return chapters.flatMap((c) => {
+    const n = countWords(c.text);
+    if (n <= MAX_CHAPTER_WORDS) return [c];
+    const target = Math.ceil(n / Math.ceil(n / MAX_CHAPTER_WORDS));
+    const parts = splitByWords(c.text.trim(), target);
+    if (parts.length < 2) return [c];
+    return parts.map((t, i) => ({ title: `${c.title} (part ${i + 1})`, text: t }));
+  });
 }
 
 export function chapterize(text: string): {
@@ -100,9 +121,12 @@ export function chapterize(text: string): {
   const sections: { title: string | null; separator: boolean; lines: string[] }[] = [
     { title: null, separator: false, lines: [] },
   ];
+  // Real headings take precedence: if any exists, *** separators are ordinary text.
+  const hasTitles = lines.some((l) => classify(l)?.kind === "title");
   let found = false;
   for (const line of lines) {
-    const h = classify(line);
+    let h = classify(line);
+    if (h?.kind === "separator" && hasTitles) h = null;
     if (h) {
       found = true;
       sections.push({ title: h.title, separator: h.kind === "separator", lines: [] });
@@ -144,5 +168,5 @@ export function chapterize(text: string): {
     out.push({ title, text: s.lines.join("\n") });
   }
 
-  return { chapters: finalize(out), autoSplit: false, wordCount };
+  return { chapters: finalize(subSplitLong(out)), autoSplit: false, wordCount };
 }
