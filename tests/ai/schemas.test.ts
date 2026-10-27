@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { toGeminiSchema } from "@/lib/ai/provider";
 import {
   ExtractRequest,
   MatchRequest,
@@ -24,6 +25,23 @@ describe("RawExtraction", () => {
     const bad = structuredClone(validExtraction);
     bad.setups[0].importance = 4;
     expect(RawExtraction.safeParse(bad).success).toBe(false);
+  });
+
+  it("rejects importance 0 and 2.5", () => {
+    for (const v of [0, 2.5]) {
+      const bad = structuredClone(validExtraction);
+      bad.setups[0].importance = v;
+      expect(RawExtraction.safeParse(bad).success).toBe(false);
+    }
+  });
+
+  it("sends Gemini importance as an integer range, not anyOf/const", () => {
+    const schema = toGeminiSchema(RawExtraction) as {
+      properties: { setups: { items: { properties: { importance: Record<string, unknown> } } } };
+    };
+    const importance = schema.properties.setups.items.properties.importance;
+    expect(importance).toMatchObject({ type: "integer", minimum: 1, maximum: 3 });
+    expect(importance).not.toHaveProperty("anyOf");
   });
 
   it('rejects kind "weapon"', () => {

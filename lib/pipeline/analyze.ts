@@ -106,7 +106,12 @@ export async function analyze(
     }
 
     const n = chapter.index;
-    const rawSetups = raw.setups.map((s, i) => ({ ...s, id: `c${n}-s${i + 1}`, chapter: n }));
+    const rawSetups = raw.setups.map((s, i) => ({
+      ...s,
+      importance: s.importance as Setup["importance"], // schema guarantees an integer 1..3
+      id: `c${n}-s${i + 1}`,
+      chapter: n,
+    }));
     const rawPayoffs = raw.payoffs.map((p, i) => {
       const { firesSetupId, ...rest } = p;
       return {

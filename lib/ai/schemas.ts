@@ -36,7 +36,8 @@ export const RawExtraction = z.object({
       quote: z.string(),
       kind: SetupKind,
       summary: z.string(),
-      importance: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+      // A plain integer range: a union of literals becomes anyOf/const, which Gemini may reject.
+      importance: z.number().int().min(1).max(3),
     }),
   ),
   payoffs: z.array(
