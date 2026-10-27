@@ -1,18 +1,17 @@
 import type { AnalysisResult } from "@/lib/types";
+import { summaryCounts } from "@/lib/view/summaryCounts";
 
 export default function Summary({ result }: { result: AnalysisResult }) {
-  const fired = new Set(result.matches.map((m) => m.setupId));
-  const uncertain = new Set(result.uncertain);
-  const firedCount = result.setups.filter((s) => fired.has(s.id)).length;
-  const unfiredCount = result.unfired.filter((id) => !uncertain.has(id)).length;
+  // planted = fired + never fired + uncertain (uncertain counts setups only).
+  const c = summaryCounts(result);
 
   const items: { label: string; value: number; tone?: string }[] = [
-    { label: result.setups.length === 1 ? "setup planted" : "setups planted", value: result.setups.length },
-    { label: "fired", value: firedCount, tone: "text-brass" },
-    { label: "never fired", value: unfiredCount, tone: unfiredCount > 0 ? "text-curtain" : undefined },
+    { label: c.planted === 1 ? "setup planted" : "setups planted", value: c.planted },
+    { label: "fired", value: c.fired, tone: "text-brass" },
+    { label: "never fired", value: c.neverFired, tone: c.neverFired > 0 ? "text-curtain" : undefined },
   ];
-  if (uncertain.size > 0) {
-    items.push({ label: "uncertain", value: uncertain.size, tone: "text-muted" });
+  if (c.uncertain > 0) {
+    items.push({ label: "uncertain", value: c.uncertain, tone: "text-muted" });
   }
 
   return (
