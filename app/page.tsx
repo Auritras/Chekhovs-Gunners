@@ -5,29 +5,13 @@ import InputPanel from "@/components/InputPanel";
 import RunStatus, { type RunState } from "@/components/RunStatus";
 import ResultTabs from "@/components/ResultTabs";
 import { chapterize } from "@/lib/chapterize";
-import { analyze, type Progress } from "@/lib/pipeline/analyze";
+import { analyze, everyChapterFailed, type Progress } from "@/lib/pipeline/analyze";
 import { httpDeps } from "@/lib/pipeline/httpDeps";
+import { findSampleWithResult } from "@/lib/samples";
 import type { AnalysisResult, Chapter } from "@/lib/types";
 
 type Prepared = { chapters: Chapter[]; autoSplit: boolean; wordCount: number };
 type Sample = { title: string; result: AnalysisResult };
-
-async function findSample(): Promise<Sample | null> {
-  try {
-    const index = await fetch("/samples/index.json");
-    if (!index.ok) return null;
-    const list: unknown = await index.json();
-    const first = Array.isArray(list) ? list[0] : null;
-    if (!first || typeof first.slug !== "string") return null;
-    const res = await fetch(`/samples/${encodeURIComponent(first.slug)}/result.json`);
-    if (!res.ok) return null;
-    const result = (await res.json()) as AnalysisResult;
-    if (!Array.isArray(result?.chapters) || !Array.isArray(result?.setups)) return null;
-    return { title: typeof first.title === "string" ? first.title : first.slug, result };
-  } catch {
-    return null;
-  }
-}
 
 export default function Home() {
   const [prepared, setPrepared] = useState<Prepared | null>(null);
@@ -54,23 +38,37 @@ export default function Home() {
         return base;
       });
     };
+    /** Look up the prebuilt sample result (if any) for a fallback offer. */
+    async function offerSample(): Promise<boolean | null> {
+      const found = await findSampleWithResult();
+      if (id !== runId.current) return null;
+      setSample(found);
+      return found !== null;
+    }
+
     try {
       const outcome = await analyze(chapters, httpDeps(), onProgress);
       if (id !== runId.current) return;
-      if (outcome.status === "ok") {
+      if (outcome.status === "ok" && !everyChapterFailed(outcome.result)) {
         setResult(outcome.result);
         setRun({ phase: "done" });
-      } else {
-        setResult(null);
-        setRun({ phase: "quota", sampleAvailable: false });
-        const found = await findSample();
-        if (id !== runId.current) return;
-        setSample(found);
-        setRun({ phase: "quota", sampleAvailable: found !== null });
+        return;
       }
-    } catch {
+      setResult(null);
+      const sampleAvailable = await offerSample();
+      if (sampleAvailable === null) return;
+      setRun(
+        outcome.status === "ok"
+          ? { phase: "error", allFailed: true, sampleAvailable }
+          : { phase: "quota", sampleAvailable },
+      );
+    } catch (e) {
       if (id !== runId.current) return;
-      setRun({ phase: "error" });
+      console.error("Analysis failed:", e);
+      setResult(null);
+      const sampleAvailable = await offerSample();
+      if (sampleAvailable === null) return;
+      setRun({ phase: "error", allFailed: false, sampleAvailable });
     }
   }
 
@@ -85,10 +83,20 @@ export default function Home() {
     if (prepared) void start(prepared.chapters);
   }
 
+  function showSample(s: Sample) {
+    runId.current++; // ignore any run still reporting progress
+    setResult(s.result);
+    setRun({ phase: "sample", title: s.title });
+  }
+
   function onLoadSample() {
-    if (!sample) return;
-    setResult(sample.result);
-    setRun({ phase: "sample", title: sample.title });
+    if (sample) showSample(sample);
+  }
+
+  /** A sample picked in the input panel whose prebuilt result exists: show it, no API calls. */
+  function onViewSample(result: AnalysisResult, title: string) {
+    setSample({ title, result });
+    showSample({ title, result });
   }
 
   // Bring the report into view when a run finishes.
@@ -118,7 +126,11 @@ export default function Home() {
             Paste a story or upload a manuscript. We read it chapter by chapter, note every
             setup it plants, and show you which ones pay off — and which are left on the wall.
           </p>
-          <InputPanel onAnalyse={onAnalyse} disabled={run.phase === "running"} />
+          <InputPanel
+            onAnalyse={onAnalyse}
+            onViewSample={onViewSample}
+            disabled={run.phase === "running"}
+          />
         </div>
 
         <RunStatus

@@ -2,8 +2,11 @@
 
 import { useEffect, useId, useState } from "react";
 import { readFile } from "@/lib/input/readFile";
+import { loadSampleIndex, loadSampleResult, type SampleInfo } from "@/lib/samples";
+import type { AnalysisResult } from "@/lib/types";
 
-type Sample = { slug: string; title: string };
+/** A chosen sample that has a prebuilt analysis: the writer picks view vs. analyse. */
+type SampleChoice = SampleInfo & { result: AnalysisResult };
 
 const ERRORS = {
   unsupported: "That file type isn't supported. Try .txt, .md, .docx or .pdf.",
@@ -20,30 +23,26 @@ function countWords(text: string): number {
 
 export default function InputPanel({
   onAnalyse,
+  onViewSample,
   disabled = false,
 }: {
   onAnalyse: (text: string) => void;
+  /** Show a sample's prebuilt analysis directly (no API calls). */
+  onViewSample: (result: AnalysisResult, title: string) => void;
   disabled?: boolean;
 }) {
   const id = useId();
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [samples, setSamples] = useState<Sample[]>([]);
+  const [samples, setSamples] = useState<SampleInfo[]>([]);
+  const [choice, setChoice] = useState<SampleChoice | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/samples/index.json")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: unknown) => {
-        if (cancelled || !Array.isArray(data)) return;
-        const valid = data.filter(
-          (s): s is Sample =>
-            !!s && typeof s.slug === "string" && typeof s.title === "string",
-        );
-        setSamples(valid);
-      })
-      .catch(() => {});
+    void loadSampleIndex().then((list) => {
+      if (!cancelled) setSamples(list);
+    });
     return () => {
       cancelled = true;
     };
@@ -62,10 +61,7 @@ export default function InputPanel({
     else setText(result.text);
   }
 
-  async function onSample(e: React.ChangeEvent<HTMLSelectElement>) {
-    const slug = e.target.value;
-    if (!slug) return;
-    setError(null);
+  async function fillSampleText(slug: string) {
     try {
       const r = await fetch(`/samples/${encodeURIComponent(slug)}/story.md`);
       if (!r.ok) throw new Error("bad response");
@@ -73,7 +69,32 @@ export default function InputPanel({
     } catch {
       setError("We couldn't load that sample. Try pasting the text instead.");
     }
-    e.target.value = "";
+  }
+
+  async function onSample(e: React.ChangeEvent<HTMLSelectElement>) {
+    const select = e.target;
+    const info = samples.find((s) => s.slug === select.value);
+    select.value = "";
+    if (!info) return;
+    setError(null);
+    setChoice(null);
+    // With a prebuilt result (from `npm run build-samples`), offer it instead of spending quota.
+    const result = await loadSampleResult(info.slug);
+    if (result) setChoice({ ...info, result });
+    else await fillSampleText(info.slug);
+  }
+
+  function viewSample() {
+    if (!choice) return;
+    onViewSample(choice.result, choice.title);
+    setChoice(null);
+  }
+
+  async function analyseSampleYourself() {
+    if (!choice) return;
+    const slug = choice.slug;
+    setChoice(null);
+    await fillSampleText(slug);
   }
 
   const words = countWords(text);
@@ -132,6 +153,32 @@ export default function InputPanel({
                 </option>
               ))}
             </select>
+          </div>
+        )}
+        {choice && (
+          <div
+            role="group"
+            aria-label={`Sample: ${choice.title}`}
+            className="flex w-full flex-col gap-2 border-l-2 border-brass pl-3 sm:w-auto"
+          >
+            <p className="text-sm text-ink-soft">“{choice.title}” has a ready-made analysis.</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={viewSample}
+                disabled={disabled}
+                className="rounded-sm bg-ink px-3 py-1.5 text-sm font-medium text-paper transition-colors hover:bg-ink-soft disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                View sample analysis
+              </button>
+              <button
+                type="button"
+                onClick={analyseSampleYourself}
+                className="rounded-sm border border-ink px-3 py-1.5 text-sm font-medium transition-colors hover:bg-ink hover:text-paper"
+              >
+                Analyse it yourself
+              </button>
+            </div>
           </div>
         )}
         <button

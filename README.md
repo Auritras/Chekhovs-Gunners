@@ -16,7 +16,7 @@ Chekhov's Gunners is a writing assistant for the oldest rule in dramatic craft. 
 | Report | Summary counts, animated arc map (setup to payoff), per-chapter tension chart, issue list with quotes |
 | Story | The chapter text with setups and payoffs highlighted inline |
 
-Also: a built-in sample story (instant, no API call), per-chapter browser caching, and a clear "quota used up" fallback to the sample.
+Also: a built-in sample story, per-chapter browser caching, and a clear "quota used up" message. The sample's analysis loads instantly (no API call) once `npm run build-samples` has generated its `public/samples/<slug>/result.json`; that file is not in the repo yet, so until then picking the sample fills the text box for a live analysis, and the quota and failure messages offer no sample fallback.
 
 ## How it works
 
@@ -74,7 +74,7 @@ GEMINI_MODEL=<Gemini model name>
 | `npm run dev` / `build` / `start` | Next.js dev server, production build, serve the build |
 | `npm test` | Vitest unit tests (chapterize, ledger, cache keys, quote verification, resolve, uncertainty, tension, routes). No AI calls |
 | `npm run lint` | ESLint |
-| `npm run build-samples` | Analyses each sample once and writes `public/samples/<slug>/result.json` (the static results the app loads instantly) |
+| `npm run build-samples` | Analyses each sample once and writes `public/samples/<slug>/result.json` (the static results the app loads instantly; until it has been run, no sample result exists) |
 | `npm run prompt-check` | Runs every sample 5 times (`-- --runs N` to change) against its answer key and prints a Markdown metrics table |
 
 `build-samples` and `prompt-check` use **only** `GEMINI_API_KEY_DEV` and exit if it is missing.

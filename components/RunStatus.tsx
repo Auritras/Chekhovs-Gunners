@@ -8,7 +8,8 @@ export type RunState =
   | { phase: "done" }
   | { phase: "quota"; sampleAvailable: boolean }
   | { phase: "sample"; title: string }
-  | { phase: "error" };
+  /** `allFailed`: the run finished but no chapter could be analysed. */
+  | { phase: "error"; allFailed: boolean; sampleAvailable: boolean };
 
 const LONG_STORY_WORDS = 25_000;
 
@@ -141,7 +142,9 @@ export default function RunStatus({
             ) : undefined
           }
         >
-          Today&apos;s free AI quota is used up. Here&apos;s the sample analysis instead.
+          {run.sampleAvailable
+            ? "Today's free AI quota is used up. Here's the sample analysis instead."
+            : "Today's free AI quota is used up. Please try again tomorrow."}
         </Banner>
       )}
 
@@ -152,12 +155,22 @@ export default function RunStatus({
       {run.phase === "error" && (
         <Banner
           action={
-            <button type="button" className={buttonClass} onClick={() => onRetry(1)}>
-              Try again
-            </button>
+            <div className="flex shrink-0 flex-wrap gap-2 self-start sm:self-auto">
+              <button type="button" className={buttonClass} onClick={() => onRetry(1)}>
+                Try again
+              </button>
+              {run.sampleAvailable && (
+                <button type="button" className={buttonClass} onClick={onLoadSample}>
+                  Load sample analysis
+                </button>
+              )}
+            </div>
           }
         >
-          The analysis couldn&apos;t start. Check your connection and try again.
+          {run.allFailed
+            ? "None of the chapters could be analysed — the AI service may be unavailable. Try again in a little while."
+            : "The analysis couldn't start. Check your connection and try again."}
+          {run.sampleAvailable && " Meanwhile, you can look at the sample analysis."}
         </Banner>
       )}
     </section>
