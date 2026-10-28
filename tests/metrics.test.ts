@@ -97,6 +97,28 @@ describe("scoreRun", () => {
     expect(s.dropRate).toBe(0);
   });
 
+  it("accepts a quote from a neighbouring sentence of the hint, but not a distant one", () => {
+    const filler = "The tide went out and came back again. ".repeat(20); // ~780 chars
+    const text =
+      "In the hall cupboard, behind the boots, she found the old flare gun, its barrel chalky with salt. " +
+      "The flare gun was kept loaded for emergencies at sea. " +
+      filler +
+      "Later she found a different old flare gun in the shed by the gate.";
+    const chapters = [{ index: 1, title: "One", text }];
+    const near = "she found the old flare gun, its barrel chalky with salt.";
+    const far = "Later she found a different old flare gun in the shed by the gate.";
+    const at = (q: string) => {
+      const start = text.indexOf(q);
+      return { ...setup("s1", 1, q), start, end: start + q.length };
+    };
+    expect(scoreRun(result({ chapters, setups: [at(near)], unfired: ["s1"] }), key)).toMatchObject({
+      recall: 0.25,
+      wrongSetups: 0,
+      unfiredCorrect: 1,
+    });
+    expect(scoreRun(result({ chapters, setups: [at(far)] }), key)).toMatchObject({ recall: 0, wrongSetups: 1 });
+  });
+
   it("accepts 6 shared consecutive words without containment", () => {
     const r = result({
       setups: [setup("s1", 1, "Oh, the clock was eleven minutes fast, as ever, and nobody cared")],

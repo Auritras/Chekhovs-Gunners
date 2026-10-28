@@ -1,5 +1,5 @@
 import type { AnalysisResult } from "@/lib/types";
-import { normalise } from "@/lib/analysis/verifyQuotes";
+import { normalise, verifyQuotes } from "@/lib/analysis/verifyQuotes";
 
 export interface AnswerKeySetup {
   id: string;
@@ -31,6 +31,8 @@ export interface RunScore {
 }
 
 const SHARED_WORDS = 6;
+/** A found quote this close (in characters) to the hint's location counts as the same setup: models often quote a neighbouring sentence. */
+const NEAR_CHARS = 200;
 
 function words(s: string): string[] {
   return s.split(/[^\p{L}\p{N}']+/u).filter(Boolean);
@@ -56,8 +58,19 @@ function overlaps(a: string, b: string): boolean {
 }
 
 export function scoreRun(result: AnalysisResult, key: AnswerKey): RunScore {
+  const hintSpan = new Map<string, { start: number; end: number } | undefined>();
+  for (const k of key.setups) {
+    const ch = result.chapters.find((c) => c.index === k.chapter);
+    hintSpan.set(k.id, ch ? verifyQuotes([{ quote: k.quoteHint }], ch.text).kept[0] : undefined);
+  }
+  const near = (s: AnalysisResult["setups"][number], k: AnswerKey["setups"][number]) => {
+    const h = hintSpan.get(k.id);
+    if (!h) return false;
+    const gap = Math.max(s.start, h.start) - Math.min(s.end, h.end);
+    return gap <= NEAR_CHARS;
+  };
   const hits = (s: AnalysisResult["setups"][number], k: AnswerKey["setups"][number]) =>
-    s.chapter === k.chapter && overlaps(s.quote, k.quoteHint);
+    s.chapter === k.chapter && (overlaps(s.quote, k.quoteHint) || near(s, k));
 
   const keyHitBy = new Map<string, Set<string>>(); // key id -> found setup ids
   for (const k of key.setups) {
