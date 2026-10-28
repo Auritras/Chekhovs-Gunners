@@ -36,6 +36,19 @@ describe("GeminiProvider", () => {
     expect(params[0].config.responseMimeType).toBe("application/json");
     expect(params[0].config.temperature).toBe(0.2);
     expect(params[0].config.responseJsonSchema).toBeTruthy();
+    expect(params[0].config.thinkingConfig).toEqual({ thinkingLevel: "medium" });
+  });
+
+  it("passes a custom thinking level, or none when empty", async () => {
+    const a = fake(['{"a":1}']);
+    await new GeminiProvider({ apiKey: "k", model: "m", client: a.client, thinkingLevel: "low" }).generateJson("hi", Schema);
+    const pa = a.generateContent.mock.calls[0] as unknown as [{ config: Record<string, unknown> }];
+    expect(pa[0].config.thinkingConfig).toEqual({ thinkingLevel: "low" });
+
+    const b = fake(['{"a":1}']);
+    await new GeminiProvider({ apiKey: "k", model: "m", client: b.client, thinkingLevel: "" }).generateJson("hi", Schema);
+    const pb = b.generateContent.mock.calls[0] as unknown as [{ config: Record<string, unknown> }];
+    expect(pb[0].config.thinkingConfig).toBeUndefined();
   });
 
   it("retries invalid output and succeeds on third call", async () => {
@@ -107,6 +120,14 @@ describe("classifyGeminiError", () => {
     expect((e as RateLimitedError).retryAfterMs).toBe(15000);
   });
 
+  it("503 high demand -> RateLimitedError after 10000ms", () => {
+    const e = classifyGeminiError(
+      mk({ error: { code: 503, message: "This model is currently experiencing high demand.", status: "UNAVAILABLE" } }, 503),
+    );
+    expect(e).toBeInstanceOf(RateLimitedError);
+    expect((e as RateLimitedError).retryAfterMs).toBe(10000);
+  });
+
   it("returns non-429 errors unchanged", () => {
     const orig = Object.assign(new Error("boom"), { status: 500 });
     expect(classifyGeminiError(orig)).toBe(orig);
@@ -122,7 +143,14 @@ describe("providerFromEnv", () => {
     vi.stubEnv("GEMINI_API_KEY_DEV", "dev");
     vi.stubEnv("GEMINI_API_KEY", "prod");
     vi.stubEnv("GEMINI_MODEL", "");
-    expect(providerFromEnv().model).toBe("gemini-2.5-flash");
+    expect(providerFromEnv().model).toBe("gemini-3.5-flash");
+  });
+
+  it("reads the thinking level from GEMINI_THINKING_LEVEL", async () => {
+    vi.stubEnv("GEMINI_API_KEY", "prod");
+    vi.stubEnv("GEMINI_THINKING_LEVEL", "low");
+    const p = providerFromEnv() as GeminiProvider;
+    expect(p.thinkingLevel).toBe("low");
   });
 
   it("throws naming the missing variable", () => {

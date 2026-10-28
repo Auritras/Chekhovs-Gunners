@@ -53,7 +53,7 @@ export function fileCache(dir = CACHE_DIR): CacheStore {
 export function nodeDeps(cache: CacheStore = fileCache()): PipelineDeps {
   const apiKey = requireDevKey();
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
-  const provider = new GeminiProvider({ apiKey, model });
+  const provider = new GeminiProvider({ apiKey, model, thinkingLevel: process.env.GEMINI_THINKING_LEVEL });
   return {
     async meta() {
       return {

@@ -62,8 +62,11 @@ npm run dev                  # http://localhost:3000
 
 ```
 GEMINI_API_KEY_DEV=<key from your development Google Cloud project>
-GEMINI_MODEL=<Gemini model name>
+GEMINI_MODEL=gemini-3.5-flash        # default if unset
+GEMINI_THINKING_LEVEL=medium         # default if unset; "low" is ~10x faster but misses subtle setups
 ```
+
+Measured on chapter 1 of the sample (Oct 2026, free tier): `gemini-3.5-flash` at `medium` thinking took ~27 s and found all 3 planted setups; at `low` ~3 s and found 2. Newer flash models were frequently returning 503 "high demand" on the free tier, which the app now waits out and retries.
 
 **Two keys, two quotas.** `GEMINI_API_KEY_DEV` lives only in `.env.local` and is used by local `npm run dev` and by the scripts. `GEMINI_API_KEY` (a separate production project) is set only in Vercel and serves visitors, so developing never burns the judges' quota. `.env*.local` is git-ignored; `.env.example` is committed.
 

@@ -22,9 +22,12 @@ export interface GenAiLike {
   };
 }
 
-export const DEFAULT_MODEL = "gemini-2.5-flash";
+export const DEFAULT_MODEL = "gemini-3.5-flash";
+/** Measured on the sample: "medium" ≈ 27 s/chapter and finds every planted setup; "low" ≈ 3 s but misses subtle ones. */
+export const DEFAULT_THINKING_LEVEL = "medium";
 const MAX_ATTEMPTS = 3;
 const DEFAULT_RETRY_MS = 15_000;
+const UNAVAILABLE_RETRY_MS = 10_000;
 
 /** Gemini's responseJsonSchema rejects `$schema`; drop it (and `additionalProperties`) recursively. */
 function stripUnsupported(node: unknown): unknown {
@@ -46,10 +49,13 @@ export function toGeminiSchema(schema: z.ZodType): unknown {
 
 export class GeminiProvider implements ModelProvider {
   readonly model: string;
+  /** Empty string sends no thinking config (model default). */
+  readonly thinkingLevel: string;
   private client: GenAiLike;
 
-  constructor(opts: { apiKey: string; model: string; client?: GenAiLike }) {
+  constructor(opts: { apiKey: string; model: string; thinkingLevel?: string; client?: GenAiLike }) {
     this.model = opts.model;
+    this.thinkingLevel = opts.thinkingLevel ?? DEFAULT_THINKING_LEVEL;
     this.client =
       opts.client ?? (new GoogleGenAI({ apiKey: opts.apiKey }) as unknown as GenAiLike);
   }
@@ -67,6 +73,7 @@ export class GeminiProvider implements ModelProvider {
             responseMimeType: "application/json",
             responseJsonSchema,
             temperature: 0.2,
+            ...(this.thinkingLevel ? { thinkingConfig: { thinkingLevel: this.thinkingLevel } } : {}),
           },
         });
         text = res.text;
@@ -104,10 +111,20 @@ function is429(err: unknown, text: string): boolean {
   return /\b429\b|RESOURCE_EXHAUSTED/.test(text);
 }
 
+function is503(err: unknown, text: string): boolean {
+  if (err && typeof err === "object") {
+    const o = err as { status?: unknown; code?: unknown };
+    if (o.status === 503 || o.code === 503) return true;
+  }
+  return /"status"\s*:\s*"UNAVAILABLE"/.test(text);
+}
+
 export function classifyGeminiError(
   err: unknown,
 ): RateLimitedError | QuotaExhaustedError | Error {
   const text = errorText(err);
+  // 503 "high demand" is temporary: wait and retry like a per-minute limit.
+  if (is503(err, text)) return new RateLimitedError(UNAVAILABLE_RETRY_MS, text);
   if (!is429(err, text)) return err instanceof Error ? err : new Error(text);
 
   if (/PerDay|per day/i.test(text)) return new QuotaExhaustedError(text);
@@ -127,5 +144,6 @@ export function providerFromEnv(): ModelProvider {
     );
   }
   const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
-  return new GeminiProvider({ apiKey, model });
+  const thinkingLevel = process.env.GEMINI_THINKING_LEVEL ?? DEFAULT_THINKING_LEVEL;
+  return new GeminiProvider({ apiKey, model, thinkingLevel });
 }
