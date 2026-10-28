@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyze, type PipelineDeps, type Progress } from "@/lib/pipeline/analyze";
+import { analyze, everyChapterFailed, type PipelineDeps, type Progress } from "@/lib/pipeline/analyze";
 import { ChapterFailedError, QuotaExhaustedError, RateLimitedError } from "@/lib/pipeline/errors";
 import { memoryCache } from "@/lib/cache";
 import type { Chapter } from "@/lib/types";
@@ -205,6 +205,26 @@ describe("analyze", () => {
     expect(out.partial.chapters).toHaveLength(3);
     expect(out.partial.setups.map((s) => s.id)).toEqual(["c1-s1"]);
     expect(out.partial.failedChapters).toEqual([]);
+  });
+
+  it("flags a run where every chapter failed", async () => {
+    const { deps } = makeDeps(() => {
+      throw new ChapterFailedError();
+    });
+    const out = await analyze(chapters, deps);
+    if (out.status !== "ok") throw new Error("expected ok");
+    expect(out.result.failedChapters).toEqual([1, 2, 3]);
+    expect(everyChapterFailed(out.result)).toBe(true);
+  });
+
+  it("does not flag a run where some chapters succeeded", async () => {
+    const { deps } = makeDeps((_r, n) => {
+      if (n === 2) throw new ChapterFailedError();
+      return empty;
+    });
+    const out = await analyze(chapters, deps);
+    if (out.status !== "ok") throw new Error("expected ok");
+    expect(everyChapterFailed(out.result)).toBe(false);
   });
 
   it("fails a chapter after 5 waits", async () => {

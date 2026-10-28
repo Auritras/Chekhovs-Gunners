@@ -56,6 +56,8 @@ export async function handleModelRoute<Req, Res>(
     if (e instanceof ChapterFailedError) {
       return Response.json({ kind: "chapter_failed" }, { status: 502 });
     }
+    // Log the cause server-side only; the response never carries it.
+    console.error("[model route] unexpected error:", e instanceof Error ? e.message : String(e));
     return Response.json({ kind: "error" }, { status: 500 });
   }
 }

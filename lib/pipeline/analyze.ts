@@ -40,6 +40,11 @@ export type AnalyzeOutcome =
 
 const MAX_WAITS = 5;
 
+/** True when no chapter could be analysed (e.g. missing key, Gemini outage): the report would be empty. */
+export function everyChapterFailed(result: AnalysisResult): boolean {
+  return result.chapters.length > 0 && result.failedChapters.length >= result.chapters.length;
+}
+
 /** Thrown internally when a call keeps being rate limited. */
 class TooManyWaits extends Error {}
 

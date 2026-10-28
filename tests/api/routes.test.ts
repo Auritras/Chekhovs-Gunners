@@ -45,10 +45,16 @@ describe("routes", () => {
   it("chapter failed -> 502, other -> 500", async () => {
     generateJson.mockImplementationOnce(async () => { throw new ChapterFailedError(); });
     expect((await extract(req(body))).status).toBe(502);
-    generateJson.mockRejectedValueOnce(new Error("boom"));
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    generateJson.mockRejectedValueOnce(new Error("boom: secret detail"));
     const r = await extract(req(body));
     expect(r.status).toBe(500);
-    expect(await r.json()).toEqual({ kind: "error" });
+    const text = await r.text();
+    expect(JSON.parse(text)).toEqual({ kind: "error" });
+    expect(text).not.toContain("boom");
+    expect(logged).toHaveBeenCalledTimes(1);
+    expect(logged.mock.calls[0].join(" ")).toContain("boom: secret detail");
+    logged.mockRestore();
   });
   it("success -> 200 with extraction", async () => {
     const out = { setups: [], payoffs: [] };
