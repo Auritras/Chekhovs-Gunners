@@ -1,0 +1,10 @@
+{
+  "setups": [
+    { "id": "torn-page", "chapter": 1, "quoteHint": "a page had been torn out, cleanly, along the spine", "payoffChapter": 3 },
+    { "id": "sen-deadline", "chapter": 1, "quoteHint": "I was patient for his sake. I won't be patient for yours. You have until Durga Puja.", "payoffChapter": 3 },
+    { "id": "bablu-promise", "chapter": 1, "quoteHint": "He had borrowed four thousand rupees from Dadu in the spring", "payoffChapter": 3 },
+    { "id": "brass-bell", "chapter": 1, "quoteHint": "Dadu used to say the bell rang only for honest customers", "payoffChapter": null },
+    { "id": "syrup-by-ear", "chapter": 2, "quoteHint": "until she could hear the difference between one-thread syrup, which sounded like rain on a tin roof", "payoffChapter": 3 },
+    { "id": "jamming-shutter", "chapter": 2, "quoteHint": "You had to lift it from the left corner, never the middle", "payoffChapter": 2 }
+  ]
+}
