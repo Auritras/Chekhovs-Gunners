@@ -58,6 +58,8 @@ export interface AnalysisResult {
   payoffs: Payoff[];
   matches: Match[];
   unfired: string[];
+  /** Unfired setups in the story's ending: too late to pay off, so not counted as unfired. Absent in older saved results. */
+  inEnding?: string[];
   tension: number[];
   failedChapters: number[];
   uncertain: string[];

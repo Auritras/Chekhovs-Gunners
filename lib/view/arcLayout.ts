@@ -10,7 +10,7 @@ export interface ArcNode {
   id: string;
   x: number;
   kind: "setup" | "payoff";
-  state: "fired" | "unfired" | "linked" | "unlinked";
+  state: "fired" | "unfired" | "inEnding" | "linked" | "unlinked";
   uncertain: boolean;
 }
 
@@ -49,13 +49,16 @@ export function layoutArcs(
   const firedSetups = new Set(result.matches.map((m) => m.setupId));
   const linkedPayoffs = new Set(result.matches.map((m) => m.payoffId));
   const uncertain = new Set(result.uncertain);
+  const inEnding = new Set(result.inEnding ?? []);
+  const setupState = (id: string) =>
+    firedSetups.has(id) ? ("fired" as const) : inEnding.has(id) ? ("inEnding" as const) : ("unfired" as const);
 
   const nodes: ArcNode[] = [
     ...result.setups.map((s) => ({
       id: s.id,
       x: xOf(s.chapter, s.start),
       kind: "setup" as const,
-      state: firedSetups.has(s.id) ? ("fired" as const) : ("unfired" as const),
+      state: setupState(s.id),
       uncertain: uncertain.has(s.id),
     })),
     ...result.payoffs.map((p) => ({

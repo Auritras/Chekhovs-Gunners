@@ -2,7 +2,7 @@ import type { AnalysisResult } from "@/lib/types";
 import { summaryCounts } from "@/lib/view/summaryCounts";
 
 export default function Summary({ result }: { result: AnalysisResult }) {
-  // planted = fired + never fired + uncertain (uncertain counts setups only).
+  // planted = fired + never fired + uncertain + in the ending (uncertain counts setups only).
   const c = summaryCounts(result);
 
   const items: { label: string; value: number; tone?: string }[] = [
@@ -12,6 +12,9 @@ export default function Summary({ result }: { result: AnalysisResult }) {
   ];
   if (c.uncertain > 0) {
     items.push({ label: "uncertain", value: c.uncertain, tone: "text-muted" });
+  }
+  if (c.inEnding > 0) {
+    items.push({ label: "in the ending", value: c.inEnding, tone: "text-muted" });
   }
 
   return (

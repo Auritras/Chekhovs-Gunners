@@ -5,6 +5,7 @@ import {
   findUnfired,
   findUnlinkedPayoffs,
   markUncertain,
+  findInEnding,
 } from "@/lib/analysis/resolve";
 import type { Setup, Payoff, Match } from "@/lib/types";
 
@@ -82,5 +83,24 @@ describe("markUncertain", () => {
   });
   it("ignores linked items", () => {
     expect(markUncertain(setups, payoffs, [cand("s2", "p5")], [3])).toEqual([]);
+  });
+});
+
+describe("findInEnding", () => {
+  const ch = (index: number, len = 100) => ({ index, title: `C${index}`, text: "x".repeat(len) });
+  const fired = (s: string): Match => cand(s, "p1");
+
+  it("flags unfired setups in the last 15% of the whole story, not earlier ones or fired ones", () => {
+    const chapters = [ch(1), ch(2)]; // 200 chars in all; the ending starts at 170
+    const s = [setup("late", 2, 90), setup("mid", 2, 10), setup("firedLate", 2, 95), setup("edge", 2, 69)];
+    expect(findInEnding(chapters, s, [fired("firedLate")])).toEqual(["late"]);
+  });
+
+  it("keeps early setups of a one-chapter story as real unfired guns", () => {
+    expect(findInEnding([ch(1)], [setup("early", 1, 5), setup("last", 1, 95)], [])).toEqual(["last"]);
+  });
+
+  it("returns nothing for an empty story", () => {
+    expect(findInEnding([], [], [])).toEqual([]);
   });
 });

@@ -10,4 +10,5 @@ Everything below is deliberately **not** in the pre-built MVP. It will be built 
 | Accept / reject updates Story tab and export | Accepted changes are applied to the in-browser text only on the writer's click, re-highlighting the Story tab and enabling export; nothing is applied automatically. |
 | Optional: Gemma 4 local "privacy mode" | Add a second `ModelProvider` implementation that calls a local Gemma 4 endpoint so text never leaves the machine. |
 | Optional: full-novel support | Longer progress reporting and a rate-limit-aware request queue across many chapters, reusing the compact ledger. |
+| Ending details are not setups | Teach the extract prompt that details introduced in the resolution (e.g. a deed handed over in the last scene) close the story rather than plant a gun. Today a code rule only keeps them out of the "never fired" count. |
 | Deep prompt tuning with before/after metrics | Iterate on the extract and match prompts live, running `npm run prompt-check` before and after each change and publishing both tables. |

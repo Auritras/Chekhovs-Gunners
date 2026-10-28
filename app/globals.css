@@ -161,6 +161,10 @@ body {
   text-underline-offset: 4px;
   text-decoration-skip-ink: none;
 }
+.mark-setup-inEnding {
+  text-decoration: underline 1.5px var(--muted);
+  text-underline-offset: 3px;
+}
 .mark-payoff-linked {
   background: var(--brass-tint);
 }

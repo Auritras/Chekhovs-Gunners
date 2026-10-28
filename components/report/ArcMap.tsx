@@ -16,9 +16,13 @@ function nodeLabel(node: ArcNode, item: Setup | Payoff | undefined, chapterTitle
   const what = node.kind === "setup" ? "Setup" : "Payoff";
   const state = node.uncertain
     ? "uncertain"
-    : { fired: "fired", unfired: "never fired", linked: "pays off a setup", unlinked: "no setup found" }[
-        node.state
-      ];
+    : {
+        fired: "fired",
+        unfired: "never fired",
+        inEnding: "in the ending, too late to pay off",
+        linked: "pays off a setup",
+        unlinked: "no setup found",
+      }[node.state];
   return `${what} in ${chapterTitle}, ${state}: ${item?.summary ?? ""}`;
 }
 
@@ -90,18 +94,24 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
         </p>
       </div>
 
-      {/* Surtitle: the line behind whichever mark is under the pointer or focus. */}
-      <div aria-live="polite" className="min-h-[7.5rem] border-y border-line py-3 sm:min-h-[6.5rem]">
+      {/* Surtitle: the line behind whichever mark is under the pointer or focus.
+          Fixed height so the chart below never moves when the text changes; a moving
+          chart slid marks out from under a still pointer and made hover flicker. */}
+      <div aria-live="polite" className="h-[10.5rem] overflow-hidden border-y border-line py-3 sm:h-[9rem]">
         {activeItem && activeNode ? (
           <>
-            <p className="text-sm text-ink-soft">
+            <p className="truncate text-sm text-ink-soft">
               {activeNode.kind === "setup" ? "Setup" : "Payoff"} in {chapterTitle(activeItem.chapter)}
               {activeNode.uncertain && ", may be affected by a failed chapter"}
+              {activeNode.state === "inEnding" && ", in the ending, too late to pay off"}
             </p>
-            <blockquote className="mt-1 font-serif text-lg italic leading-snug">
+            <blockquote
+              title={activeItem.quote}
+              className="mt-1 line-clamp-3 font-serif text-lg italic leading-snug"
+            >
               “{activeItem.quote}”
             </blockquote>
-            <p className="mt-1 text-sm text-ink-soft">{activeItem.summary}</p>
+            <p className="mt-1 truncate text-sm text-ink-soft">{activeItem.summary}</p>
           </>
         ) : (
           <p className="pt-2 font-serif italic text-muted">
@@ -225,14 +235,15 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
                 const label = nodeLabel(n, item, chapterTitle(item?.chapter ?? 0));
                 let mark: React.ReactNode;
                 if (n.kind === "setup") {
-                  const fill = n.uncertain ? "var(--paper)" : n.state === "unfired" ? "var(--curtain)" : "var(--ink)";
+                  const ending = n.state === "inEnding" && !n.uncertain;
+                  const fill = n.uncertain || ending ? "var(--paper)" : n.state === "unfired" ? "var(--curtain)" : "var(--ink)";
                   mark = (
                     <circle
                       cx={n.x}
                       cy={base}
                       r={isActive ? 6.5 : 4.5}
                       fill={fill}
-                      stroke={n.uncertain ? "var(--muted)" : "var(--paper)"}
+                      stroke={n.uncertain || ending ? "var(--muted)" : "var(--paper)"}
                       strokeWidth={n.uncertain ? 1.5 : 1.25}
                       strokeDasharray={n.uncertain ? "2 2" : undefined}
                     />
@@ -293,6 +304,12 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
           <svg width="14" height="18" aria-hidden><circle cx="7" cy="4.5" r="4" fill="var(--curtain)" /><path d="M7 5 L7 17" stroke="var(--curtain)" strokeWidth="2" strokeLinecap="round" /></svg>
           Never fired
         </li>
+        {(result.inEnding?.length ?? 0) > 0 && (
+          <li className="flex items-center gap-2">
+            <svg width="14" height="14" aria-hidden><circle cx="7" cy="7" r="4.5" fill="var(--paper)" stroke="var(--muted)" strokeWidth="1.5" /></svg>
+            In the ending, too late to pay off
+          </li>
+        )}
         {result.uncertain.length > 0 && (
           <li className="flex items-center gap-2">
             <svg width="26" height="14" aria-hidden><path d="M2 7 L24 7" stroke="var(--muted)" strokeWidth="2" strokeDasharray="3 3" /></svg>

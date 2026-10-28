@@ -32,6 +32,7 @@ export default function StoryView({
     const fired = new Set(result.matches.map((m) => m.setupId));
     const linked = new Set(result.matches.map((m) => m.payoffId));
     const uncertain = new Set(result.uncertain);
+    const inEnding = new Set(result.inEnding ?? []);
     const info = new Map<string, Info>();
     const marksByChapter = new Map<number, HighlightMark[]>();
     const add = (chapter: number, m: HighlightMark, summary: string) => {
@@ -41,7 +42,7 @@ export default function StoryView({
       marksByChapter.set(chapter, list);
     };
     for (const s of result.setups) {
-      const state = fired.has(s.id) ? "fired" : "unfired";
+      const state = fired.has(s.id) ? "fired" : inEnding.has(s.id) ? "inEnding" : "unfired";
       add(s.chapter, { id: s.id, start: s.start, end: s.end, kind: "setup", state }, s.summary);
     }
     for (const p of result.payoffs) {
@@ -72,6 +73,9 @@ export default function StoryView({
         <li><span className="mark mark-setup-unfired">Setup that never fires</span></li>
         <li><span className="mark mark-payoff-linked">Payoff</span></li>
         <li><span className="mark mark-payoff-unlinked">Payoff with no setup</span></li>
+        {(result.inEnding?.length ?? 0) > 0 && (
+          <li><span className="mark mark-setup-inEnding">Setup in the ending</span></li>
+        )}
         {hasUncertain && <li><span className="mark mark-uncertain">Uncertain</span></li>}
       </ul>
 

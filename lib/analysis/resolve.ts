@@ -1,4 +1,7 @@
-import type { Match, Payoff, Setup } from "@/lib/types";
+import type { Chapter, Match, Payoff, Setup } from "@/lib/types";
+
+/** The last 15% of a story is its ending: something introduced there has no room left to pay off. */
+const ENDING_FRACTION = 0.85;
 
 /** Keep only candidates that are coherent: known ids, payoff after setup, payoff not already linked. */
 export function resolveMatches(
@@ -37,6 +40,22 @@ export function matchesFromExtraction(payoffs: Payoff[]): Match[] {
 export function findUnfired(setups: Setup[], matches: Match[]): string[] {
   const fired = new Set(matches.map((m) => m.setupId));
   return setups.filter((s) => !fired.has(s.id)).map((s) => s.id);
+}
+
+/** Unfired setups whose position in the whole story falls in its ending (see ENDING_FRACTION). */
+export function findInEnding(chapters: Chapter[], setups: Setup[], matches: Match[]): string[] {
+  const offset = new Map<number, number>();
+  let total = 0;
+  for (const c of chapters) {
+    offset.set(c.index, total);
+    total += c.text.length;
+  }
+  if (total === 0) return [];
+  const endingStarts = total * ENDING_FRACTION;
+  const unfired = new Set(findUnfired(setups, matches));
+  return setups
+    .filter((s) => unfired.has(s.id) && (offset.get(s.chapter) ?? 0) + s.start >= endingStarts)
+    .map((s) => s.id);
 }
 
 export function findUnlinkedPayoffs(payoffs: Payoff[], matches: Match[]): string[] {

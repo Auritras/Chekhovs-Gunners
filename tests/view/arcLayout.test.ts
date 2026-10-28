@@ -64,4 +64,10 @@ describe("layoutArcs", () => {
     r.setups[0].start = 0;
     expect(layoutArcs(r, 1000).nodes[0].x).toBe(0);
   });
+
+  it("marks an unfired setup in the ending as inEnding, not unfired", () => {
+    const r = { ...base(), unfired: [], uncertain: [], inEnding: ["s2"] };
+    expect(layoutArcs(r, 1000).nodes.find((n) => n.id === "s2")!.state).toBe("inEnding");
+  });
 });
+

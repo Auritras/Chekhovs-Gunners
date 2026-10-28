@@ -10,6 +10,7 @@ import { toLedger, toMatchSetups } from "@/lib/ledger";
 import { verifyQuotes } from "@/lib/analysis/verifyQuotes";
 import { computeTension } from "@/lib/analysis/tension";
 import {
+  findInEnding,
   findUnfired,
   findUnlinkedPayoffs,
   markUncertain,
@@ -79,12 +80,15 @@ export async function analyze(
 
   function build(matches: Match[]): AnalysisResult {
     const failedChapters = [...failed].sort((a, b) => a - b);
+    const inEnding = findInEnding(chapters, setups, matches);
+    const ending = new Set(inEnding);
     return {
       chapters,
       setups,
       payoffs,
       matches,
-      unfired: findUnfired(setups, matches),
+      unfired: findUnfired(setups, matches).filter((id) => !ending.has(id)),
+      inEnding,
       tension: computeTension(chapters.length, setups, payoffs, matches),
       failedChapters,
       uncertain: markUncertain(setups, payoffs, matches, failedChapters),
