@@ -4,6 +4,7 @@ import {
   GeminiProvider,
   classifyGeminiError,
   providerFromEnv,
+  resetExhaustedModels,
   type GenAiLike,
 } from "@/lib/ai/provider";
 import { buildExtractPrompt, buildMatchPrompt } from "@/lib/ai/prompts";
@@ -73,6 +74,80 @@ describe("GeminiProvider", () => {
     const p = new GeminiProvider({ apiKey: "k", model: "m", client });
     await expect(p.generateJson("hi", Schema)).rejects.toBeInstanceOf(RateLimitedError);
     expect(generateContent).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("GeminiProvider daily-quota fallback", () => {
+  const dailyQuota = () =>
+    Object.assign(
+      new Error('{"error":{"code":429,"details":[{"violations":[{"quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier"}]}]}}'),
+      { status: 429 },
+    );
+
+  /** A fake client whose answer depends on the model asked for. */
+  function byModel(answers: Record<string, () => string>) {
+    const generateContent = vi.fn(async (params: { model: string }) => ({ text: answers[params.model]() }));
+    return { client: { models: { generateContent } } as unknown as GenAiLike, generateContent };
+  }
+
+  afterEach(() => resetExhaustedModels());
+
+  it("switches to the fallback model when the primary's daily quota is used up", async () => {
+    const { client, generateContent } = byModel({
+      big: () => { throw dailyQuota(); },
+      lite: () => '{"a":7}',
+    });
+    const p = new GeminiProvider({ apiKey: "k", model: "big", fallbackModel: "lite", client });
+    expect(await p.generateJson("hi", Schema)).toEqual({ a: 7 });
+    expect(generateContent.mock.calls.map((c) => (c[0] as { model: string }).model)).toEqual(["big", "lite"]);
+  });
+
+  it("skips the exhausted primary on later calls, even from a new provider instance", async () => {
+    const { client, generateContent } = byModel({
+      big: () => { throw dailyQuota(); },
+      lite: () => '{"a":1}',
+    });
+    await new GeminiProvider({ apiKey: "k", model: "big", fallbackModel: "lite", client }).generateJson("hi", Schema);
+    generateContent.mockClear();
+    await new GeminiProvider({ apiKey: "k", model: "big", fallbackModel: "lite", client }).generateJson("hi", Schema);
+    expect(generateContent.mock.calls.map((c) => (c[0] as { model: string }).model)).toEqual(["lite"]);
+  });
+
+  it("tries the primary again once the exhaustion window has passed", async () => {
+    let now = 0;
+    const { client, generateContent } = byModel({
+      big: () => { throw dailyQuota(); },
+      lite: () => '{"a":1}',
+    });
+    const mk = () => new GeminiProvider({ apiKey: "k", model: "big", fallbackModel: "lite", client, now: () => now });
+    await mk().generateJson("hi", Schema);
+    now += 60 * 60 * 1000 + 1;
+    generateContent.mockClear();
+    await mk().generateJson("hi", Schema);
+    expect((generateContent.mock.calls[0][0] as { model: string }).model).toBe("big");
+  });
+
+  it("throws QuotaExhaustedError when the fallback is used up too, or when there is no fallback", async () => {
+    const both = byModel({ big: () => { throw dailyQuota(); }, lite: () => { throw dailyQuota(); } });
+    await expect(
+      new GeminiProvider({ apiKey: "k", model: "big", fallbackModel: "lite", client: both.client }).generateJson("hi", Schema),
+    ).rejects.toBeInstanceOf(QuotaExhaustedError);
+
+    resetExhaustedModels();
+    const none = byModel({ big: () => { throw dailyQuota(); } });
+    await expect(
+      new GeminiProvider({ apiKey: "k", model: "big", client: none.client }).generateJson("hi", Schema),
+    ).rejects.toBeInstanceOf(QuotaExhaustedError);
+  });
+
+  it("does not fall back on per-minute rate limits", async () => {
+    const { client } = byModel({
+      big: () => { throw Object.assign(new Error('{"error":{"code":429}}'), { status: 429 }); },
+      lite: () => '{"a":1}',
+    });
+    await expect(
+      new GeminiProvider({ apiKey: "k", model: "big", fallbackModel: "lite", client }).generateJson("hi", Schema),
+    ).rejects.toBeInstanceOf(RateLimitedError);
   });
 });
 
@@ -151,6 +226,14 @@ describe("providerFromEnv", () => {
     vi.stubEnv("GEMINI_THINKING_LEVEL", "low");
     const p = providerFromEnv() as GeminiProvider;
     expect(p.thinkingLevel).toBe("low");
+  });
+
+  it("defaults the fallback model, and an empty GEMINI_FALLBACK_MODEL disables it", () => {
+    vi.stubEnv("GEMINI_API_KEY", "prod");
+    vi.stubEnv("GEMINI_FALLBACK_MODEL", undefined as unknown as string);
+    expect((providerFromEnv() as GeminiProvider).fallbackModel).toBe("gemini-3.5-flash-lite");
+    vi.stubEnv("GEMINI_FALLBACK_MODEL", "");
+    expect((providerFromEnv() as GeminiProvider).fallbackModel).toBeUndefined();
   });
 
   it("throws naming the missing variable", () => {

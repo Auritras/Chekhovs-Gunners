@@ -64,7 +64,10 @@ npm run dev                  # http://localhost:3000
 GEMINI_API_KEY_DEV=<key from your development Google Cloud project>
 GEMINI_MODEL=gemini-3.5-flash        # default if unset
 GEMINI_THINKING_LEVEL=medium         # default if unset; "low" is ~10x faster but misses subtle setups
+GEMINI_FALLBACK_MODEL=gemini-3.5-flash-lite   # default if unset; empty disables
 ```
+
+**Daily-quota fallback.** The free tier allows `gemini-3.5-flash` only 20 requests per day per project (a 4-chapter story uses about 5). When that runs out, the app switches to `gemini-3.5-flash-lite`, which has its own quota, and retries the main model an hour later. On chapter 1 of the sample the lite model at `medium` thinking took ~6 s and also found all 3 planted setups. Results are cached under the main model's name whichever model answered. The metrics scripts never fall back, so their numbers always describe one model.
 
 Measured on chapter 1 of the sample (Oct 2026, free tier): `gemini-3.5-flash` at `medium` thinking took ~27 s and found all 3 planted setups; at `low` ~3 s and found 2. Newer flash models were frequently returning 503 "high demand" on the free tier, which the app now waits out and retries.
 
