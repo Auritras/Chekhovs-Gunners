@@ -117,6 +117,10 @@ tests/          Vitest suites
 
 This repo is the pre-built half. The features to be built live in the 6-hour sprint on 21 Nov 2026 are listed in [LIVE_SPRINT.md](LIVE_SPRINT.md).
 
+**Pre-built (as the organizers confirmed is allowed):** file input, UI, backend routes, and the basic Gemini pipeline that extracts and matches setups/payoffs, with code-side quote checks. Also pre-built, as error handling so the online demo keeps working on the free tier: waiting out 503 "high demand" errors and falling back to a lite model when the daily quota runs out.
+
+**Not pre-built:** the prompts have only had bug fixes so far. The prompt-check numbers above are the *before* baseline; deep prompt tuning happens live, with before/after tables.
+
 ## Constraints
 
 Free only: Gemini API free tier, Vercel Hobby, GitHub. No database. Built for short stories and screenplay acts up to roughly 20,000 words.
