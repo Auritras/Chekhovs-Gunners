@@ -1,5 +1,7 @@
 "use client";
 
+import { GUN_BODY, GUN_TRIGGER } from "@/components/effects/GunGlyph";
+
 /** Paper layers carry data-depth: how far (px) they drift at the header edge; nearer layers move more. */
 function paperLayers(stage: HTMLElement) {
   return [...stage.querySelectorAll<HTMLElement>(".paper-layer")];
@@ -58,11 +60,8 @@ export default function PaperHeader() {
         <svg viewBox="0 0 80 50" className="h-10 w-16 lg:h-14 lg:w-24">
           <path d="M40 2 L22 16 M40 2 L58 16" className="stroke-curtain-ink/60" strokeWidth="1.5" fill="none" />
           <circle cx="40" cy="3" r="2.5" className="fill-brass" />
-          <path
-            d="M6 16 H70 V22 H74 V28 H34 Q30 28 29 32 L25 46 Q24 48 21 48 H12 Q9 48 10 45 L15 28 H6 Z"
-            className="fill-curtain-ink"
-          />
-          <path d="M34 28 Q36 36 31 38" className="stroke-curtain-ink" strokeWidth="2.5" fill="none" />
+          <path d={GUN_BODY} className="fill-curtain-ink" />
+          <path d={GUN_TRIGGER} className="stroke-curtain-ink" strokeWidth="2.5" fill="none" />
         </svg>
       </div>
 

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { readFile } from "@/lib/input/readFile";
 import { loadSampleIndex, loadSampleResult, type SampleInfo } from "@/lib/samples";
 import type { AnalysisResult } from "@/lib/types";
 
-/** A chosen sample that has a prebuilt analysis: the writer picks view vs. analyse. */
-type SampleChoice = SampleInfo & { result: AnalysisResult };
+/** A sample and its prebuilt analysis, if `npm run build-samples` made one. */
+type Sample = SampleInfo & { result: AnalysisResult | null };
 
 const ERRORS = {
   unsupported: "That file type isn't supported. Try .txt, .md, .docx or .pdf.",
@@ -15,6 +15,8 @@ const ERRORS = {
   unreadable:
     "We couldn't read text from that file — it may be a scanned PDF. Try pasting the text instead.",
 } as const;
+
+const EMPTY_HINT = "Paste a story, drop in a file, or try a sample first.";
 
 function countWords(text: string): number {
   const t = text.trim();
@@ -32,164 +34,191 @@ export default function InputPanel({
   disabled?: boolean;
 }) {
   const id = useId();
+  const textRef = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [samples, setSamples] = useState<SampleInfo[]>([]);
-  const [choice, setChoice] = useState<SampleChoice | null>(null);
+  const [samples, setSamples] = useState<Sample[]>([]);
   const [busy, setBusy] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    void loadSampleIndex().then((list) => {
-      if (!cancelled) setSamples(list);
+    void loadSampleIndex().then(async (list) => {
+      const withResults = await Promise.all(
+        list.map(async (s) => ({ ...s, result: await loadSampleResult(s.slug) })),
+      );
+      if (!cancelled) setSamples(withResults);
     });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const input = e.target;
-    const file = input.files?.[0];
-    if (!file) return;
+  function edit(next: string) {
+    setText(next);
+    if (error === EMPTY_HINT) setError(null);
+  }
+
+  async function loadFile(file: File) {
     setError(null);
     setBusy(true);
     const result = await readFile(file);
     setBusy(false);
-    input.value = "";
     if ("error" in result) setError(ERRORS[result.error]);
-    else setText(result.text);
+    else edit(result.text);
+  }
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.target;
+    const file = input.files?.[0];
+    input.value = "";
+    if (file) await loadFile(file);
+  }
+
+  function onDragOver(e: React.DragEvent) {
+    if (!e.dataTransfer.types.includes("Files")) return;
+    e.preventDefault();
+    setDragging(true);
+  }
+
+  function onDragLeave(e: React.DragEvent) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false);
+  }
+
+  function onDrop(e: React.DragEvent) {
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    e.preventDefault();
+    setDragging(false);
+    if (!busy && !disabled) void loadFile(file);
   }
 
   async function fillSampleText(slug: string) {
+    setError(null);
     try {
       const r = await fetch(`/samples/${encodeURIComponent(slug)}/story.md`);
       if (!r.ok) throw new Error("bad response");
-      setText(await r.text());
+      edit(await r.text());
+      textRef.current?.scrollIntoView({ block: "nearest" });
     } catch {
       setError("We couldn't load that sample. Try pasting the text instead.");
     }
   }
 
-  async function onSample(e: React.ChangeEvent<HTMLSelectElement>) {
-    const select = e.target;
-    const info = samples.find((s) => s.slug === select.value);
-    select.value = "";
-    if (!info) return;
-    setError(null);
-    setChoice(null);
-    // With a prebuilt result (from `npm run build-samples`), offer it instead of spending quota.
-    const result = await loadSampleResult(info.slug);
-    if (result) setChoice({ ...info, result });
-    else await fillSampleText(info.slug);
-  }
-
-  function viewSample() {
-    if (!choice) return;
-    onViewSample(choice.result, choice.title);
-    setChoice(null);
-  }
-
-  async function analyseSampleYourself() {
-    if (!choice) return;
-    const slug = choice.slug;
-    setChoice(null);
-    await fillSampleText(slug);
+  function analyse() {
+    if (countWords(text) === 0) {
+      setError(EMPTY_HINT);
+      textRef.current?.focus();
+      return;
+    }
+    onAnalyse(text);
   }
 
   const words = countWords(text);
-  const canAnalyse = words > 0 && !disabled;
 
   return (
-    <section className="flex flex-col gap-3">
-      <label htmlFor={`${id}-text`} className="font-display text-2xl">
-        Your story
-      </label>
-      <textarea
-        id={`${id}-text`}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={14}
-        placeholder="Paste your story here, or upload a file."
-        className="w-full resize-y rounded-sm border border-line bg-surface p-4 font-serif text-base leading-relaxed text-ink placeholder:text-muted focus:border-ink focus:outline-none"
-      />
-      <p aria-live="polite" className="text-sm text-ink-soft tabular-nums">
-        {words.toLocaleString("en-US")} {words === 1 ? "word" : "words"}
-      </p>
-      {error && (
-        <p role="alert" className="text-sm text-curtain">
-          {error}
-        </p>
+    <section className="flex flex-col gap-6">
+      {samples.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-ink-soft">New here? See it work on a sample story:</p>
+          <ul className="flex flex-wrap gap-x-5 gap-y-3">
+            {samples.map((s) => (
+              <li key={s.slug} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => (s.result ? onViewSample(s.result, s.title) : fillSampleText(s.slug))}
+                  className="min-h-11 rounded-sm border border-brass px-4 py-2 text-left transition-colors hover:bg-brass hover:text-paper disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="block font-display text-lg leading-tight">{s.title}</span>
+                  <span className="block text-xs opacity-80">
+                    {s.result ? "Ready-made analysis, no wait" : "Loads the text for you to analyse"}
+                  </span>
+                </button>
+                {s.result && (
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => fillSampleText(s.slug)}
+                    className="min-h-11 text-sm text-ink-soft underline decoration-line underline-offset-4 hover:text-ink disabled:opacity-50"
+                  >
+                    or load its text
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-1">
-          <label htmlFor={`${id}-file`} className="text-sm text-ink-soft">
-            Upload a file (.txt, .md, .docx, .pdf)
-          </label>
+
+      <div
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        className="playbill relative flex flex-col gap-2 px-5 pb-4 pt-5 sm:px-7"
+      >
+        <span aria-hidden className="playbill-corner -left-[5px] -top-[5px]" />
+        <span aria-hidden className="playbill-corner -right-[5px] -top-[5px]" />
+        <span aria-hidden className="playbill-corner -bottom-[5px] -left-[5px]" />
+        <span aria-hidden className="playbill-corner -bottom-[5px] -right-[5px]" />
+
+        <label
+          htmlFor={`${id}-text`}
+          className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-ink-soft"
+        >
+          <span aria-hidden className="h-px flex-1 bg-brass opacity-60" />
+          Your story
+          <span aria-hidden className="h-px flex-1 bg-brass opacity-60" />
+        </label>
+        <textarea
+          ref={textRef}
+          id={`${id}-text`}
+          value={text}
+          onChange={(e) => edit(e.target.value)}
+          rows={14}
+          placeholder="Paste your story here, or drop a manuscript (.txt, .md, .docx, .pdf) anywhere in this frame."
+          className="w-full resize-y bg-transparent font-serif text-base leading-relaxed text-ink placeholder:text-muted focus:outline-none"
+        />
+
+        {(dragging || busy) && (
+          <div
+            aria-hidden={!busy}
+            className="absolute inset-2 flex items-center justify-center border-2 border-dashed border-brass bg-surface/95 font-display text-2xl"
+          >
+            {busy ? "Reading your manuscript…" : "Drop it on the stage"}
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+        <p aria-live="polite" className="text-sm tabular-nums text-ink-soft">
+          {words.toLocaleString("en-US")} {words === 1 ? "word" : "words"}
+        </p>
+        <label className="inline-flex min-h-11 cursor-pointer items-center rounded-sm border border-ink px-4 text-sm font-medium transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus hover:bg-ink hover:text-paper has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
+          Choose a file
           <input
-            id={`${id}-file`}
             type="file"
             accept=".txt,.md,.docx,.pdf"
             onChange={onFile}
             disabled={busy}
-            className="max-w-full text-sm file:mr-3 file:rounded-sm file:border file:border-ink file:bg-transparent file:px-3 file:py-1.5 file:text-ink hover:file:bg-ink hover:file:text-paper"
+            className="sr-only"
           />
-        </div>
-        {samples.length > 0 && (
-          <div className="flex flex-col gap-1">
-            <label htmlFor={`${id}-sample`} className="text-sm text-ink-soft">
-              Or try a sample
-            </label>
-            <select
-              id={`${id}-sample`}
-              defaultValue=""
-              onChange={onSample}
-              className="rounded-sm border border-line bg-surface px-2 py-1.5 text-sm text-ink"
-            >
-              <option value="">Choose a sample…</option>
-              {samples.map((s) => (
-                <option key={s.slug} value={s.slug}>
-                  {s.title}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-        {choice && (
-          <div
-            role="group"
-            aria-label={`Sample: ${choice.title}`}
-            className="flex w-full flex-col gap-2 border-l-2 border-brass pl-3 sm:w-auto"
-          >
-            <p className="text-sm text-ink-soft">“{choice.title}” has a ready-made analysis.</p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={viewSample}
-                disabled={disabled}
-                className="rounded-sm bg-ink px-3 py-1.5 text-sm font-medium text-paper transition-colors hover:bg-ink-soft disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                View sample analysis
-              </button>
-              <button
-                type="button"
-                onClick={analyseSampleYourself}
-                className="rounded-sm border border-ink px-3 py-1.5 text-sm font-medium transition-colors hover:bg-ink hover:text-paper"
-              >
-                Analyse it yourself
-              </button>
-            </div>
-          </div>
-        )}
+        </label>
         <button
           type="button"
-          onClick={() => onAnalyse(text)}
-          disabled={!canAnalyse}
-          className="w-full rounded-sm bg-curtain px-6 py-2.5 font-display text-xl text-curtain-ink transition-colors hover:bg-curtain-deep disabled:cursor-not-allowed disabled:opacity-40 sm:ml-auto sm:w-auto"
+          onClick={analyse}
+          disabled={disabled}
+          className="w-full rounded-sm bg-curtain px-8 py-2.5 font-display text-xl text-curtain-ink transition-colors hover:bg-curtain-deep disabled:cursor-not-allowed disabled:opacity-50 sm:ml-auto sm:w-auto"
         >
           Analyse
         </button>
       </div>
+
+      {error && (
+        <p role="alert" className="-mt-3 text-sm text-curtain sm:text-right">
+          {error}
+        </p>
+      )}
     </section>
   );
 }

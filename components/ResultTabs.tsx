@@ -6,6 +6,7 @@ import Summary from "@/components/report/Summary";
 import ArcMap from "@/components/report/ArcMap";
 import TensionChart from "@/components/report/TensionChart";
 import IssueList from "@/components/report/IssueList";
+import Divider from "@/components/report/Divider";
 import StoryView from "@/components/story/StoryView";
 
 type Tab = "report" | "story";
@@ -85,10 +86,13 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
         className="pt-8"
       >
         {tab === "report" ? (
-          <div className="flex flex-col gap-14">
+          <div className="flex flex-col gap-10">
             <Summary result={result} />
+            <Divider />
             <ArcMap result={result} />
+            <Divider />
             <TensionChart result={result} />
+            <Divider />
             <IssueList result={result} onSelect={openInStory} />
           </div>
         ) : (

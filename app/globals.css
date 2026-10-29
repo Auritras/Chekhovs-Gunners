@@ -169,6 +169,26 @@ body {
   filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.35));
 }
 
+/* Playbill frame around the story input: a brass double rule with diamond corners. */
+.playbill {
+  background: var(--surface);
+  border: 1px solid var(--brass);
+  box-shadow:
+    inset 0 0 0 4px var(--surface),
+    inset 0 0 0 5px color-mix(in srgb, var(--brass) 55%, transparent);
+  transition: border-color 150ms ease;
+}
+.playbill:focus-within {
+  border-color: var(--ink);
+}
+.playbill-corner {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: var(--brass);
+  transform: rotate(45deg);
+}
+
 /* Chekhov's rule, word by word; the payoff word goes off in brass. */
 .kinetic-word {
   display: inline-block;
