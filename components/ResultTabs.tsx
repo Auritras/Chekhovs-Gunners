@@ -7,6 +7,7 @@ import ArcMap from "@/components/report/ArcMap";
 import TensionChart from "@/components/report/TensionChart";
 import IssueList from "@/components/report/IssueList";
 import Divider from "@/components/report/Divider";
+import FiredList from "@/components/report/FiredList";
 import StoryView from "@/components/story/StoryView";
 
 type Tab = "report" | "story";
@@ -90,7 +91,10 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
             <Summary result={result} />
             <Divider />
             {/* The guns that never fire are why writers come, so they lead the report. */}
-            <IssueList result={result} onSelect={openInStory} />
+            <div className="flex flex-col gap-6">
+              <IssueList result={result} onSelect={openInStory} />
+              <FiredList result={result} onSelect={openInStory} />
+            </div>
             <Divider />
             <ArcMap result={result} />
             <Divider />

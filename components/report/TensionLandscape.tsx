@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-const LINES = 18;
-const REVEAL_MS = 1400;
+const LINES = 13;
+const REVEAL_MS = 1000;
 
 /** Smoothstep between chapter values so the ridge rises and falls with the story. */
 function heightAt(values: number[], u: number): number {
@@ -53,23 +53,41 @@ export default function TensionLandscape({ tension }: { tension: number[] }) {
       const ink = style.getPropertyValue("--ink-soft").trim();
       const accent = style.getPropertyValue("--curtain").trim();
       ctx.clearRect(0, 0, w, h);
-      for (let k = 0; k < LINES; k++) {
+      const end = w * reveal;
+      // Upper lines rise most; lines bunch together over the peak like contours on a hill.
+      const yAt = (k: number, x: number) => {
         const depth = k / (LINES - 1);
-        // Upper lines rise most; lines bunch together over the peak like contours on a hill.
-        const base = h * 0.52 + depth * h * 0.45;
-        const major = k % 5 === 0;
+        const u = w === 0 ? 0 : x / w;
+        const ridge = heightAt(values, u) * h * (0.5 - depth * 0.3);
+        const wobble = Math.sin(u * 9 + k * 0.7 + t) * 1.5 + Math.sin(u * 23 - k + t * 0.6) * 0.75;
+        return h * 0.52 + depth * h * 0.45 - ridge + wobble;
+      };
+      const trace = (k: number) => {
         ctx.beginPath();
-        for (let x = 0; x <= w * reveal; x += 4) {
-          const u = w === 0 ? 0 : x / w;
-          const ridge = heightAt(values, u) * h * (0.5 - depth * 0.3);
-          const wobble = Math.sin(u * 9 + k * 0.7 + t) * 1.5 + Math.sin(u * 23 - k + t * 0.6) * 0.75;
-          const y = base - ridge + wobble;
-          if (x === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
+        for (let x = 0; x <= end; x += 4) {
+          if (x === 0) ctx.moveTo(x, yAt(k, x));
+          else ctx.lineTo(x, yAt(k, x));
         }
+      };
+
+      // Fill under the top ridge so the hill reads as a shape, not just lines.
+      trace(0);
+      ctx.lineTo(end, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      const fill = ctx.createLinearGradient(0, 0, 0, h);
+      fill.addColorStop(0, accent);
+      fill.addColorStop(1, "transparent");
+      ctx.globalAlpha = 0.28;
+      ctx.fillStyle = fill;
+      ctx.fill();
+
+      for (let k = LINES - 1; k >= 0; k--) {
+        const major = k % 4 === 0;
+        trace(k);
         ctx.strokeStyle = major ? accent : ink;
-        ctx.globalAlpha = major ? 0.8 : 0.3;
-        ctx.lineWidth = major ? 1.3 : 1;
+        ctx.globalAlpha = k === 0 ? 1 : major ? 0.9 : 0.5;
+        ctx.lineWidth = k === 0 ? 3 : major ? 2 : 1.25;
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
@@ -102,8 +120,17 @@ export default function TensionLandscape({ tension }: { tension: number[] }) {
 
     size();
     start();
+    // If animation frames are throttled (background tab, headless capture), finish the
+    // draw-in anyway so the chart is never left blank.
+    let settle: ReturnType<typeof setTimeout> | undefined;
     const observer = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
+      if (visible && reveal < 1 && settle === undefined) {
+        settle = setTimeout(() => {
+          reveal = 1;
+          draw();
+        }, REVEAL_MS + 300);
+      }
     });
     observer.observe(canvas);
     window.addEventListener("resize", onResize);
@@ -111,6 +138,7 @@ export default function TensionLandscape({ tension }: { tension: number[] }) {
     reduce.addEventListener("change", start);
     return () => {
       cancelAnimationFrame(frame);
+      clearTimeout(settle);
       observer.disconnect();
       window.removeEventListener("resize", onResize);
       dark.removeEventListener("change", draw);

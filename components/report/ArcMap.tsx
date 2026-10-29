@@ -93,7 +93,7 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
   const unfiredNodes = layout?.nodes.filter((n) => n.kind === "setup" && n.state === "unfired") ?? [];
 
   return (
-    <section aria-labelledby={`${uid}-h`} className="flex flex-col gap-4">
+    <section id="arc-map" aria-labelledby={`${uid}-h`} className="flex scroll-mt-24 flex-col gap-4">
       <div>
         <h2 id={`${uid}-h`} className="font-display text-3xl">
           Arc map
