@@ -69,8 +69,18 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
     return ids;
   }, [active, result.matches]);
 
-  const activeItem = active ? byId.get(active) : undefined;
-  const activeNode = active ? layout?.nodes.find((n) => n.id === active) : undefined;
+  // With nothing under the pointer, show the first gun that never fires (else the first setup),
+  // so the surtitle is never an empty band and touch screens see a line without hovering.
+  const restingId = useMemo(() => {
+    const unfired = new Set(result.unfired);
+    const first = [...result.setups]
+      .sort((a, b) => a.chapter - b.chapter || a.start - b.start)
+      .sort((a, b) => Number(unfired.has(b.id)) - Number(unfired.has(a.id)))[0];
+    return first?.id ?? null;
+  }, [result]);
+  const shown = active ?? restingId;
+  const activeItem = shown ? byId.get(shown) : undefined;
+  const activeNode = shown ? layout?.nodes.find((n) => n.id === shown) : undefined;
   const uncertain = new Set(result.uncertain);
   const failed = new Set(result.failedChapters);
 
@@ -90,7 +100,7 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
         </h2>
         <p className="mt-1 max-w-[62ch] text-sm text-ink-soft">
           Each arc runs from a setup to the moment it pays off. Red threads hang from the guns that
-          never fire.
+          never fire. Hover, tap or tab to any mark to read its line.
         </p>
       </div>
 
@@ -102,6 +112,9 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
           <>
             <p className="truncate text-sm text-ink-soft">
               {activeNode.kind === "setup" ? "Setup" : "Payoff"} in {chapterTitle(activeItem.chapter)}
+              {activeNode.state === "unfired" && !activeNode.uncertain && (
+                <span className="text-curtain">, never fires</span>
+              )}
               {activeNode.uncertain && ", may be affected by a failed chapter"}
               {activeNode.state === "inEnding" && ", in the ending, too late to pay off"}
             </p>
@@ -114,9 +127,7 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
             <p className="mt-1 truncate text-sm text-ink-soft">{activeItem.summary}</p>
           </>
         ) : (
-          <p className="pt-2 font-serif italic text-muted">
-            Hover over or focus a mark to read the line behind it.
-          </p>
+          <p className="pt-2 font-serif italic text-muted">No setups were found in this story.</p>
         )}
       </div>
 
@@ -230,7 +241,7 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
               {/* Nodes */}
               {layout.nodes.map((n) => {
                 const item = byId.get(n.id);
-                const isActive = active === n.id;
+                const isActive = shown === n.id;
                 const dim = related && !related.has(n.id);
                 const label = nodeLabel(n, item, chapterTitle(item?.chapter ?? 0));
                 let mark: React.ReactNode;
@@ -267,7 +278,7 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
                     tabIndex={0}
                     role="button"
                     aria-label={label}
-                    aria-pressed={isActive}
+                    aria-pressed={active === n.id}
                     className="cursor-pointer outline-none [&:focus-visible>circle:first-child]:stroke-[var(--focus)]"
                     style={{ opacity: dim ? 0.3 : 1, transition: "opacity 160ms" }}
                     onMouseEnter={() => setActive(n.id)}

@@ -24,7 +24,7 @@ export default function IssueList({
     result.chapters.find((c) => c.index === n)?.title || `Chapter ${n}`;
 
   return (
-    <section aria-labelledby="issues-heading" className="flex flex-col gap-4">
+    <section id="issues" aria-labelledby="issues-heading" className="flex scroll-mt-24 flex-col gap-4">
       <div>
         <h2 id="issues-heading" className="font-display text-3xl">
           Guns that never fire

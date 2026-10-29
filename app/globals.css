@@ -263,7 +263,16 @@ body {
   color: inherit;
   padding: 0.05em 0;
   border-radius: 2px;
-  scroll-margin-block: 30vh;
+  /* Clears the sticky tabs and the "Show all highlights" button when jumped to. */
+  scroll-margin-top: 8rem;
+  transition:
+    background-color 200ms ease,
+    text-decoration-color 200ms ease;
+}
+/* While one passage is selected, the other highlights step back; the text stays readable. */
+.story-focus .mark:not(.mark-target) {
+  background-color: transparent;
+  text-decoration-color: transparent;
 }
 .mark-setup-fired {
   text-decoration: underline 2px var(--brass);
@@ -294,6 +303,8 @@ body {
 .mark-target {
   outline: 2px solid var(--curtain);
   outline-offset: 3px;
+}
+.mark-flash {
   animation: mark-flash 1.6s ease-out 1;
 }
 @keyframes mark-flash {
@@ -310,7 +321,7 @@ body {
   .arc-draw,
   .arc-fade,
   .footlight-live,
-  .mark-target,
+  .mark-flash,
   .riso-title::before,
   .kinetic-word {
     animation: none;

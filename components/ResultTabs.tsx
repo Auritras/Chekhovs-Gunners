@@ -89,11 +89,12 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
           <div className="flex flex-col gap-10">
             <Summary result={result} />
             <Divider />
+            {/* The guns that never fire are why writers come, so they lead the report. */}
+            <IssueList result={result} onSelect={openInStory} />
+            <Divider />
             <ArcMap result={result} />
             <Divider />
             <TensionChart result={result} />
-            <Divider />
-            <IssueList result={result} onSelect={openInStory} />
           </div>
         ) : (
           <StoryView result={result} target={target} />

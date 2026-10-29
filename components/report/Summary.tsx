@@ -5,10 +5,15 @@ export default function Summary({ result }: { result: AnalysisResult }) {
   // planted = fired + never fired + uncertain + in the ending (uncertain counts setups only).
   const c = summaryCounts(result);
 
-  const items: { label: string; value: number; tone?: string }[] = [
+  const items: { label: string; value: number; tone?: string; href?: string }[] = [
     { label: c.planted === 1 ? "setup planted" : "setups planted", value: c.planted },
     { label: "fired", value: c.fired, tone: "text-brass" },
-    { label: "never fired", value: c.neverFired, tone: c.neverFired > 0 ? "text-curtain" : undefined },
+    {
+      label: "never fired",
+      value: c.neverFired,
+      tone: c.neverFired > 0 ? "text-curtain" : undefined,
+      href: c.neverFired > 0 ? "#issues" : undefined,
+    },
   ];
   if (c.uncertain > 0) {
     items.push({ label: "uncertain", value: c.uncertain, tone: "text-muted" });
@@ -25,9 +30,23 @@ export default function Summary({ result }: { result: AnalysisResult }) {
       <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:flex sm:gap-0 sm:divide-x sm:divide-line">
         {items.map((it) => (
           <div key={it.label} className="flex flex-col sm:px-8 sm:first:pl-0">
-            <dt className="order-2 mt-1 text-sm text-ink-soft">{it.label}</dt>
+            <dt className="order-2 mt-1 text-sm text-ink-soft">
+              {it.href ? (
+                <a href={it.href} className="underline decoration-line underline-offset-4 hover:text-ink">
+                  {it.label}
+                </a>
+              ) : (
+                it.label
+              )}
+            </dt>
             <dd className={`order-1 font-display text-6xl leading-none tabular-nums ${it.tone ?? ""}`}>
-              {it.value}
+              {it.href ? (
+                <a href={it.href} aria-hidden tabIndex={-1} className="hover:opacity-80">
+                  {it.value}
+                </a>
+              ) : (
+                it.value
+              )}
             </dd>
           </div>
         ))}

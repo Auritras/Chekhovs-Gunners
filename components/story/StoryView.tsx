@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import { highlightSegments, type HighlightMark } from "@/lib/view/highlight";
 
@@ -28,6 +28,10 @@ export default function StoryView({
   result: AnalysisResult;
   target: { id: string; seq: number } | null;
 }) {
+  // The jump (by seq) the writer dismissed; while a newer one is live, other highlights fade.
+  const [dismissed, setDismissed] = useState<number | null>(null);
+  const focusId = target && target.seq !== dismissed ? target.id : null;
+
   const { info, marksByChapter } = useMemo(() => {
     const fired = new Set(result.matches.map((m) => m.setupId));
     const linked = new Set(result.matches.map((m) => m.payoffId));
@@ -57,17 +61,25 @@ export default function StoryView({
     const el = document.getElementById(markElementId(target.id));
     if (!el) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+    // "start" plus the mark's scroll margin lands it just under the sticky tabs.
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
     el.focus({ preventScroll: true });
-    el.classList.remove("mark-target");
+    el.classList.remove("mark-flash");
     void el.offsetWidth; // restart the flash on repeat visits
-    el.classList.add("mark-target");
+    el.classList.add("mark-flash");
   }, [target]);
+
+  /** Clicking any other highlight brings the rest back. */
+  function onClick(e: React.MouseEvent) {
+    if (!focusId || !target) return;
+    const mark = (e.target as HTMLElement).closest("mark");
+    if (mark && !mark.classList.contains("mark-target")) setDismissed(target.seq);
+  }
 
   const hasUncertain = result.uncertain.length > 0;
 
   return (
-    <article className="flex flex-col gap-10">
+    <article className={`flex flex-col gap-10 ${focusId ? "story-focus" : ""}`} onClick={onClick}>
       <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-soft" aria-label="Key">
         <li><span className="mark mark-setup-fired">Setup that fires</span></li>
         <li><span className="mark mark-setup-unfired">Setup that never fires</span></li>
@@ -78,6 +90,18 @@ export default function StoryView({
         )}
         {hasUncertain && <li><span className="mark mark-uncertain">Uncertain</span></li>}
       </ul>
+
+      {focusId && target && (
+        <div className="sticky top-16 z-[5] -mb-6 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setDismissed(target.seq)}
+            className="min-h-11 rounded-sm border border-ink bg-paper px-4 text-sm font-medium shadow-sm transition-colors hover:bg-ink hover:text-paper"
+          >
+            Show all highlights
+          </button>
+        </div>
+      )}
 
       {result.chapters.map((c) => {
         const segments = highlightSegments(c.text, marksByChapter.get(c.index) ?? []);
@@ -101,12 +125,13 @@ export default function StoryView({
                 // The first segment of each mark carries its anchor id.
                 const anchor = seg.marks.find((id) => !seen.has(id));
                 seg.marks.forEach((id) => seen.add(id));
+                const isTarget = focusId !== null && seg.marks.includes(focusId);
                 return (
                   <mark
                     key={i}
                     id={anchor ? markElementId(anchor) : undefined}
                     tabIndex={anchor ? -1 : undefined}
-                    className={top ? markClass(top.i) : "mark"}
+                    className={`${top ? markClass(top.i) : "mark"}${isTarget ? " mark-target" : ""}`}
                     title={infos.map((x) => x.i.summary).join("\n")}
                   >
                     {seg.text}
