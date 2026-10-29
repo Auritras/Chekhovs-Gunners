@@ -1,3 +1,4 @@
+import CountUp from "@/components/effects/CountUp";
 import type { AnalysisResult } from "@/lib/types";
 import { summaryCounts } from "@/lib/view/summaryCounts";
 
@@ -42,7 +43,7 @@ export default function Summary({ result }: { result: AnalysisResult }) {
         Summary
       </h2>
       <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:flex sm:gap-0 sm:divide-x sm:divide-line">
-        {items.map((it) => (
+        {items.map((it, i) => (
           <div key={it.label} className="flex flex-col sm:px-8 sm:first:pl-0">
             <dt className="order-2 mt-1 text-sm text-ink-soft">
               {it.href ? (
@@ -60,10 +61,10 @@ export default function Summary({ result }: { result: AnalysisResult }) {
             <dd className={`order-1 font-display text-6xl leading-none tabular-nums ${it.tone ?? ""}`}>
               {it.href ? (
                 <a href={it.href} onClick={(e) => jump(e, it.href!)} aria-hidden tabIndex={-1} className="hover:opacity-80">
-                  {it.value}
+                  <CountUp value={it.value} delay={i * 180} />
                 </a>
               ) : (
-                it.value
+                <CountUp value={it.value} delay={i * 180} />
               )}
             </dd>
           </div>
