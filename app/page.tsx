@@ -5,6 +5,8 @@ import InputPanel from "@/components/InputPanel";
 import RunStatus, { type RunState } from "@/components/RunStatus";
 import ResultTabs from "@/components/ResultTabs";
 import PaperHeader from "@/components/effects/PaperHeader";
+import HowItWorks from "@/components/landing/HowItWorks";
+import SamplePreview from "@/components/landing/SamplePreview";
 import { chapterize } from "@/lib/chapterize";
 import { analyze, everyChapterFailed, type Progress } from "@/lib/pipeline/analyze";
 import { httpDeps } from "@/lib/pipeline/httpDeps";
@@ -113,16 +115,23 @@ export default function Home() {
       <PaperHeader />
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-8 sm:px-8 sm:py-12">
-        <div className="max-w-3xl">
-          <p className="mb-6 max-w-[62ch] font-serif text-[1.05rem] leading-relaxed text-ink-soft">
-            Paste a story or upload a manuscript. We read it chapter by chapter, note every
-            setup it plants, and show you which ones pay off — and which are left on the wall.
-          </p>
-          <InputPanel
-            onAnalyse={onAnalyse}
-            onViewSample={onViewSample}
-            disabled={run.phase === "running"}
-          />
+        {/* Desktop: the input on the left, a miniature of a real report on the right. */}
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-10">
+          <div className="flex min-w-0 flex-col gap-6">
+            <p className="max-w-[62ch] font-serif text-[1.05rem] leading-relaxed text-ink-soft">
+              Paste a story or upload a manuscript. We read it chapter by chapter, note every
+              setup it plants, and show you which ones pay off — and which are left on the wall.
+            </p>
+            <HowItWorks />
+            <InputPanel
+              onAnalyse={onAnalyse}
+              onViewSample={onViewSample}
+              disabled={run.phase === "running"}
+            />
+          </div>
+          <aside aria-label="Sample report" className="lg:sticky lg:top-8">
+            <SamplePreview onView={onViewSample} />
+          </aside>
         </div>
 
         <RunStatus

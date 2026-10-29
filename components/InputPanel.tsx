@@ -175,9 +175,9 @@ export default function InputPanel({
           id={`${id}-text`}
           value={text}
           onChange={(e) => edit(e.target.value)}
-          rows={14}
+          rows={8}
           placeholder="Paste your story here, or drop a manuscript (.txt, .md, .docx, .pdf) anywhere in this frame."
-          className="w-full resize-y bg-transparent font-serif text-base leading-relaxed text-ink placeholder:text-muted focus:outline-none"
+          className="max-h-[70vh] min-h-48 w-full resize-y bg-transparent [field-sizing:content] font-serif text-base leading-relaxed text-ink placeholder:text-muted focus:outline-none"
         />
 
         {(dragging || busy) && (
