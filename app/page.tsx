@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import InputPanel from "@/components/InputPanel";
 import RunStatus, { type RunState } from "@/components/RunStatus";
 import ResultTabs from "@/components/ResultTabs";
+import PaperStage from "@/components/effects/PaperStage";
 import { chapterize } from "@/lib/chapterize";
 import { analyze, everyChapterFailed, type Progress } from "@/lib/pipeline/analyze";
 import { httpDeps } from "@/lib/pipeline/httpDeps";
@@ -109,9 +110,13 @@ export default function Home() {
 
   return (
     <>
-      <header className="curtain pb-10 pt-8 sm:pb-14 sm:pt-12">
-        <div className="mx-auto max-w-5xl px-4 sm:px-8">
-          <h1 className="font-display text-[2.6rem] leading-[1.05] sm:text-7xl">
+      <header className="curtain relative pb-10 pt-8 sm:pb-14 sm:pt-12">
+        <div aria-hidden className="halftone" />
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-8">
+          <h1
+            data-text="Chekhov’s Gunners"
+            className="riso-title font-display text-[2.6rem] leading-[1.05] sm:text-7xl"
+          >
             Chekhov’s Gunners
           </h1>
           <p className="mt-2 font-display text-xl italic opacity-90 sm:text-2xl">
@@ -142,6 +147,8 @@ export default function Home() {
           onRetry={onRetry}
           onLoadSample={onLoadSample}
         />
+
+        {run.phase === "idle" && !result && <PaperStage />}
 
         {showResults && result && (
           <div ref={resultsRef} className="scroll-mt-4">

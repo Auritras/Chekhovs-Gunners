@@ -12,3 +12,33 @@ Everything below is deliberately **not** in the pre-built MVP. It will be built 
 | Optional: full-novel support | Longer progress reporting and a rate-limit-aware request queue across many chapters, reusing the compact ledger. |
 | Ending details are not setups | Teach the extract prompt that details introduced in the resolution (e.g. a deed handed over in the last scene) close the story rather than plant a gun. Today a code rule only keeps them out of the "never fired" count. |
 | Deep prompt tuning with before/after metrics | Iterate on the extract and match prompts live, running `npm run prompt-check` before and after each change and publishing both tables. |
+
+## Sprint checklist
+
+Tick items off on the day. Order is a suggestion: the must-haves first, so there is always something to demo.
+
+**Must have**
+- [ ] Run `npm run prompt-check` for the "before" numbers
+- [ ] Verifier step with confidence score
+- [ ] Cheap-twist detection
+- [ ] Prompt tuning: catch the brass bell in *The Sweet Shop* and stop flagging ending details as setups
+- [ ] Run `npm run prompt-check` again for the "after" numbers; put both tables in the README
+
+**Should have**
+- [ ] Fix suggestions in the author's style
+- [ ] Accept / reject updates the Story tab and export
+
+**Nice to have**
+- [ ] Gemma 4 privacy mode
+- [ ] Full-novel support
+
+**Before time runs out**
+- [ ] Redeploy and check the live site
+- [ ] Update the demo video / pitch with the new features
+- [ ] Final push
+
+## Ideas
+
+Anyone on the team can add an idea here. Write one line: what it does and why a writer would want it. We pick from this list on the day if there is time.
+
+- **Genre selector before analysis.** The writer picks a genre (mystery, romance, fantasy, thriller, literary, or "detect for me") from a row of bubbles (pill buttons; a single-choice radio group for keyboard and screen readers, wrapping onto two lines on phones; fall back to a dropdown only if the list grows past about 8 genres) and the extract and match prompts get genre-specific guidance: in a mystery, clues and red herrings (a red herring that never fires is intentional, not a mistake); in fantasy, rules of magic or the world that must be paid off; in romance, emotional promises and relationship beats. The genre becomes part of the cache key so results don't mix. Measure it with `prompt-check` like any other prompt change.

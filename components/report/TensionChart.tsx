@@ -1,3 +1,4 @@
+import TensionLandscape from "@/components/report/TensionLandscape";
 import type { AnalysisResult } from "@/lib/types";
 
 /** Horizontal bars so long chapter titles stay readable at phone width. */
@@ -17,6 +18,7 @@ export default function TensionChart({ result }: { result: AnalysisResult }) {
           weighted by importance.
         </p>
       </div>
+      <TensionLandscape tension={result.tension} />
       <ol className="flex flex-col gap-2.5">
         {result.chapters.map((c, i) => {
           const value = result.tension[i] ?? 0;

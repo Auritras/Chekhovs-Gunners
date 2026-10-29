@@ -1,5 +1,6 @@
 "use client";
 
+import KineticLine from "@/components/effects/KineticLine";
 import type { Chapter } from "@/lib/types";
 
 export type RunState =
@@ -114,6 +115,9 @@ export default function RunStatus({
             </p>
           )}
           <Footlights of={run.of} current={run.chapter} finished={run.stage === "match"} />
+          <div className="mt-4">
+            <KineticLine />
+          </div>
         </div>
       )}
 
