@@ -1,6 +1,6 @@
 "use client";
 
-import KineticLine from "@/components/effects/KineticLine";
+import QuoteRotator from "@/components/effects/QuoteRotator";
 import type { Chapter } from "@/lib/types";
 
 export type RunState =
@@ -116,7 +116,7 @@ export default function RunStatus({
           )}
           <Footlights of={run.of} current={run.chapter} finished={run.stage === "match"} />
           <div className="mt-4">
-            <KineticLine />
+            <QuoteRotator />
           </div>
         </div>
       )}

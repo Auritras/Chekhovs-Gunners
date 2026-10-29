@@ -26,6 +26,6 @@ Before finishing, check each rule above against the result and fix anything that
 
 Four animation studies in this style (risograph playbill, paper cutout set, kinetic typography, tension landscape) were approved by the team on 29 Oct 2026. Planned uses:
 
-- Kinetic typography: demo video opening, analysis loading screen
+- Kinetic typography: demo video opening; while analysing, five public-domain lines on setup and payoff rotate every 7 s, each with its own entrance (word by word, typewriter, ink, curtain wipe, letterpress stamp)
 - Paper cutout set + risograph title: the page header (toy-theatre drapes, valance, brass stage lip, gun on the wall)
 - Tension landscape: behind the tension chart in the report
