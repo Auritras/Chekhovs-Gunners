@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { startTransition, useId, useRef, useState, ViewTransition } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import Summary from "@/components/report/Summary";
 import ArcMap from "@/components/report/ArcMap";
@@ -24,7 +24,8 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
   const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ report: null, story: null });
 
   function select(next: Tab, focus = false) {
-    setTab(next);
+    // A transition, so the <ViewTransition> below draws the curtain between views.
+    startTransition(() => setTab(next));
     if (focus) tabRefs.current[next]?.focus();
   }
 
@@ -41,8 +42,10 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
   }
 
   function openInStory(setupId: string) {
-    setTarget((prev) => ({ id: setupId, seq: (prev?.seq ?? 0) + 1 }));
-    setTab("story");
+    startTransition(() => {
+      setTarget((prev) => ({ id: setupId, seq: (prev?.seq ?? 0) + 1 }));
+      setTab("story");
+    });
   }
 
   return (
@@ -86,23 +89,27 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
         aria-labelledby={`${id}-tab-${tab}`}
         className="pt-8"
       >
-        {tab === "report" ? (
-          <div className="flex flex-col gap-10">
-            <Summary result={result} />
-            <Divider />
-            {/* The guns that never fire are why writers come, so they lead the report. */}
-            <div className="flex flex-col gap-6">
-              <IssueList result={result} onSelect={openInStory} />
-              <FiredList result={result} onSelect={openInStory} />
-            </div>
-            <Divider />
-            <ArcMap result={result} />
-            <Divider />
-            <TensionChart result={result} />
+        <ViewTransition key={tab} name="result-panel" share="curtain" enter="curtain" default="none">
+          <div>
+            {tab === "report" ? (
+              <div className="flex flex-col gap-10">
+                <Summary result={result} />
+                <Divider />
+                {/* The guns that never fire are why writers come, so they lead the report. */}
+                <div className="flex flex-col gap-6">
+                  <IssueList result={result} onSelect={openInStory} />
+                  <FiredList result={result} onSelect={openInStory} />
+                </div>
+                <Divider />
+                <ArcMap result={result} />
+                <Divider />
+                <TensionChart result={result} />
+              </div>
+            ) : (
+              <StoryView result={result} target={target} />
+            )}
           </div>
-        ) : (
-          <StoryView result={result} target={target} />
-        )}
+        </ViewTransition>
       </div>
     </section>
   );
