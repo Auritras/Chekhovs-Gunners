@@ -23,6 +23,7 @@
   --brass-tint: rgba(196, 151, 46, 0.22);
   --curtain-tint: rgba(140, 28, 34, 0.12);
   --focus: #1f4fbf;
+  --spot: rgba(214, 170, 70, 0.34);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -41,6 +42,7 @@
     --brass-tint: rgba(214, 178, 91, 0.2);
     --curtain-tint: rgba(210, 68, 75, 0.18);
     --focus: #8fb2ff;
+    --spot: rgba(255, 214, 150, 0.22);
   }
 }
 
@@ -356,20 +358,24 @@ body {
   text-decoration: underline dashed 1.5px var(--muted);
   text-underline-offset: 4px;
 }
-.mark-target {
-  outline: 2px solid var(--curtain);
-  outline-offset: 3px;
+/* The selected passage stands in a pool of stage light. */
+.mark.mark-target {
+  background-color: var(--spot);
+  box-shadow: 0 0 18px 6px var(--spot);
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 .mark-flash {
-  animation: mark-flash 1.6s ease-out 1;
+  animation: spot-in 1s cubic-bezier(0.2, 0.7, 0.2, 1) 1;
 }
-@keyframes mark-flash {
+@keyframes spot-in {
   0% {
-    outline-color: transparent;
-    box-shadow: 0 0 0 10px var(--curtain-tint);
+    background-color: transparent;
+    box-shadow: 0 0 160px 110px transparent;
   }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
+  45% {
+    box-shadow: 0 0 60px 28px var(--spot);
   }
 }
 
