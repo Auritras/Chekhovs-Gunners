@@ -22,8 +22,10 @@ export default function TensionLandscape({ tension }: { tension: number[] }) {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx || tension.length === 0) return;
-    const max = Math.max(1, ...tension);
-    const values = tension.map((v) => v / max);
+    // Scale between the quietest and most loaded chapter so the peak stands out.
+    const min = Math.min(...tension);
+    const range = Math.max(...tension) - min;
+    const values = tension.map((v) => (range === 0 ? 0.5 : 0.1 + (0.9 * (v - min)) / range));
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
     const dark = window.matchMedia("(prefers-color-scheme: dark)");
     let w = 0;
@@ -49,14 +51,15 @@ export default function TensionLandscape({ tension }: { tension: number[] }) {
       ctx.clearRect(0, 0, w, h);
       for (let k = 0; k < LINES; k++) {
         const depth = k / (LINES - 1);
-        const base = h * 0.2 + depth * h * 0.75;
+        // Upper lines rise most; lines bunch together over the peak like contours on a hill.
+        const base = h * 0.52 + depth * h * 0.45;
         const major = k % 5 === 0;
         ctx.beginPath();
         for (let x = 0; x <= w; x += 4) {
           const u = w === 0 ? 0 : x / w;
-          const ridge = heightAt(values, u) * h * 0.55 * Math.pow(1 - depth, 0.6);
-          const wobble = Math.sin(u * 9 + k * 0.7 + t) * 2 + Math.sin(u * 23 - k + t * 0.6) * 1;
-          const y = base - ridge * (0.5 + 0.5 * Math.sin(depth * 3.1)) + wobble;
+          const ridge = heightAt(values, u) * h * (0.5 - depth * 0.3);
+          const wobble = Math.sin(u * 9 + k * 0.7 + t) * 1.5 + Math.sin(u * 23 - k + t * 0.6) * 0.75;
+          const y = base - ridge + wobble;
           if (x === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
@@ -103,5 +106,5 @@ export default function TensionLandscape({ tension }: { tension: number[] }) {
     };
   }, [tension]);
 
-  return <canvas ref={canvasRef} aria-hidden className="block h-24 w-full sm:h-28" />;
+  return <canvas ref={canvasRef} aria-hidden className="block h-32 w-full sm:h-40" />;
 }

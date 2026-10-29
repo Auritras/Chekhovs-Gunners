@@ -77,7 +77,7 @@ body {
   outline-offset: 2px;
 }
 
-/* The house curtain: pleats from a repeating gradient, scalloped hem from a mask. */
+/* The house curtain: pleats from a repeating gradient. */
 .curtain {
   background:
     repeating-linear-gradient(
@@ -90,6 +90,22 @@ body {
     ),
     linear-gradient(180deg, var(--curtain-deep), var(--curtain) 85%);
   color: var(--curtain-ink);
+}
+
+/* Header back wall: a dark stage with a warm spotlight where the title stands. */
+.stage-wall {
+  background:
+    radial-gradient(ellipse 60% 90% at 32% 60%, rgba(255, 214, 150, 0.13), transparent 70%),
+    linear-gradient(180deg, #160c0a, #2a1712);
+}
+
+/* Paper drape: the pleated curtain cut to a tied-back swag. */
+.drape {
+  clip-path: polygon(0 0, 100% 0, 78% 22%, 62% 48%, 64% 62%, 82% 80%, 72% 100%, 0 100%);
+}
+
+/* Paper valance across the top of the header: scalloped hem from a mask. */
+.valance {
   -webkit-mask:
     radial-gradient(14px 12px at 50% 0, #000 98%, transparent) 0 100% / 28px 12px repeat-x,
     linear-gradient(#000, #000) 0 0 / 100% calc(100% - 11px) no-repeat;
@@ -142,12 +158,15 @@ body {
   mask-image: radial-gradient(ellipse at 100% 0%, #000 0%, transparent 60%);
 }
 
-/* Paper cutout stage: layers drift with the pointer. */
+/* Paper cutout header: layers drift with the pointer. */
 .paper-layer {
   transition: transform 250ms ease-out;
 }
 .paper-shadow {
-  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.28));
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.35));
+}
+.paper-shadow-up {
+  filter: drop-shadow(0 -2px 2px rgba(0, 0, 0, 0.35));
 }
 
 /* Chekhov's rule, word by word; the payoff word goes off in brass. */
