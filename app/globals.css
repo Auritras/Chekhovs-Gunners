@@ -308,6 +308,43 @@ body {
   }
 }
 
+/* The header gun fires once when a report opens. */
+.gun-body,
+.gun-puff {
+  transform-box: fill-box;
+}
+.gun-body {
+  transform-origin: 20% 90%;
+}
+.gun-puff {
+  opacity: 0;
+  transform-origin: 0% 50%;
+}
+.gun-recoil .gun-body {
+  animation: recoil 650ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.gun-recoil .gun-puff {
+  animation: puff 800ms ease-out;
+}
+@keyframes recoil {
+  12% {
+    transform: translateX(-5px) rotate(-12deg);
+  }
+}
+@keyframes puff {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(8px) scale(1.7);
+  }
+}
+
 /* Arc map: trajectories draw in once, in story order. */
 .arc-draw {
   stroke-dasharray: 1;

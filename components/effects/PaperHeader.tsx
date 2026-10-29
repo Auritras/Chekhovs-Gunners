@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { GUN_BODY, GUN_TRIGGER } from "@/components/effects/GunGlyph";
 
 /** Paper layers carry data-depth: how far (px) they drift at the header edge; nearer layers move more. */
@@ -26,7 +27,18 @@ function Drape({ side }: { side: "left" | "right" }) {
  * The page header as a toy theatre in cut paper: a dark back wall with a spotlight,
  * paper drapes, a scalloped valance, a brass stage lip, and a gun on the wall.
  */
-export default function PaperHeader() {
+export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
+  const gunRef = useRef<SVGSVGElement>(null);
+
+  // A new report opened: the gun on the wall fires once (recoil and a puff of smoke).
+  useEffect(() => {
+    const gun = gunRef.current;
+    if (!fireKey || !gun || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    gun.classList.remove("gun-recoil");
+    void gun.getBoundingClientRect(); // restart the animation on repeat reports
+    gun.classList.add("gun-recoil");
+  }, [fireKey]);
+
   function onPointerMove(e: React.PointerEvent<HTMLElement>) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const r = e.currentTarget.getBoundingClientRect();
@@ -57,11 +69,18 @@ export default function PaperHeader() {
         data-depth="3"
         className="paper-layer paper-shadow absolute right-[clamp(48px,15vw,240px)] top-1/2 hidden -translate-y-1/2 sm:block"
       >
-        <svg viewBox="0 0 80 50" className="h-10 w-16 lg:h-14 lg:w-24">
+        <svg ref={gunRef} viewBox="0 0 80 50" className="h-10 w-16 overflow-visible lg:h-14 lg:w-24">
           <path d="M40 2 L22 16 M40 2 L58 16" className="stroke-curtain-ink/60" strokeWidth="1.5" fill="none" />
           <circle cx="40" cy="3" r="2.5" className="fill-brass" />
-          <path d={GUN_BODY} className="fill-curtain-ink" />
-          <path d={GUN_TRIGGER} className="stroke-curtain-ink" strokeWidth="2.5" fill="none" />
+          <g className="gun-body">
+            <path d={GUN_BODY} className="fill-curtain-ink" />
+            <path d={GUN_TRIGGER} className="stroke-curtain-ink" strokeWidth="2.5" fill="none" />
+          </g>
+          <g className="gun-puff fill-curtain-ink/80">
+            <circle cx="82" cy="19" r="4" />
+            <circle cx="89" cy="15" r="3" />
+            <circle cx="88" cy="23" r="2.5" />
+          </g>
         </svg>
       </div>
 
