@@ -26,10 +26,13 @@ export default function StoryView({
   result,
   overrides = {},
   target,
+  onBack,
 }: {
   result: AnalysisResult;
   overrides?: Overrides;
   target: { id: string; seq: number } | null;
+  /** Return to the report card the writer came from. */
+  onBack?: () => void;
 }) {
   // The jump (by seq) the writer dismissed; while a newer one is live, other highlights fade.
   const [dismissed, setDismissed] = useState<number | null>(null);
@@ -105,15 +108,28 @@ export default function StoryView({
         {hasUncertain && <li><span className="mark mark-uncertain">Uncertain</span></li>}
       </ul>
 
-      {focusId && target && (
-        <div className="sticky top-16 z-[5] -mb-6 flex justify-end">
-          <button
-            type="button"
-            onClick={() => setDismissed(target.seq)}
-            className="min-h-11 rounded-sm border border-ink bg-paper px-4 text-sm font-medium shadow-sm transition-colors hover:bg-ink hover:text-paper"
-          >
-            Show all highlights
-          </button>
+      {(onBack || (focusId && target)) && (
+        <div className="sticky top-16 z-[5] -mb-6 flex flex-wrap justify-between gap-2">
+          {onBack ? (
+            <button
+              type="button"
+              onClick={onBack}
+              className="min-h-11 rounded-sm border border-ink bg-paper px-4 text-sm font-medium shadow-sm transition-colors hover:bg-ink hover:text-paper"
+            >
+              ← Back to report
+            </button>
+          ) : (
+            <span />
+          )}
+          {focusId && target && (
+            <button
+              type="button"
+              onClick={() => setDismissed(target.seq)}
+              className="min-h-11 rounded-sm border border-ink bg-paper px-4 text-sm font-medium shadow-sm transition-colors hover:bg-ink hover:text-paper"
+            >
+              Show all highlights
+            </button>
+          )}
         </div>
       )}
 

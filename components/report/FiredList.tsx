@@ -51,7 +51,7 @@ export default function FiredList({
       </summary>
       <ul className="flex flex-col pb-2">
         {guns.map(({ setup, payoffs, writerChapter }) => (
-          <li key={setup.id} className="flex items-start gap-2 border-t border-line">
+          <li key={setup.id} id={`card-${setup.id}`} className="flex scroll-mt-28 items-start gap-2 border-t border-line">
             <button
               type="button"
               onClick={() => onSelect(setup.id)}

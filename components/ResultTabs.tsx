@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useId, useRef, useState, ViewTransition } from "react";
+import { startTransition, useEffect, useId, useRef, useState, ViewTransition } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import {
   activeOverrides,
@@ -69,6 +69,33 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
     });
   }
 
+  // "Back to report": return to the card the writer jumped from.
+  const [backTo, setBackTo] = useState<{ id: string; seq: number } | null>(null);
+  const handledBack = useRef(0);
+  function backToReport() {
+    if (!target) return;
+    const card = { id: target.id, seq: handledBack.current + 1 };
+    startTransition(() => {
+      setBackTo(card);
+      setTab("report");
+    });
+  }
+  useEffect(() => {
+    // Only once per return, not every later visit to the Report tab.
+    if (tab !== "report" || !backTo || backTo.seq === handledBack.current) return;
+    handledBack.current = backTo.seq;
+    const el = document.getElementById(`card-${backTo.id}`);
+    if (!el) return;
+    const list = el.closest("details");
+    if (list) list.open = true;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+    el.classList.remove("card-return");
+    void el.offsetWidth; // restart the highlight on repeat returns
+    el.classList.add("card-return");
+  }, [tab, backTo]);
+
+
   return (
     <section aria-label="Results">
       <div
@@ -127,7 +154,12 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
                 <TensionChart result={result} />
               </div>
             ) : (
-              <StoryView result={result} overrides={overrides} target={target} />
+              <StoryView
+                result={result}
+                overrides={overrides}
+                target={target}
+                onBack={target ? backToReport : undefined}
+              />
             )}
           </div>
         </ViewTransition>
