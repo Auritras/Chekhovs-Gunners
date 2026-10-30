@@ -6,17 +6,28 @@
 
 Chekhov's Gunners is a writing assistant for the oldest rule in dramatic craft. Paste or upload a short story (`.txt`, `.md`, `.docx`, text `.pdf`) and it finds every **setup** (a planted object, trait, secret, promise, skill or relationship), links each one to its **payoff**, and shows which setups never fire. Every finding is backed by an exact quote from your text. **It suggests; the writer decides.** The app never edits your story.
 
-- Live demo: _coming soon_
+- **Live demo:** https://chekhovs-gunners.vercel.app
 - Demo video: _coming soon_
+
+## Judge it in 60 seconds
+
+1. Open the live demo and click **The Locked Drawer** (or **See the full report** in the "What you get" card). The saved report opens instantly and uses no AI quota.
+2. Read **Guns that never fire**: each card quotes the line that planted the gun. Click one to jump to it in the Story tab, where it stands in a spotlight and the other highlights step back.
+3. Open **Guns that fired** to check what the tool understood, then look at the **arc map** and the **tension** hill.
+4. To see a live run, click **The Sweet Shop (Kolkata)** to load its text and press **Analyse** (about a minute).
 
 ## What you get
 
 | Tab | Contents |
 | --- | --- |
-| Report | Summary counts, animated arc map (setup to payoff), per-chapter tension chart, issue list with quotes |
-| Story | The chapter text with setups and payoffs highlighted inline |
+| Report | Summary counts (each links to its section), **guns that never fire** with quotes, a collapsible list of **guns that fired** (one row per gun, every payoff listed), the animated **arc map** (setup to payoff; red threads for unfired guns), and the per-chapter **tension** landscape and bars |
+| Story | The chapter text with setups and payoffs highlighted inline; jumping from a card spotlights that passage and fades the rest |
 
-Also: a built-in sample story, per-chapter browser caching, and a clear "quota used up" message. The sample's analysis loads instantly (no API call) once `npm run build-samples` has generated its `public/samples/<slug>/result.json`; that file is not in the repo yet, so until then picking the sample fills the text box for a live analysis, and the quota and failure messages offer no sample fallback.
+Three sample stories with writer-made answer keys: **The Locked Drawer**, **The Sweet Shop (Kolkata)**, and **The Stopped Clock**, a detective case with two deliberate red herrings (useful for the genre work planned for the live sprint). A sample whose `public/samples/<slug>/result.json` exists opens instantly with no API call; otherwise its button loads the text for a live analysis.
+
+The interface is a paper toy theatre: a cut-paper header whose layers drift with the pointer, curtains that part on the first report, rotating public-domain lines on setup and payoff (Chekhov, Poe, Twain, Aristotle) while a story is read, and a running clock so long chapters visibly progress. Every animation is off under `prefers-reduced-motion`.
+
+**Limits and timing.** One AI request per chapter plus one to link payoffs. Text without chapter headings is split into ~1,500-word parts. A 1,500-2,000-word story takes roughly 30-90 s; ~25,000 words (about 18 requests) is the practical maximum for one day on the free tier. Re-running a story is instant: results are cached per chapter in the browser.
 
 ## How it works
 
@@ -81,7 +92,7 @@ Measured on chapter 1 of the sample (Oct 2026, free tier): `gemini-3.5-flash` at
 | `npm test` | Vitest unit tests (chapterize, ledger, cache keys, quote verification, resolve, uncertainty, tension, routes). No AI calls |
 | `npm run lint` | ESLint |
 | `npm run build-samples` | Analyses each sample once and writes `public/samples/<slug>/result.json` (the static results the app loads instantly; until it has been run, no sample result exists) |
-| `npm run prompt-check` | Runs every sample 5 times (`-- --runs N` to change) against its answer key and prints a Markdown metrics table |
+| `npm run prompt-check` | Runs every sample 5 times (`-- --runs N` to change, `--only slug,slug` for a subset) against its answer key and prints a Markdown metrics table |
 
 `build-samples` and `prompt-check` use **only** `GEMINI_API_KEY_DEV` and exit if it is missing.
 
@@ -89,11 +100,13 @@ Measured on chapter 1 of the sample (Oct 2026, free tier): `gemini-3.5-flash` at
 
 ## Prompt-check metrics
 
-Sample stories ship with writer-made answer keys (`samples/<slug>/answer-key.json`). Metrics are averaged over 5 runs.
+Sample stories ship with writer-made answer keys (`samples/<slug>/answer-key.json`). Metrics are averaged over the runs stated under the table; the free tier's 20 requests a day limit how many fit in one day.
 
 | Sample | Recall | Wrong setups | Wrong matches | Unfired correct | Quote drop rate |
 | --- | --- | --- | --- | --- | --- |
 | the-locked-drawer | not yet measured | not yet measured | not yet measured | not yet measured | not yet measured |
+| the-sweet-shop | not yet measured | not yet measured | not yet measured | not yet measured | not yet measured |
+| the-stopped-clock | not yet measured | not yet measured | not yet measured | not yet measured | not yet measured |
 
 Produce it with `npm run prompt-check` (needs `GEMINI_API_KEY_DEV`). The latest numbers will be recorded here with the date, model and prompt versions (currently extract `x2`, match `m2`).
 
@@ -103,7 +116,8 @@ Produce it with `npm run prompt-check` (needs `GEMINI_API_KEY_DEV`). The latest 
 
 ```
 app/            Next.js pages and API routes (extract, match, meta)
-components/     Input, run status, Report tab, Story tab
+components/     Input, run status, Report tab, Story tab; effects/ (theatre header, curtains,
+                quotes, count-up) and landing/ (how it works, sample preview)
 lib/ai/         ModelProvider + Gemini, prompts (versioned), Zod schemas
 lib/analysis/   verifyQuotes, resolve, tension (pure code)
 lib/pipeline/   The chapter-by-chapter analysis loop

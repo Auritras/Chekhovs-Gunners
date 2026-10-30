@@ -390,6 +390,29 @@ body {
   }
 }
 
+/* "Reading chapter 2 of 4..." with the dots ticking, so a long wait still moves. */
+.working-dots::after {
+  content: "…";
+  display: inline-block;
+  width: 1.2em;
+  text-align: left;
+  animation: working-dots 1.2s steps(1) infinite;
+}
+@keyframes working-dots {
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+}
+
 /* Footlights in the progress row. */
 .footlight-live {
   animation: footlight 1.4s ease-in-out infinite;
@@ -471,6 +494,7 @@ body {
   .mark-flash,
   .riso-title::before,
   .kinetic-word,
+  .working-dots::after,
   .type-char,
   .quote-ink,
   .quote-wipe,

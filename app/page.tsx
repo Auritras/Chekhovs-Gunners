@@ -26,6 +26,9 @@ export default function Home() {
   const resultsRef = useRef<HTMLDivElement>(null);
   const curtainPlayed = useRef(false);
   const [curtain, setCurtain] = useState(false);
+  const statusRef = useRef<HTMLDivElement>(null);
+  // While analysing or showing a report the story box folds away, until the writer asks to edit.
+  const [editing, setEditing] = useState(false);
   const closeCurtain = useCallback(() => setCurtain(false), []);
 
   /** The first report of the visit opens behind full-screen curtains; later ones just appear. */
@@ -90,6 +93,7 @@ export default function Home() {
   }
 
   function onAnalyse(text: string) {
+    setEditing(false);
     const p = chapterize(text);
     setPrepared(p);
     setResult(null);
@@ -117,8 +121,17 @@ export default function Home() {
     showSample({ title, result });
   }
 
+  // Bring the progress into view when a run starts: it sits below the fold otherwise.
+  const running = run.phase === "running";
+  useEffect(() => {
+    if (!running) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    statusRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }, [running]);
+
   // Bring the report into view when a run finishes.
   const showResults = result !== null && (run.phase === "done" || run.phase === "sample");
+  const compact = (running || showResults) && !editing;
   useEffect(() => {
     if (!showResults) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -131,25 +144,33 @@ export default function Home() {
       <PaperHeader fireKey={showResults ? result : null} />
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-8 sm:px-8 sm:py-12">
-        {/* Desktop: the input on the left, a miniature of a real report on the right. */}
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-10">
+        {/* Desktop: the input on the left, a miniature of a real report on the right
+            (hidden once the writer has a report of their own to look at). */}
+        <div
+          className={`grid items-start gap-8 lg:gap-10 ${showResults ? "" : "lg:grid-cols-[minmax(0,1fr)_18rem]"}`}
+        >
           <div className="flex min-w-0 flex-col gap-6">
             <p className="max-w-[62ch] font-serif text-[1.05rem] leading-relaxed text-ink-soft">
               Paste a story or upload a manuscript. We read it chapter by chapter, note every
               setup it plants, and show you which ones pay off — and which are left on the wall.
             </p>
-            <HowItWorks />
+            {!compact && <HowItWorks />}
             <InputPanel
               onAnalyse={onAnalyse}
               onViewSample={onViewSample}
-              disabled={run.phase === "running"}
+              disabled={running}
+              compact={compact}
+              onEdit={() => setEditing(true)}
             />
           </div>
-          <aside aria-label="Sample report" className="lg:sticky lg:top-8">
-            <SamplePreview onView={onViewSample} />
-          </aside>
+          {!showResults && (
+            <aside aria-label="Sample report" className="lg:sticky lg:top-8">
+              <SamplePreview onView={onViewSample} />
+            </aside>
+          )}
         </div>
 
+        <div ref={statusRef} className="scroll-mt-4">
         <RunStatus
           run={run}
           chapters={prepared?.chapters ?? []}
@@ -159,6 +180,7 @@ export default function Home() {
           onRetry={onRetry}
           onLoadSample={onLoadSample}
         />
+        </div>
 
         {showResults && result && (
           <div ref={resultsRef} className="scroll-mt-4">

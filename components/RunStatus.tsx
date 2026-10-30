@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import QuoteRotator from "@/components/effects/QuoteRotator";
 import type { Chapter } from "@/lib/types";
 
@@ -43,6 +44,21 @@ function Banner({
 
 const buttonClass =
   "shrink-0 self-start rounded-sm border border-ink px-3 py-1.5 text-sm font-medium transition-colors hover:bg-ink hover:text-paper sm:self-auto";
+
+/** Time on stage so far, so a long chapter still visibly moves. */
+function Elapsed() {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    const start = Date.now();
+    const id = setInterval(() => setSeconds(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <span aria-hidden className="tabular-nums text-muted">
+      {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
+    </span>
+  );
+}
 
 /** A row of footlights, one per chapter: lit when read, flickering while being read. */
 function Footlights({ of, current, finished }: { of: number; current: number; finished: boolean }) {
@@ -104,16 +120,20 @@ export default function RunStatus({
         <div className="flex flex-col gap-2 py-2" aria-live="polite">
           <p className="font-display text-2xl">
             {run.stage === "match"
-              ? "Linking setups to their payoffs…"
-              : `Analysing chapter ${run.chapter} of ${run.of}`}
+              ? "Following every gun to its payoff"
+              : `Reading chapter ${run.chapter} of ${run.of}`}
+            <span aria-hidden className="working-dots" />
           </p>
-          {run.stage !== "match" && (
-            <p className="text-sm text-ink-soft">
+          <p className="flex flex-wrap gap-x-3 text-sm text-ink-soft">
+            <span>
               {run.stage === "waiting"
-                ? "waiting for Gemini…"
-                : (chapters.find((c) => c.index === run.chapter)?.title ?? "")}
-            </p>
-          )}
+                ? "The house is busy, so we're holding the curtain for a moment."
+                : run.stage === "match"
+                  ? "Last scene: checking which setups pay off."
+                  : (chapters.find((c) => c.index === run.chapter)?.title ?? "")}
+            </span>
+            <Elapsed />
+          </p>
           <Footlights of={run.of} current={run.chapter} finished={run.stage === "match"} />
           <div className="mt-4">
             <QuoteRotator />

@@ -27,11 +27,16 @@ export default function InputPanel({
   onAnalyse,
   onViewSample,
   disabled = false,
+  compact = false,
+  onEdit,
 }: {
   onAnalyse: (text: string) => void;
   /** Show a sample's prebuilt analysis directly (no API calls). */
   onViewSample: (result: AnalysisResult, title: string) => void;
   disabled?: boolean;
+  /** Fold the story box to one line (while analysing or showing a report). */
+  compact?: boolean;
+  onEdit?: () => void;
 }) {
   const id = useId();
   const textRef = useRef<HTMLTextAreaElement>(null);
@@ -115,6 +120,33 @@ export default function InputPanel({
   }
 
   const words = countWords(text);
+
+  if (compact && words > 0) {
+    return (
+      <section
+        aria-label="Your story"
+        className="playbill flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-3"
+      >
+        <p className="text-sm text-ink-soft">
+          <span className="text-xs uppercase tracking-[0.2em]">Your story</span>
+          <span className="mx-2" aria-hidden>
+            ·
+          </span>
+          <span className="tabular-nums">{words.toLocaleString("en-US")} words</span>
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            onEdit?.();
+            requestAnimationFrame(() => textRef.current?.focus());
+          }}
+          className="min-h-11 rounded-sm border border-ink px-4 text-sm font-medium transition-colors hover:bg-ink hover:text-paper"
+        >
+          {disabled ? "View text" : "Edit"}
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section className="flex flex-col gap-6">
