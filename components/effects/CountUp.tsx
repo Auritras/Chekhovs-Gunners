@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { curtainDelay } from "@/components/effects/OpeningCurtain";
 
 const DURATION_MS = 700;
 
@@ -15,15 +16,17 @@ export default function CountUp({ value, delay = 0 }: { value: number; delay?: n
     }
     let frame = 0;
     let begin: number | null = null;
+    // Wait for the opening curtain, if one is playing, so the count is seen.
+    const wait = delay + curtainDelay();
     const tick = (now: number) => {
-      begin ??= now + delay;
+      begin ??= now + wait;
       const p = Math.min(1, Math.max(0, (now - begin) / DURATION_MS));
       setShown(Math.round(value * (1 - (1 - p) ** 3)));
       if (p < 1) frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     // If animation frames are throttled (background tab, screenshots), land on the value anyway.
-    const settle = setTimeout(() => setShown(value), delay + DURATION_MS + 300);
+    const settle = setTimeout(() => setShown(value), wait + DURATION_MS + 300);
     return () => {
       cancelAnimationFrame(frame);
       clearTimeout(settle);

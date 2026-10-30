@@ -345,6 +345,47 @@ body {
   }
 }
 
+/* The first report of a visit: full-screen curtains hold, then part to the sides. */
+.opening-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  cursor: pointer;
+}
+.opening-half {
+  flex: 1;
+  height: 100%;
+  filter: drop-shadow(0 0 12px rgba(0, 0, 0, 0.5));
+  animation: 1000ms cubic-bezier(0.65, 0, 0.25, 1) 300ms forwards;
+}
+.opening-left {
+  transform-origin: left center;
+  border-right: 3px solid var(--brass);
+  animation-name: part-left;
+}
+.opening-right {
+  transform-origin: right center;
+  border-left: 3px solid var(--brass);
+  animation-name: part-right;
+}
+@keyframes part-left {
+  60% {
+    transform: scaleX(0.22);
+  }
+  100% {
+    transform: translateX(-100%) scaleX(0.22);
+  }
+}
+@keyframes part-right {
+  60% {
+    transform: scaleX(0.22);
+  }
+  100% {
+    transform: translateX(100%) scaleX(0.22);
+  }
+}
+
 /* Arc map: trajectories draw in once, in story order. */
 .arc-draw {
   stroke-dasharray: 1;

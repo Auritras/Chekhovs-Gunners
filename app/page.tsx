@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import InputPanel from "@/components/InputPanel";
 import RunStatus, { type RunState } from "@/components/RunStatus";
 import ResultTabs from "@/components/ResultTabs";
+import OpeningCurtain, { markCurtainStart } from "@/components/effects/OpeningCurtain";
 import PaperHeader from "@/components/effects/PaperHeader";
 import HowItWorks from "@/components/landing/HowItWorks";
 import SamplePreview from "@/components/landing/SamplePreview";
@@ -23,6 +24,18 @@ export default function Home() {
   const [sample, setSample] = useState<Sample | null>(null);
   const runId = useRef(0);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const curtainPlayed = useRef(false);
+  const [curtain, setCurtain] = useState(false);
+  const closeCurtain = useCallback(() => setCurtain(false), []);
+
+  /** The first report of the visit opens behind full-screen curtains; later ones just appear. */
+  function raiseCurtain() {
+    if (curtainPlayed.current) return;
+    curtainPlayed.current = true;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    markCurtainStart();
+    setCurtain(true);
+  }
 
   async function start(chapters: Chapter[]) {
     const id = ++runId.current;
@@ -53,6 +66,7 @@ export default function Home() {
       const outcome = await analyze(chapters, httpDeps(), onProgress);
       if (id !== runId.current) return;
       if (outcome.status === "ok" && !everyChapterFailed(outcome.result)) {
+        raiseCurtain();
         setResult(outcome.result);
         setRun({ phase: "done" });
         return;
@@ -88,6 +102,7 @@ export default function Home() {
 
   function showSample(s: Sample) {
     runId.current++; // ignore any run still reporting progress
+    raiseCurtain();
     setResult(s.result);
     setRun({ phase: "sample", title: s.title });
   }
@@ -112,6 +127,7 @@ export default function Home() {
 
   return (
     <>
+      {curtain && <OpeningCurtain onDone={closeCurtain} />}
       <PaperHeader fireKey={showResults ? result : null} />
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-8 sm:px-8 sm:py-12">
