@@ -238,7 +238,13 @@ export default function InputPanel({
         </label>
         <button
           type="button"
-          onClick={analyse}
+          onClick={(e) => {
+            const b = e.currentTarget;
+            b.classList.remove("cocking");
+            void b.offsetWidth; // restart the press on every click
+            b.classList.add("cocking");
+            analyse();
+          }}
           disabled={disabled}
           className="analyse-cock w-full rounded-sm bg-curtain px-8 py-2.5 font-display text-xl text-curtain-ink transition-colors hover:bg-curtain-deep disabled:cursor-not-allowed disabled:opacity-50 sm:ml-auto sm:w-auto"
         >

@@ -319,7 +319,9 @@ body {
     .divider-gun {
       animation: divider-slide linear both;
       animation-timeline: view();
-      animation-range: entry 0% entry 90%;
+      /* From entering at the bottom edge until about a third of the way up the screen;
+         "entry" alone spans only the divider's own 16px and finished unseen. */
+      animation-range: entry 0% cover 35%;
     }
   }
 }
@@ -338,6 +340,18 @@ body {
 }
 .analyse-cock:not(:disabled):active {
   transform: translateY(2px) scale(0.97);
+}
+/* On click: pressed down, a small kick back, then rest. */
+.analyse-cock.cocking {
+  animation: cock 320ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+@keyframes cock {
+  30% {
+    transform: translateY(4px) scale(0.94);
+  }
+  65% {
+    transform: translateY(-2px) scale(1.03);
+  }
 }
 
 /* Hover over the header gun and it swings a little on its nail. */
@@ -414,12 +428,15 @@ body {
   will-change: transform;
   box-shadow: 0 0 28px rgba(0, 0, 0, 0.45);
 }
+/* Resting place before and after the animations: bunched off screen at the sides. */
 .opening-left {
   transform-origin: left center;
+  transform: translateX(-100%) scaleX(0.22);
   border-right: 3px solid var(--brass);
 }
 .opening-right {
   transform-origin: right center;
+  transform: translateX(100%) scaleX(0.22);
   border-left: 3px solid var(--brass);
 }
 
@@ -598,6 +615,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .analyse-cock:active,
+  .analyse-cock.cocking,
   .arc-draw,
   .arc-fade,
   .writer-arc,

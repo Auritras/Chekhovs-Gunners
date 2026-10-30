@@ -63,11 +63,11 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
     >
       <div aria-hidden className="halftone" />
 
-      {/* The gun on the back wall, hung beside the title. */}
+      {/* The gun on the back wall, hung beside the title (above the title's box, so it can be hovered). */}
       <div
         aria-hidden
         data-depth="3"
-        className="paper-layer paper-shadow absolute right-[clamp(48px,15vw,240px)] top-1/2 hidden -translate-y-1/2 sm:block"
+        className="paper-layer paper-shadow absolute right-[clamp(48px,15vw,240px)] top-1/2 z-10 hidden -translate-y-1/2 sm:block"
       >
         <svg ref={gunRef} viewBox="0 0 80 50" className="gun-hang h-10 w-16 overflow-visible lg:h-14 lg:w-24">
           <path d="M40 2 L22 16 M40 2 L58 16" className="stroke-curtain-ink/60" strokeWidth="1.5" fill="none" />
