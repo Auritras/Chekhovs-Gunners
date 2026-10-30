@@ -29,8 +29,24 @@ export interface PipelineDeps {
   sleep(ms: number): Promise<void>;
 }
 
+/** A gun found while reading, and a gun that fired, for the live "Found" wall. */
+export interface FoundGun {
+  id: string;
+  chapter: number;
+  summary: string;
+}
+export interface FiredGun {
+  setupId: string;
+  /** The chapter of the payoff. */
+  chapter: number;
+}
+
 export type Progress =
   | { stage: "extract"; chapter: number; of: number }
+  /** After each chapter: its verified setups, and setups its payoffs fired. */
+  | { stage: "found"; chapter: number; setups: FoundGun[]; fired: FiredGun[] }
+  /** After the match pass: setups it newly linked to payoffs. */
+  | { stage: "linked"; fired: FiredGun[] }
   | { stage: "waiting"; retryInMs: number }
   | { stage: "match" }
   | { stage: "done" };
@@ -101,6 +117,17 @@ export async function analyze(
   const extractionMatches = () =>
     resolveMatches(setups, payoffs, matchesFromExtraction(payoffs));
 
+  /** Setups fired by `now` but not in `before`, each with the chapter of its first payoff. */
+  function newlyFired(before: Set<string>, now: Match[]): FiredGun[] {
+    const chapterOf = new Map(payoffs.map((p) => [p.id, p.chapter]));
+    const out = new Map<string, number>();
+    for (const m of now) {
+      if (before.has(m.setupId) || out.has(m.setupId)) continue;
+      out.set(m.setupId, chapterOf.get(m.payoffId) ?? 0);
+    }
+    return [...out].map(([setupId, chapter]) => ({ setupId, chapter }));
+  }
+
   for (const chapter of chapters) {
     emit({ stage: "extract", chapter: chapter.index, of: chapters.length });
     const ledger = toLedger(setups);
@@ -140,8 +167,15 @@ export async function analyze(
     const vs = verifyQuotes(rawSetups, chapter.text);
     const vp = verifyQuotes(rawPayoffs, chapter.text);
     dropped += vs.dropped + vp.dropped;
+    const firedBefore = new Set(extractionMatches().map((m) => m.setupId));
     setups.push(...(vs.kept as Setup[]));
     payoffs.push(...(vp.kept as Payoff[]));
+    emit({
+      stage: "found",
+      chapter: n,
+      setups: (vs.kept as Setup[]).map((s) => ({ id: s.id, chapter: n, summary: s.summary })),
+      fired: newlyFired(firedBefore, extractionMatches()),
+    });
   }
 
   let matches = extractionMatches();
@@ -165,7 +199,9 @@ export async function analyze(
         await deps.cache.set(key, raw);
       }
       const candidates: Match[] = raw.matches.map((m) => ({ ...m, source: "match" as const }));
+      const firedBefore = new Set(matches.map((m) => m.setupId));
       matches = resolveMatches(setups, payoffs, [...matchesFromExtraction(payoffs), ...candidates]);
+      emit({ stage: "linked", fired: newlyFired(firedBefore, matches) });
     } catch (e) {
       if (e instanceof QuotaExhaustedError) {
         return { status: "quota_exhausted", partial: build(matches) };

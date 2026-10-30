@@ -398,6 +398,29 @@ body {
   }
 }
 
+/* The live "Found" wall: guns are hung as they are found; a gold thread draws when one fires. */
+.wall-hang {
+  animation: wall-hang 450ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+@keyframes wall-hang {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) rotate(-2deg);
+  }
+}
+.wall-thread {
+  transform-origin: left center;
+  animation: wall-thread 700ms ease-out both;
+}
+@keyframes wall-thread {
+  from {
+    transform: scaleX(0);
+  }
+}
+.wall-fired {
+  animation: arc-fade 500ms ease-out 400ms both;
+}
+
 /* Arc map: trajectories draw in once, in story order. */
 .arc-draw {
   stroke-dasharray: 1;
@@ -527,6 +550,9 @@ body {
   .arc-draw,
   .arc-fade,
   .writer-arc,
+  .wall-hang,
+  .wall-thread,
+  .wall-fired,
   .card-return,
   .footlight-live,
   .mark-flash,

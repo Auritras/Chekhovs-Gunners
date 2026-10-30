@@ -13,6 +13,7 @@ import { analyze, everyChapterFailed, type Progress } from "@/lib/pipeline/analy
 import { httpDeps } from "@/lib/pipeline/httpDeps";
 import { findSampleWithResult } from "@/lib/samples";
 import type { AnalysisResult, Chapter } from "@/lib/types";
+import type { WallItem } from "@/components/effects/FoundWall";
 import { storyKey } from "@/lib/view/overrides";
 
 type Prepared = { chapters: Chapter[]; autoSplit: boolean; wordCount: number };
@@ -23,6 +24,8 @@ export default function Home() {
   const [run, setRun] = useState<RunState>({ phase: "idle" });
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [sample, setSample] = useState<Sample | null>(null);
+  // The live "Found" wall shown while a story is read.
+  const [wall, setWall] = useState<WallItem[]>([]);
   const runId = useRef(0);
   const resultsRef = useRef<HTMLDivElement>(null);
   const curtainPlayed = useRef(false);
@@ -45,8 +48,19 @@ export default function Home() {
     const id = ++runId.current;
     setRun({ phase: "running", chapter: 1, of: chapters.length, stage: "extract" });
     setSample(null);
+    setWall([]);
     const onProgress = (p: Progress) => {
       if (id !== runId.current) return;
+      if (p.stage === "found" || p.stage === "linked") {
+        const fired = new Map(p.fired.map((f) => [f.setupId, f.chapter]));
+        const added: WallItem[] = p.stage === "found" ? p.setups : [];
+        setWall((w) =>
+          [...w, ...added].map((g) =>
+            fired.has(g.id) && g.firedIn === undefined ? { ...g, firedIn: fired.get(g.id) } : g,
+          ),
+        );
+        return;
+      }
       setRun((prev) => {
         const base =
           prev.phase === "running"
@@ -180,6 +194,7 @@ export default function Home() {
           failedChapters={run.phase === "done" ? (result?.failedChapters ?? []) : []}
           onRetry={onRetry}
           onLoadSample={onLoadSample}
+          wall={wall}
         />
         </div>
 

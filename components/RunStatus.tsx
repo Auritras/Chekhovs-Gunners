@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import FoundWall, { type WallItem } from "@/components/effects/FoundWall";
 import QuoteRotator from "@/components/effects/QuoteRotator";
 import type { Chapter } from "@/lib/types";
 
@@ -89,6 +90,7 @@ export default function RunStatus({
   failedChapters,
   onRetry,
   onLoadSample,
+  wall = [],
 }: {
   run: RunState;
   chapters: Chapter[];
@@ -97,6 +99,7 @@ export default function RunStatus({
   failedChapters: number[];
   onRetry: (chapter: number) => void;
   onLoadSample: () => void;
+  wall?: WallItem[];
 }) {
   if (run.phase === "idle") return null;
 
@@ -135,6 +138,9 @@ export default function RunStatus({
             <Elapsed />
           </p>
           <Footlights of={run.of} current={run.chapter} finished={run.stage === "match"} />
+          <div className="mt-4">
+            <FoundWall items={wall} />
+          </div>
           <div className="mt-4">
             <QuoteRotator />
           </div>

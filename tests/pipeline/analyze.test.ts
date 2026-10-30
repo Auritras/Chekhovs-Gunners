@@ -101,6 +101,27 @@ describe("analyze", () => {
     expect(progress.some((p) => p.stage === "match")).toBe(true);
     expect(progress.at(-1)).toEqual({ stage: "done" });
     expect(progress[0]).toEqual({ stage: "extract", chapter: 1, of: 3 });
+    // The live "Found" wall: chapter 1's verified setup (not the bogus one), then the match pass links it.
+    expect(progress).toContainEqual({
+      stage: "found",
+      chapter: 1,
+      setups: [{ id: "c1-s1", chapter: 1, summary: "rusty key" }],
+      fired: [],
+    });
+    expect(progress).toContainEqual({ stage: "linked", fired: [{ setupId: "c1-s1", chapter: 2 }] });
+  });
+
+  it("reports a setup fired during reading in the chapter that fires it", async () => {
+    const { deps } = makeDeps((_r, n) =>
+      n === 1
+        ? ch1
+        : n === 2
+          ? { setups: [], payoffs: [{ quote: "opened the cellar with the rusty key", summary: "used", firesSetupId: "c1-s1" }] }
+          : empty,
+    );
+    const progress: Progress[] = [];
+    await analyze(chapters, deps, (p) => progress.push(p));
+    expect(progress).toContainEqual({ stage: "found", chapter: 2, setups: [], fired: [{ setupId: "c1-s1", chapter: 2 }] });
   });
 
   it("links a same-chapter setup and later payoff in a one-chapter story via the match pass", async () => {
