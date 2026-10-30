@@ -312,6 +312,16 @@ body {
   }
 }
 
+/* Analyse is cocked as it is pressed: a quick press down and back (it never delays the run). */
+.analyse-cock {
+  transition:
+    background-color 150ms ease,
+    transform 90ms ease-out;
+}
+.analyse-cock:not(:disabled):active {
+  transform: translateY(2px) scale(0.97);
+}
+
 /* Hover over the header gun and it swings a little on its nail. */
 .gun-hang {
   transform-origin: 50% 6%;
@@ -569,6 +579,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .analyse-cock:active,
   .arc-draw,
   .arc-fade,
   .writer-arc,

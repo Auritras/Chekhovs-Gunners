@@ -240,7 +240,7 @@ export default function InputPanel({
           type="button"
           onClick={analyse}
           disabled={disabled}
-          className="w-full rounded-sm bg-curtain px-8 py-2.5 font-display text-xl text-curtain-ink transition-colors hover:bg-curtain-deep disabled:cursor-not-allowed disabled:opacity-50 sm:ml-auto sm:w-auto"
+          className="analyse-cock w-full rounded-sm bg-curtain px-8 py-2.5 font-display text-xl text-curtain-ink transition-colors hover:bg-curtain-deep disabled:cursor-not-allowed disabled:opacity-50 sm:ml-auto sm:w-auto"
         >
           Analyse
         </button>
