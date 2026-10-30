@@ -312,6 +312,24 @@ body {
   }
 }
 
+/* Report dividers: the little gun slides in from the side as the divider scrolls into view.
+   Scroll-driven, so it needs no script and simply sits still where unsupported. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .divider-gun {
+      animation: divider-slide linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+  }
+}
+@keyframes divider-slide {
+  from {
+    opacity: 0;
+    transform: translateX(-48px) rotate(-8deg);
+  }
+}
+
 /* Analyse is cocked as it is pressed: a quick press down and back (it never delays the run). */
 .analyse-cock {
   transition:
