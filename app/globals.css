@@ -573,6 +573,11 @@ body {
   text-decoration: underline 2px var(--gold);
   text-underline-offset: 3px;
 }
+.mark-payoff-writer {
+  background: color-mix(in srgb, var(--gold) 26%, transparent);
+  text-decoration: underline 2px var(--gold);
+  text-underline-offset: 3px;
+}
 .mark-setup-inEnding {
   text-decoration: underline 1.5px var(--muted);
   text-underline-offset: 3px;

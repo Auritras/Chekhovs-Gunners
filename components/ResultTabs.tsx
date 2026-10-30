@@ -36,6 +36,21 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
   const [saved, setSaved] = useState<Overrides>(() => loadOverrides(key));
   const overrides = activeOverrides(result, saved);
 
+  // "Point to the line": the Story view in pick mode for a gun the writer marked as firing.
+  const [pick, setPick] = useState<{ setupId: string; chapter: number } | null>(null);
+  function pointOut(setupId: string) {
+    const call = saved[setupId];
+    if (call?.kind !== "fired") return;
+    startTransition(() => {
+      setPick({ setupId, chapter: call.chapter });
+      setTab("story");
+    });
+  }
+  useEffect(() => {
+    if (tab !== "story" || !pick) return;
+    document.getElementById(`story-ch-${pick.chapter}`)?.scrollIntoView({ block: "start" });
+  }, [tab, pick]);
+
   function decide(setupId: string, call: Override | null) {
     const next = { ...saved };
     if (call) next[setupId] = call;
@@ -146,7 +161,13 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
                 {/* The guns that never fire are why writers come, so they lead the report. */}
                 <div className="flex flex-col gap-6">
                   <IssueList result={result} overrides={overrides} onDecide={decide} onSelect={openInStory} />
-                  <FiredList result={result} overrides={overrides} onDecide={decide} onSelect={openInStory} />
+                  <FiredList
+                    result={result}
+                    overrides={overrides}
+                    onDecide={decide}
+                    onSelect={openInStory}
+                    onPointOut={pointOut}
+                  />
                 </div>
                 <Divider />
                 <ArcMap result={result} overrides={overrides} />
@@ -159,6 +180,17 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
                 overrides={overrides}
                 target={target}
                 onBack={target ? backToReport : undefined}
+                pick={
+                  pick
+                    ? { ...pick, summary: result.setups.find((s) => s.id === pick.setupId)?.summary ?? "" }
+                    : null
+                }
+                onPicked={(chapter, passage) => {
+                  if (!pick) return;
+                  decide(pick.setupId, { kind: "fired", chapter, ...passage });
+                  setPick(null);
+                }}
+                onCancelPick={() => setPick(null)}
               />
             )}
           </div>

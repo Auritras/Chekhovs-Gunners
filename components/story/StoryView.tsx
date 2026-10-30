@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import { highlightSegments, type HighlightMark } from "@/lib/view/highlight";
-import type { Overrides } from "@/lib/view/overrides";
+import { payoffPassage, type Overrides } from "@/lib/view/overrides";
 
 export const markElementId = (id: string) => `mark-${id}`;
 
@@ -27,13 +27,52 @@ export default function StoryView({
   overrides = {},
   target,
   onBack,
+  pick = null,
+  onPicked,
+  onCancelPick,
 }: {
   result: AnalysisResult;
   overrides?: Overrides;
   target: { id: string; seq: number } | null;
   /** Return to the report card the writer came from. */
   onBack?: () => void;
+  /** Pick mode: the writer selects the passage where this gun fires. */
+  pick?: { setupId: string; chapter: number; summary: string } | null;
+  onPicked?: (chapter: number, passage: { start: number; end: number; quote: string }) => void;
+  onCancelPick?: () => void;
 }) {
+  const [pickError, setPickError] = useState<string | null>(null);
+
+  /** Read the writer's text selection as offsets into one chapter's text. */
+  function applyPickedLine() {
+    if (!pick) return;
+    const sel = window.getSelection();
+    const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+    const box = (n: Node | null) =>
+      (n instanceof Element ? n : n?.parentElement)?.closest<HTMLElement>("[data-chapter]") ?? null;
+    const container = range ? box(range.startContainer) : null;
+    if (!range || range.collapsed || !container || container !== box(range.endContainer)) {
+      setPickError("Select a few words inside one chapter first.");
+      return;
+    }
+    const before = document.createRange();
+    before.setStart(container, 0);
+    before.setEnd(range.startContainer, range.startOffset);
+    const start = before.toString().length;
+    const chapter = Number(container.dataset.chapter);
+    const text = result.chapters.find((c) => c.index === chapter)?.text ?? "";
+    const setup = result.setups.find((x) => x.id === pick.setupId);
+    if (!setup) return;
+    const passage = payoffPassage(text, start, start + range.toString().length, setup, chapter);
+    if ("error" in passage) {
+      setPickError(passage.error);
+      return;
+    }
+    setPickError(null);
+    sel?.removeAllRanges();
+    onPicked?.(chapter, passage);
+  }
+
   // The jump (by seq) the writer dismissed; while a newer one is live, other highlights fade.
   const [dismissed, setDismissed] = useState<number | null>(null);
   const focusId = target && target.seq !== dismissed ? target.id : null;
@@ -62,6 +101,16 @@ export default function StoryView({
             ? "inEnding"
             : "unfired";
       add(s.chapter, { id: s.id, start: s.start, end: s.end, kind: "setup", state }, s.summary);
+    }
+    // Passages the writer pointed to as payoffs: gold.
+    for (const [id, call] of Object.entries(overrides)) {
+      if (call.kind !== "fired" || call.start === undefined || call.end === undefined) continue;
+      const setup = result.setups.find((x) => x.id === id);
+      add(
+        call.chapter,
+        { id: `writer-${id}`, start: call.start, end: call.end, kind: "payoff", state: "writer" },
+        `Pays off: ${setup?.summary ?? "a setup"} (marked by you)`,
+      );
     }
     for (const p of result.payoffs) {
       const state = linked.has(p.id) ? "linked" : "unlinked";
@@ -108,7 +157,40 @@ export default function StoryView({
         {hasUncertain && <li><span className="mark mark-uncertain">Uncertain</span></li>}
       </ul>
 
-      {(onBack || (focusId && target)) && (
+      {pick && (
+        <div
+          role="region"
+          aria-label="Point to the line"
+          className="sticky top-16 z-[6] -mb-6 flex flex-col gap-2 rounded-sm border border-gold bg-paper p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="text-sm">
+            Select the line where <span className="font-medium">“{pick.summary}”</span> pays off, then press{" "}
+            <em>Use this line</em>.
+            {pickError && <span className="block text-curtain">{pickError}</span>}
+          </p>
+          <span className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={applyPickedLine}
+              className="min-h-11 rounded-sm bg-gold px-4 text-sm font-medium text-paper transition-opacity hover:opacity-90"
+            >
+              Use this line
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPickError(null);
+                onCancelPick?.();
+              }}
+              className="min-h-11 rounded-sm border border-line px-4 text-sm font-medium text-ink-soft hover:border-ink hover:text-ink"
+            >
+              Cancel
+            </button>
+          </span>
+        </div>
+      )}
+
+      {!pick && (onBack || (focusId && target)) && (
         <div className="sticky top-16 z-[5] -mb-6 flex flex-wrap justify-between gap-2">
           {onBack ? (
             <button
@@ -145,7 +227,7 @@ export default function StoryView({
             {failed && (
               <p className="mt-1 text-sm italic text-muted">This chapter couldn&apos;t be analysed.</p>
             )}
-            <div className="mt-4 whitespace-pre-wrap font-serif text-[1.075rem] leading-[1.8]">
+            <div data-chapter={c.index} className="mt-4 whitespace-pre-wrap font-serif text-[1.075rem] leading-[1.8]">
               {segments.map((seg, i) => {
                 if (seg.marks.length === 0) return <span key={i}>{seg.text}</span>;
                 const infos = seg.marks

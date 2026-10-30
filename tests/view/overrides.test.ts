@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { activeOverrides, storyKey } from "@/lib/view/overrides";
+import { activeOverrides, payoffPassage, storyKey } from "@/lib/view/overrides";
 import type { AnalysisResult } from "@/lib/types";
 
 function result(over: Partial<AnalysisResult>): AnalysisResult {
@@ -33,5 +33,24 @@ describe("activeOverrides", () => {
       gone: { kind: "dismissed" },
     });
     expect(Object.keys(o).sort()).toEqual(["s2", "s3"]);
+  });
+});
+
+describe("payoffPassage", () => {
+  const text = "  The gun hung there.  Later she fired it.  ";
+  const setup = { chapter: 1, end: 21 };
+  it("trims whitespace and returns the quote", () => {
+    const a = text.indexOf("Later") - 2;
+    const b = text.indexOf("it.") + 3 + 2;
+    expect(payoffPassage(text, a, b, setup, 1)).toEqual({
+      start: text.indexOf("Later"),
+      end: text.indexOf("it.") + 3,
+      quote: "Later she fired it.",
+    });
+  });
+  it("rejects an empty selection and one before the setup", () => {
+    expect(payoffPassage(text, 0, 2, setup, 1)).toHaveProperty("error");
+    expect(payoffPassage(text, 2, 10, setup, 1)).toHaveProperty("error");
+    expect(payoffPassage(text, 2, 10, setup, 2)).toHaveProperty("quote");
   });
 });

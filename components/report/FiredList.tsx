@@ -1,7 +1,7 @@
 import type { AnalysisResult, Payoff, Setup } from "@/lib/types";
 import type { Override, Overrides } from "@/lib/view/overrides";
 
-type Gun = { setup: Setup; payoffs: Payoff[]; writerChapter?: number };
+type Gun = { setup: Setup; payoffs: Payoff[]; writerChapter?: number; writerQuote?: string };
 
 /** The guns that did fire, collapsed: lets the writer check what the tool understood. */
 export default function FiredList({
@@ -9,11 +9,14 @@ export default function FiredList({
   overrides,
   onDecide,
   onSelect,
+  onPointOut,
 }: {
   result: AnalysisResult;
   overrides: Overrides;
   onDecide: (setupId: string, call: Override | null) => void;
   onSelect: (setupId: string) => void;
+  /** Open the story to let the writer select the passage where it fires. */
+  onPointOut?: (setupId: string) => void;
 }) {
   const setups = new Map(result.setups.map((s) => [s.id, s]));
   const payoffs = new Map(result.payoffs.map((p) => [p.id, p]));
@@ -31,7 +34,9 @@ export default function FiredList({
   // Guns the tool said never fire, which the writer says do.
   for (const [id, call] of Object.entries(overrides)) {
     const setup = setups.get(id);
-    if (call.kind === "fired" && setup) bySetup.set(id, { setup, payoffs: [], writerChapter: call.chapter });
+    if (call.kind === "fired" && setup) {
+      bySetup.set(id, { setup, payoffs: [], writerChapter: call.chapter, writerQuote: call.quote });
+    }
   }
   const guns = [...bySetup.values()]
     .map((g) => ({ ...g, payoffs: g.payoffs.sort((a, b) => a.chapter - b.chapter || a.start - b.start) }))
@@ -50,7 +55,7 @@ export default function FiredList({
         Guns that fired <span className="text-brass tabular-nums">({guns.length})</span>
       </summary>
       <ul className="flex flex-col pb-2">
-        {guns.map(({ setup, payoffs, writerChapter }) => (
+        {guns.map(({ setup, payoffs, writerChapter, writerQuote }) => (
           <li key={setup.id} id={`card-${setup.id}`} className="flex scroll-mt-28 items-start gap-2 border-t border-line">
             <button
               type="button"
@@ -72,20 +77,33 @@ export default function FiredList({
                 ))}
                 {writerChapter !== undefined && (
                   <span className="block text-sm text-ink-soft">
-                    Fires in {chapterTitle(writerChapter)}: <span className="text-gold">marked by you</span>
+                    Fires in {chapterTitle(writerChapter)}:{" "}
+                    {writerQuote && <span className="font-serif italic text-ink">“{writerQuote}” </span>}
+                    <span className="text-gold">marked by you</span>
                     <span className="block text-xs text-muted">The tool said: never fires</span>
                   </span>
                 )}
               </span>
             </button>
             {writerChapter !== undefined && (
-              <button
-                type="button"
-                onClick={() => onDecide(setup.id, null)}
-                className="mt-3 min-h-11 shrink-0 rounded-sm border border-line px-3 text-sm font-medium text-ink-soft transition-colors hover:border-ink hover:text-ink"
-              >
-                Undo
-              </button>
+              <span className="mt-3 flex shrink-0 flex-col gap-2 sm:flex-row">
+                {onPointOut && (
+                  <button
+                    type="button"
+                    onClick={() => onPointOut(setup.id)}
+                    className="min-h-11 rounded-sm border border-gold px-3 text-sm font-medium text-ink transition-colors hover:bg-gold hover:text-paper"
+                  >
+                    {writerQuote ? "Change line" : "Point to the line"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onDecide(setup.id, null)}
+                  className="min-h-11 rounded-sm border border-line px-3 text-sm font-medium text-ink-soft transition-colors hover:border-ink hover:text-ink"
+                >
+                  Undo
+                </button>
+              </span>
             )}
           </li>
         ))}

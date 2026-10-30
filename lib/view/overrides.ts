@@ -5,7 +5,39 @@ import type { AnalysisResult } from "@/lib/types";
  * pick), or it is not a gun at all (set aside). The tool's own verdict is never changed;
  * views show both.
  */
-export type Override = { kind: "fired"; chapter: number } | { kind: "dismissed" };
+export type Override =
+  | {
+      kind: "fired";
+      chapter: number;
+      /** Optional: the passage the writer pointed to, as offsets into the chapter text. */
+      start?: number;
+      end?: number;
+      quote?: string;
+    }
+  | { kind: "dismissed" };
+
+/**
+ * Turn a selection's offsets in a chapter into a payoff passage: trimmed of surrounding
+ * whitespace, and rejected if empty or before the setup it is meant to pay off.
+ */
+export function payoffPassage(
+  text: string,
+  start: number,
+  end: number,
+  setup: { chapter: number; end: number },
+  chapter: number,
+): { start: number; end: number; quote: string } | { error: string } {
+  let a = Math.max(0, Math.min(start, end));
+  let b = Math.min(text.length, Math.max(start, end));
+  while (a < b && /\s/.test(text[a])) a++;
+  while (b > a && /\s/.test(text[b - 1])) b--;
+  if (a === b) return { error: "Select a few words of the story first." };
+  if (chapter < setup.chapter || (chapter === setup.chapter && a < setup.end)) {
+    return { error: "Pick a passage that comes after the setup." };
+  }
+  return { start: a, end: b, quote: text.slice(a, b) };
+}
+
 export type Overrides = Record<string, Override>;
 
 /** A short stable id for a story, so a writer's calls are remembered per story. */

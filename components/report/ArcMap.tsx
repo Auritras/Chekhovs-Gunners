@@ -117,7 +117,9 @@ export default function ArcMap({
         const node = layout.nodes.find((n) => n.id === id);
         const tick = layout.chapterTicks.find((t) => t.chapter === call.chapter);
         if (!node || !tick) return [];
-        let x2 = tick.x + band / 2;
+        // At the passage the writer pointed to, else the middle of the chapter they picked.
+        const len = result.chapters.find((c) => c.index === call.chapter)?.text.length ?? 0;
+        let x2 = call.start !== undefined && len > 0 ? tick.x + (call.start / len) * band : tick.x + band / 2;
         if (x2 <= node.x + 6) x2 = Math.min(node.x + Math.max(14, band * 0.3), plotW);
         return [{ id, x1: node.x, x2 }];
       })
