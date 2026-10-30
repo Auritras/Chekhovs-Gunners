@@ -1,0 +1,10 @@
+{
+  "setups": [
+    { "id": "stopped-clock", "chapter": 1, "quoteHint": "The hall clock at Glenmore Bungalow had stopped at twenty to ten", "payoffChapter": 3 },
+    { "id": "red-clay", "chapter": 1, "quoteHint": "he noticed a rim of wet red clay along the welt of her left shoe", "payoffChapter": 3 },
+    { "id": "tenzing-record", "chapter": 1, "quoteHint": "Tenzing had served two years in Alipore jail for stealing from a Calcutta warehouse", "payoffChapter": null },
+    { "id": "arun-debts", "chapter": 1, "quoteHint": "who owed money to half the bookmakers in Siliguri", "payoffChapter": null },
+    { "id": "oiled-latch", "chapter": 2, "quoteHint": "The brass latch on the study window had been oiled, very recently; it slid back without a sound.", "payoffChapter": 2 },
+    { "id": "wireless-news", "chapter": 2, "quoteHint": "the news on the wireless was just finishing when I saw someone come in from the garden", "payoffChapter": 3 }
+  ]
+}

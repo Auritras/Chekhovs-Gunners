@@ -1,4 +1,14 @@
 [
-  { "slug": "the-locked-drawer", "title": "The Locked Drawer" },
-  { "slug": "the-sweet-shop", "title": "The Sweet Shop (Kolkata)" }
+  {
+    "slug": "the-locked-drawer",
+    "title": "The Locked Drawer"
+  },
+  {
+    "slug": "the-sweet-shop",
+    "title": "The Sweet Shop (Kolkata)"
+  },
+  {
+    "slug": "the-stopped-clock",
+    "title": "The Stopped Clock (a detective case)"
+  }
 ]

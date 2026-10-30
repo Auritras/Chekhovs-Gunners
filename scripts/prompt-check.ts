@@ -1,5 +1,6 @@
 // Runs the pipeline N times per sample and prints a Markdown table of averaged metrics.
-// Usage: npm run prompt-check [-- --runs 5]   (needs GEMINI_API_KEY_DEV in .env.local)
+// Usage: npm run prompt-check [-- --runs 5] [--only slug,slug]   (needs GEMINI_API_KEY_DEV in .env.local)
+// --only limits the run to some samples, to fit the free tier's daily request quota.
 //
 // "Cache bypassed for extraction": every run gets a brand-new in-memory cache
 // (never the .cache/ file store), so no run can reuse another run's extraction
@@ -21,6 +22,11 @@ function parseRuns(argv: string[]): number {
   return n;
 }
 
+function parseOnly(argv: string[]): string[] | null {
+  const i = argv.indexOf("--only");
+  return i === -1 ? null : (argv[i + 1] ?? "").split(",").filter(Boolean);
+}
+
 const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
 const num = (x: number) => x.toFixed(1);
@@ -28,7 +34,8 @@ const num = (x: number) => x.toFixed(1);
 async function main() {
   const runs = parseRuns(process.argv.slice(2));
   nodeDeps(); // fail fast (exit 1) when the dev key is missing
-  const samples = listSamples();
+  const only = parseOnly(process.argv.slice(2));
+  const samples = listSamples().filter((s) => !only || only.includes(s.slug));
   if (samples.length === 0) {
     console.error("No samples found (expected samples/<slug>/answer-key.json).");
     process.exit(1);
