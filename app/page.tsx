@@ -34,13 +34,26 @@ export default function Home() {
   // While analysing or showing a report the story box folds away, until the writer asks to edit.
   const [editing, setEditing] = useState(false);
   const closeCurtain = useCallback(() => setCurtain(false), []);
+  // The report waiting behind the closed curtain.
+  const pendingReveal = useRef<(() => void) | null>(null);
+  const curtainClosed = useCallback(() => {
+    pendingReveal.current?.();
+    pendingReveal.current = null;
+  }, []);
 
-  /** The first report of the visit opens behind full-screen curtains; later ones just appear. */
-  function raiseCurtain() {
-    if (curtainPlayed.current) return;
+  /**
+   * Show a report. The first of the visit plays the curtains: they close over the page,
+   * the report is put in place behind them, then they part. Later reports just appear.
+   */
+  function reveal(show: () => void) {
+    if (curtainPlayed.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      curtainPlayed.current = true;
+      show();
+      return;
+    }
     curtainPlayed.current = true;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     markCurtainStart();
+    pendingReveal.current = show;
     setCurtain(true);
   }
 
@@ -84,9 +97,10 @@ export default function Home() {
       const outcome = await analyze(chapters, httpDeps(), onProgress);
       if (id !== runId.current) return;
       if (outcome.status === "ok" && !everyChapterFailed(outcome.result)) {
-        raiseCurtain();
-        setResult(outcome.result);
-        setRun({ phase: "done" });
+        reveal(() => {
+          setResult(outcome.result);
+          setRun({ phase: "done" });
+        });
         return;
       }
       setResult(null);
@@ -121,9 +135,10 @@ export default function Home() {
 
   function showSample(s: Sample) {
     runId.current++; // ignore any run still reporting progress
-    raiseCurtain();
-    setResult(s.result);
-    setRun({ phase: "sample", title: s.title });
+    reveal(() => {
+      setResult(s.result);
+      setRun({ phase: "sample", title: s.title });
+    });
   }
 
   function onLoadSample() {
@@ -155,7 +170,7 @@ export default function Home() {
 
   return (
     <>
-      {curtain && <OpeningCurtain onDone={closeCurtain} />}
+      {curtain && <OpeningCurtain onClosed={curtainClosed} onDone={closeCurtain} />}
       <PaperHeader fireKey={showResults ? result : null} />
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-8 sm:px-8 sm:py-12">
