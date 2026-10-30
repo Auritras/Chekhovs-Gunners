@@ -1,14 +1,5 @@
 [
-  {
-    "slug": "the-locked-drawer",
-    "title": "The Locked Drawer"
-  },
-  {
-    "slug": "the-sweet-shop",
-    "title": "The Sweet Shop (Kolkata)"
-  },
-  {
-    "slug": "the-stopped-clock",
-    "title": "The Stopped Clock (a detective case)"
-  }
+  { "slug": "the-locked-drawer", "title": "The Locked Drawer", "genre": "Literary drama" },
+  { "slug": "the-sweet-shop", "title": "The Sweet Shop", "genre": "Family drama · Kolkata" },
+  { "slug": "the-stopped-clock", "title": "The Stopped Clock", "genre": "Detective · with red herrings" }
 ]

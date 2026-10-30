@@ -1,6 +1,6 @@
 import type { AnalysisResult } from "@/lib/types";
 
-export type SampleInfo = { slug: string; title: string };
+export type SampleInfo = { slug: string; title: string; genre?: string };
 
 type Fetch = (url: string) => Promise<Pick<Response, "ok" | "json">>;
 

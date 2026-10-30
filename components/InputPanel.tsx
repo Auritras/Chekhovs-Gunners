@@ -153,17 +153,18 @@ export default function InputPanel({
       {samples.length > 0 && (
         <div className="flex flex-col gap-2">
           <p className="text-sm text-ink-soft">New here? See it work on a sample story:</p>
-          <ul className="flex flex-wrap gap-x-5 gap-y-3">
+          <ul className="grid gap-3 sm:grid-cols-3">
             {samples.map((s) => (
-              <li key={s.slug} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <li key={s.slug} className="flex flex-col rounded-sm border border-brass">
                 <button
                   type="button"
                   disabled={disabled}
                   onClick={() => (s.result ? onViewSample(s.result, s.title) : fillSampleText(s.slug))}
-                  className="min-h-11 rounded-sm border border-brass px-4 py-2 text-left transition-colors hover:bg-brass hover:text-paper disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex min-h-11 flex-1 flex-col gap-0.5 px-4 py-3 text-left transition-colors hover:bg-brass hover:text-paper disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <span className="block font-display text-lg leading-tight">{s.title}</span>
-                  <span className="block text-xs opacity-80">
+                  <span className="font-display text-lg leading-tight">{s.title}</span>
+                  {s.genre && <span className="text-xs uppercase tracking-[0.12em] opacity-80">{s.genre}</span>}
+                  <span className="mt-1 text-xs opacity-80">
                     {s.result ? "Ready-made analysis, no wait" : "Loads the text for you to analyse"}
                   </span>
                 </button>
@@ -172,9 +173,9 @@ export default function InputPanel({
                     type="button"
                     disabled={disabled}
                     onClick={() => fillSampleText(s.slug)}
-                    className="min-h-11 text-sm text-ink-soft underline decoration-line underline-offset-4 hover:text-ink disabled:opacity-50"
+                    className="min-h-11 border-t border-brass/40 px-4 text-left text-xs text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
                   >
-                    or load its text
+                    Or load its text to analyse yourself
                   </button>
                 )}
               </li>

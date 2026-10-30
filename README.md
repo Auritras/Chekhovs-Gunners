@@ -14,7 +14,7 @@ Chekhov's Gunners is a writing assistant for the oldest rule in dramatic craft. 
 1. Open the live demo and click **The Locked Drawer** (or **See the full report** in the "What you get" card). The saved report opens instantly and uses no AI quota.
 2. Read **Guns that never fire**: each card quotes the line that planted the gun. Click one to jump to it in the Story tab, where it stands in a spotlight and the other highlights step back.
 3. Open **Guns that fired** to check what the tool understood, then look at the **arc map** and the **tension** hill.
-4. To see a live run, click **The Sweet Shop (Kolkata)** to load its text and press **Analyse** (about a minute).
+4. To see a live run, click **The Sweet Shop** to load its text and press **Analyse** (about a minute).
 
 ## What you get
 
@@ -23,7 +23,7 @@ Chekhov's Gunners is a writing assistant for the oldest rule in dramatic craft. 
 | Report | Summary counts (each links to its section), **guns that never fire** with quotes, a collapsible list of **guns that fired** (one row per gun, every payoff listed), the animated **arc map** (setup to payoff; red threads for unfired guns), and the per-chapter **tension** landscape and bars |
 | Story | The chapter text with setups and payoffs highlighted inline; jumping from a card spotlights that passage and fades the rest |
 
-Three sample stories with writer-made answer keys: **The Locked Drawer**, **The Sweet Shop (Kolkata)**, and **The Stopped Clock**, a detective case with two deliberate red herrings (useful for the genre work planned for the live sprint). A sample whose `public/samples/<slug>/result.json` exists opens instantly with no API call; otherwise its button loads the text for a live analysis.
+Three sample stories with writer-made answer keys: **The Locked Drawer**, **The Sweet Shop**, and **The Stopped Clock**, a detective case with two deliberate red herrings (useful for the genre work planned for the live sprint). A sample whose `public/samples/<slug>/result.json` exists opens instantly with no API call; otherwise its button loads the text for a live analysis.
 
 The interface is a paper toy theatre: a cut-paper header whose layers drift with the pointer, curtains that part on the first report, rotating public-domain lines on setup and payoff (Chekhov, Poe, Twain, Aristotle) while a story is read, and a running clock so long chapters visibly progress. Every animation is off under `prefers-reduced-motion`.
 
