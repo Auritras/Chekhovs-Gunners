@@ -61,10 +61,10 @@ export default function Summary({ result }: { result: AnalysisResult }) {
             <dd className={`order-1 font-display text-6xl leading-none tabular-nums ${it.tone ?? ""}`}>
               {it.href ? (
                 <a href={it.href} onClick={(e) => jump(e, it.href!)} aria-hidden tabIndex={-1} className="hover:opacity-80">
-                  <CountUp value={it.value} delay={i * 180} />
+                  <CountUp value={it.value} delay={i * 400} />
                 </a>
               ) : (
-                <CountUp value={it.value} delay={i * 180} />
+                <CountUp value={it.value} delay={i * 400} />
               )}
             </dd>
           </div>
