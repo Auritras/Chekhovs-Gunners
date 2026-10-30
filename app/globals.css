@@ -312,6 +312,28 @@ body {
   }
 }
 
+/* Hover over the header gun and it swings a little on its nail. */
+.gun-hang {
+  transform-origin: 50% 6%;
+}
+.gun-hang:hover {
+  animation: swing 1.6s ease-in-out;
+}
+@keyframes swing {
+  15% {
+    transform: rotate(9deg);
+  }
+  35% {
+    transform: rotate(-6deg);
+  }
+  55% {
+    transform: rotate(3deg);
+  }
+  75% {
+    transform: rotate(-1deg);
+  }
+}
+
 /* The header gun fires once when a report opens. */
 .gun-body,
 .gun-puff {
@@ -550,6 +572,7 @@ body {
   .arc-draw,
   .arc-fade,
   .writer-arc,
+  .gun-hang:hover,
   .wall-hang,
   .wall-thread,
   .wall-fired,

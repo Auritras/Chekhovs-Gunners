@@ -69,7 +69,7 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
         data-depth="3"
         className="paper-layer paper-shadow absolute right-[clamp(48px,15vw,240px)] top-1/2 hidden -translate-y-1/2 sm:block"
       >
-        <svg ref={gunRef} viewBox="0 0 80 50" className="h-10 w-16 overflow-visible lg:h-14 lg:w-24">
+        <svg ref={gunRef} viewBox="0 0 80 50" className="gun-hang h-10 w-16 overflow-visible lg:h-14 lg:w-24">
           <path d="M40 2 L22 16 M40 2 L58 16" className="stroke-curtain-ink/60" strokeWidth="1.5" fill="none" />
           <circle cx="40" cy="3" r="2.5" className="fill-brass" />
           <g className="gun-body">
