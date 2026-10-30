@@ -1,18 +1,25 @@
 import type { AnalysisResult, Payoff, Setup } from "@/lib/types";
+import type { Override, Overrides } from "@/lib/view/overrides";
+
+type Gun = { setup: Setup; payoffs: Payoff[]; writerChapter?: number };
 
 /** The guns that did fire, collapsed: lets the writer check what the tool understood. */
 export default function FiredList({
   result,
+  overrides,
+  onDecide,
   onSelect,
 }: {
   result: AnalysisResult;
+  overrides: Overrides;
+  onDecide: (setupId: string, call: Override | null) => void;
   onSelect: (setupId: string) => void;
 }) {
   const setups = new Map(result.setups.map((s) => [s.id, s]));
   const payoffs = new Map(result.payoffs.map((p) => [p.id, p]));
 
   // One row per gun: a setup can pay off more than once (e.g. a skill used twice).
-  const bySetup = new Map<string, { setup: Setup; payoffs: Payoff[] }>();
+  const bySetup = new Map<string, Gun>();
   for (const m of result.matches) {
     const setup = setups.get(m.setupId);
     const payoff = payoffs.get(m.payoffId);
@@ -20,6 +27,11 @@ export default function FiredList({
     const row = bySetup.get(setup.id) ?? { setup, payoffs: [] };
     row.payoffs.push(payoff);
     bySetup.set(setup.id, row);
+  }
+  // Guns the tool said never fire, which the writer says do.
+  for (const [id, call] of Object.entries(overrides)) {
+    const setup = setups.get(id);
+    if (call.kind === "fired" && setup) bySetup.set(id, { setup, payoffs: [], writerChapter: call.chapter });
   }
   const guns = [...bySetup.values()]
     .map((g) => ({ ...g, payoffs: g.payoffs.sort((a, b) => a.chapter - b.chapter || a.start - b.start) }))
@@ -38,14 +50,17 @@ export default function FiredList({
         Guns that fired <span className="text-brass tabular-nums">({guns.length})</span>
       </summary>
       <ul className="flex flex-col pb-2">
-        {guns.map(({ setup, payoffs }) => (
-          <li key={setup.id} className="border-t border-line">
+        {guns.map(({ setup, payoffs, writerChapter }) => (
+          <li key={setup.id} className="flex items-start gap-2 border-t border-line">
             <button
               type="button"
               onClick={() => onSelect(setup.id)}
-              className="grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-4 py-4 text-left transition-colors hover:bg-surface sm:px-3"
+              className="grid min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)] gap-x-4 py-4 text-left transition-colors hover:bg-surface sm:px-3"
             >
-              <span aria-hidden className="mt-1.5 block h-3 w-3 rounded-full bg-ink" />
+              <span
+                aria-hidden
+                className={`mt-1.5 block h-3 w-3 rounded-full ${writerChapter ? "bg-gold" : "bg-ink"}`}
+              />
               <span className="flex min-w-0 flex-col gap-1">
                 <span className="text-base font-medium leading-snug">{setup.summary}</span>
                 <span className="text-sm text-ink-soft">Planted in {chapterTitle(setup.chapter)}</span>
@@ -55,8 +70,23 @@ export default function FiredList({
                     Fires in {chapterTitle(p.chapter)}: <span className="text-ink">{p.summary}</span>
                   </span>
                 ))}
+                {writerChapter !== undefined && (
+                  <span className="block text-sm text-ink-soft">
+                    Fires in {chapterTitle(writerChapter)}: <span className="text-gold">marked by you</span>
+                    <span className="block text-xs text-muted">The tool said: never fires</span>
+                  </span>
+                )}
               </span>
             </button>
+            {writerChapter !== undefined && (
+              <button
+                type="button"
+                onClick={() => onDecide(setup.id, null)}
+                className="mt-3 min-h-11 shrink-0 rounded-sm border border-line px-3 text-sm font-medium text-ink-soft transition-colors hover:border-ink hover:text-ink"
+              >
+                Undo
+              </button>
+            )}
           </li>
         ))}
       </ul>

@@ -24,6 +24,8 @@
   --curtain-tint: rgba(140, 28, 34, 0.12);
   --focus: #1f4fbf;
   --spot: rgba(214, 170, 70, 0.34);
+  /* Brighter than brass: guns the writer marked as firing. */
+  --gold: #b8860b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -43,6 +45,7 @@
     --curtain-tint: rgba(210, 68, 75, 0.18);
     --focus: #8fb2ff;
     --spot: rgba(255, 214, 150, 0.22);
+    --gold: #f2c94c;
   }
 }
 
@@ -58,6 +61,7 @@
   --color-curtain-deep: var(--curtain-deep);
   --color-curtain-ink: var(--curtain-ink);
   --color-brass: var(--brass);
+  --color-gold: var(--gold);
   --color-focus: var(--focus);
   --font-sans: var(--font-instrument);
   --font-display: var(--font-fell);
@@ -369,6 +373,20 @@ body {
   border-left: 3px solid var(--brass);
 }
 
+/* A gun the writer marked as firing: a gold arc that draws in, glints once, and stays bright. */
+.writer-arc {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation:
+    arc-draw 900ms cubic-bezier(0.55, 0.05, 0.25, 1) forwards,
+    arc-glint 900ms ease-out 900ms;
+}
+@keyframes arc-glint {
+  40% {
+    filter: drop-shadow(0 0 6px var(--gold));
+  }
+}
+
 /* Arc map: trajectories draw in once, in story order. */
 .arc-draw {
   stroke-dasharray: 1;
@@ -450,6 +468,10 @@ body {
   text-underline-offset: 4px;
   text-decoration-skip-ink: none;
 }
+.mark-setup-writer {
+  text-decoration: underline 2px var(--gold);
+  text-underline-offset: 3px;
+}
 .mark-setup-inEnding {
   text-decoration: underline 1.5px var(--muted);
   text-underline-offset: 3px;
@@ -490,6 +512,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .arc-draw,
   .arc-fade,
+  .writer-arc,
   .footlight-live,
   .mark-flash,
   .riso-title::before,

@@ -13,6 +13,7 @@ import { analyze, everyChapterFailed, type Progress } from "@/lib/pipeline/analy
 import { httpDeps } from "@/lib/pipeline/httpDeps";
 import { findSampleWithResult } from "@/lib/samples";
 import type { AnalysisResult, Chapter } from "@/lib/types";
+import { storyKey } from "@/lib/view/overrides";
 
 type Prepared = { chapters: Chapter[]; autoSplit: boolean; wordCount: number };
 type Sample = { title: string; result: AnalysisResult };
@@ -184,7 +185,7 @@ export default function Home() {
 
         {showResults && result && (
           <div ref={resultsRef} className="scroll-mt-4">
-            <ResultTabs result={result} />
+            <ResultTabs key={storyKey(result)} result={result} />
           </div>
         )}
       </main>

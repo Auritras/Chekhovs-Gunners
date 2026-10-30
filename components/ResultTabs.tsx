@@ -2,6 +2,14 @@
 
 import { startTransition, useId, useRef, useState, ViewTransition } from "react";
 import type { AnalysisResult } from "@/lib/types";
+import {
+  activeOverrides,
+  loadOverrides,
+  saveOverrides,
+  storyKey,
+  type Override,
+  type Overrides,
+} from "@/lib/view/overrides";
 import Summary from "@/components/report/Summary";
 import ArcMap from "@/components/report/ArcMap";
 import TensionChart from "@/components/report/TensionChart";
@@ -22,6 +30,19 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
   // `seq` makes repeat clicks on the same issue scroll again.
   const [target, setTarget] = useState<{ id: string; seq: number } | null>(null);
   const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ report: null, story: null });
+  // The writer's calls on guns the tool says never fire, remembered per story.
+  // (The page remounts this component for each new result, so the key is fixed here.)
+  const [key] = useState(() => storyKey(result));
+  const [saved, setSaved] = useState<Overrides>(() => loadOverrides(key));
+  const overrides = activeOverrides(result, saved);
+
+  function decide(setupId: string, call: Override | null) {
+    const next = { ...saved };
+    if (call) next[setupId] = call;
+    else delete next[setupId];
+    setSaved(next);
+    saveOverrides(key, next);
+  }
 
   function select(next: Tab, focus = false) {
     // A transition, so the <ViewTransition> below draws the curtain between views.
@@ -93,20 +114,20 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
           <div>
             {tab === "report" ? (
               <div className="flex flex-col gap-10">
-                <Summary result={result} />
+                <Summary result={result} overrides={overrides} />
                 <Divider />
                 {/* The guns that never fire are why writers come, so they lead the report. */}
                 <div className="flex flex-col gap-6">
-                  <IssueList result={result} onSelect={openInStory} />
-                  <FiredList result={result} onSelect={openInStory} />
+                  <IssueList result={result} overrides={overrides} onDecide={decide} onSelect={openInStory} />
+                  <FiredList result={result} overrides={overrides} onDecide={decide} onSelect={openInStory} />
                 </div>
                 <Divider />
-                <ArcMap result={result} />
+                <ArcMap result={result} overrides={overrides} />
                 <Divider />
                 <TensionChart result={result} />
               </div>
             ) : (
-              <StoryView result={result} target={target} />
+              <StoryView result={result} overrides={overrides} target={target} />
             )}
           </div>
         </ViewTransition>

@@ -3,6 +3,7 @@
 import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AnalysisResult, Payoff, Setup } from "@/lib/types";
 import { layoutArcs, type ArcNode } from "@/lib/view/arcLayout";
+import type { Override, Overrides } from "@/lib/view/overrides";
 
 const PAD_X = 14;
 const TOP = 14;
@@ -12,9 +13,18 @@ const STAGGER_MS = 70;
 const MAX_STAGGER_MS = 1800;
 const DRAW_MS = 900;
 
-function nodeLabel(node: ArcNode, item: Setup | Payoff | undefined, chapterTitle: string): string {
+function nodeLabel(
+  node: ArcNode,
+  item: Setup | Payoff | undefined,
+  chapterTitle: string,
+  call: Override | undefined,
+): string {
   const what = node.kind === "setup" ? "Setup" : "Payoff";
-  const state = node.uncertain
+  const state = call
+    ? call.kind === "fired"
+      ? "fires, marked by you"
+      : "set aside by you"
+    : node.uncertain
     ? "uncertain"
     : {
         fired: "fired",
@@ -26,7 +36,13 @@ function nodeLabel(node: ArcNode, item: Setup | Payoff | undefined, chapterTitle
   return `${what} in ${chapterTitle}, ${state}: ${item?.summary ?? ""}`;
 }
 
-export default function ArcMap({ result }: { result: AnalysisResult }) {
+export default function ArcMap({
+  result,
+  overrides = {},
+}: {
+  result: AnalysisResult;
+  overrides?: Overrides;
+}) {
   const uid = useId();
   const boxRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState<number | null>(null);
@@ -72,12 +88,12 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
   // With nothing under the pointer, show the first gun that never fires (else the first setup),
   // so the surtitle is never an empty band and touch screens see a line without hovering.
   const restingId = useMemo(() => {
-    const unfired = new Set(result.unfired);
+    const unfired = new Set(result.unfired.filter((id) => !overrides[id]));
     const first = [...result.setups]
       .sort((a, b) => a.chapter - b.chapter || a.start - b.start)
       .sort((a, b) => Number(unfired.has(b.id)) - Number(unfired.has(a.id)))[0];
     return first?.id ?? null;
-  }, [result]);
+  }, [result, overrides]);
   const shown = active ?? restingId;
   const activeItem = shown ? byId.get(shown) : undefined;
   const activeNode = shown ? layout?.nodes.find((n) => n.id === shown) : undefined;
@@ -90,7 +106,22 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
   const stagger = arcs.length > 1 ? Math.min(STAGGER_MS, MAX_STAGGER_MS / (arcs.length - 1)) : 0;
   const dangleDelay = (arcs.length ? stagger * (arcs.length - 1) + DRAW_MS * 0.7 : 0) + 100;
 
-  const unfiredNodes = layout?.nodes.filter((n) => n.kind === "setup" && n.state === "unfired") ?? [];
+  const unfiredNodes =
+    layout?.nodes.filter((n) => n.kind === "setup" && n.state === "unfired" && !overrides[n.id]) ?? [];
+  const activeCall = shown ? overrides[shown] : undefined;
+
+  // Gold arcs for the guns the writer marked as firing: setup to the middle of the chapter they picked.
+  const writerArcs = layout
+    ? Object.entries(overrides).flatMap(([id, call]) => {
+        if (call.kind !== "fired") return [];
+        const node = layout.nodes.find((n) => n.id === id);
+        const tick = layout.chapterTicks.find((t) => t.chapter === call.chapter);
+        if (!node || !tick) return [];
+        let x2 = tick.x + band / 2;
+        if (x2 <= node.x + 6) x2 = Math.min(node.x + Math.max(14, band * 0.3), plotW);
+        return [{ id, x1: node.x, x2 }];
+      })
+    : [];
 
   return (
     <section id="arc-map" aria-labelledby={`${uid}-h`} className="flex scroll-mt-24 flex-col gap-4">
@@ -112,7 +143,11 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
           <>
             <p className="truncate text-sm text-ink-soft">
               {activeNode.kind === "setup" ? "Setup" : "Payoff"} in {chapterTitle(activeItem.chapter)}
-              {activeNode.state === "unfired" && !activeNode.uncertain && (
+              {activeCall?.kind === "fired" && (
+                <span className="text-gold">, fires in {chapterTitle(activeCall.chapter)} (marked by you)</span>
+              )}
+              {activeCall?.kind === "dismissed" && <span>, set aside by you</span>}
+              {!activeCall && activeNode.state === "unfired" && !activeNode.uncertain && (
                 <span className="text-curtain">, never fires</span>
               )}
               {activeNode.uncertain && ", may be affected by a failed chapter"}
@@ -213,6 +248,26 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
                 );
               })}
 
+              {/* The writer's calls: gold arcs, drawn after the tool's own */}
+              {writerArcs.map((a) => {
+                const rx = Math.max((a.x2 - a.x1) / 2, 3);
+                const ry = Math.min(Math.max(rx * 0.9, 10), maxArc - 6);
+                const dim = related && !related.has(a.id);
+                return (
+                  <path
+                    key={`writer-${a.id}`}
+                    d={`M ${a.x1} ${base} A ${rx} ${ry} 0 0 1 ${a.x2} ${base}`}
+                    pathLength={1}
+                    fill="none"
+                    stroke="var(--gold)"
+                    strokeWidth="2.75"
+                    strokeLinecap="round"
+                    strokeOpacity={dim ? 0.18 : 1}
+                    className="writer-arc"
+                  />
+                );
+              })}
+
               {/* Dangling threads under guns that never fire */}
               {unfiredNodes.map((n) => {
                 const len = 12 + (setupById.get(n.id)?.importance ?? 1) * 9;
@@ -243,11 +298,19 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
                 const item = byId.get(n.id);
                 const isActive = shown === n.id;
                 const dim = related && !related.has(n.id);
-                const label = nodeLabel(n, item, chapterTitle(item?.chapter ?? 0));
+                const call = overrides[n.id];
+                const label = nodeLabel(n, item, chapterTitle(item?.chapter ?? 0), call);
                 let mark: React.ReactNode;
                 if (n.kind === "setup") {
-                  const ending = n.state === "inEnding" && !n.uncertain;
-                  const fill = n.uncertain || ending ? "var(--paper)" : n.state === "unfired" ? "var(--curtain)" : "var(--ink)";
+                  const ending = (n.state === "inEnding" && !n.uncertain) || call?.kind === "dismissed";
+                  const fill =
+                    call?.kind === "fired"
+                      ? "var(--gold)"
+                      : n.uncertain || ending
+                        ? "var(--paper)"
+                        : n.state === "unfired"
+                          ? "var(--curtain)"
+                          : "var(--ink)";
                   mark = (
                     <circle
                       cx={n.x}
@@ -315,6 +378,12 @@ export default function ArcMap({ result }: { result: AnalysisResult }) {
           <svg width="14" height="18" aria-hidden><circle cx="7" cy="4.5" r="4" fill="var(--curtain)" /><path d="M7 5 L7 17" stroke="var(--curtain)" strokeWidth="2" strokeLinecap="round" /></svg>
           Never fired
         </li>
+        {writerArcs.length > 0 && (
+          <li className="flex items-center gap-2">
+            <svg width="26" height="14" aria-hidden><path d="M2 12 A 11 9 0 0 1 24 12" fill="none" stroke="var(--gold)" strokeWidth="2.75" /></svg>
+            Fires, marked by you
+          </li>
+        )}
         {(result.inEnding?.length ?? 0) > 0 && (
           <li className="flex items-center gap-2">
             <svg width="14" height="14" aria-hidden><circle cx="7" cy="7" r="4.5" fill="var(--paper)" stroke="var(--muted)" strokeWidth="1.5" /></svg>

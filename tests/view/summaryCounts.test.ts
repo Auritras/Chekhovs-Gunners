@@ -29,7 +29,7 @@ describe("summaryCounts", () => {
       uncertain: ["s2", "s4", "p2", "p3"],
     });
     const c = summaryCounts(r);
-    expect(c).toEqual({ planted: 4, fired: 1, neverFired: 1, uncertain: 2, inEnding: 0 });
+    expect(c).toEqual({ planted: 4, fired: 1, neverFired: 1, uncertain: 2, inEnding: 0, firedByWriter: 0, setAside: 0 });
     expect(c.fired + c.neverFired + c.uncertain).toBe(c.planted);
   });
 
@@ -42,11 +42,11 @@ describe("summaryCounts", () => {
         { setupId: "s1", payoffId: "p2", reasoning: "", source: "extract" },
       ],
     });
-    expect(summaryCounts(r)).toEqual({ planted: 1, fired: 1, neverFired: 0, uncertain: 0, inEnding: 0 });
+    expect(summaryCounts(r)).toEqual({ planted: 1, fired: 1, neverFired: 0, uncertain: 0, inEnding: 0, firedByWriter: 0, setAside: 0 });
   });
 
   it("handles an empty result", () => {
-    expect(summaryCounts(result({}))).toEqual({ planted: 0, fired: 0, neverFired: 0, uncertain: 0, inEnding: 0 });
+    expect(summaryCounts(result({}))).toEqual({ planted: 0, fired: 0, neverFired: 0, uncertain: 0, inEnding: 0, firedByWriter: 0, setAside: 0 });
   });
 
   it("counts setups in the ending separately so the tiles still add up", () => {
@@ -58,7 +58,7 @@ describe("summaryCounts", () => {
       inEnding: ["s3"],
     });
     const c = summaryCounts(r);
-    expect(c).toEqual({ planted: 3, fired: 1, neverFired: 1, uncertain: 0, inEnding: 1 });
+    expect(c).toEqual({ planted: 3, fired: 1, neverFired: 1, uncertain: 0, inEnding: 1, firedByWriter: 0, setAside: 0 });
     expect(c.fired + c.neverFired + c.uncertain + c.inEnding).toBe(c.planted);
   });
 
@@ -69,3 +69,22 @@ describe("summaryCounts", () => {
   });
 });
 
+
+describe("summaryCounts with the writer's calls", () => {
+  it("moves overridden guns to fired or set aside, and the tiles still add up", () => {
+    const r = result({
+      setups: [setup("s1", 1), setup("s2", 1), setup("s3", 2), setup("s4", 1)],
+      payoffs: [payoff("p1", 2)],
+      matches: [{ setupId: "s1", payoffId: "p1", reasoning: "", source: "match" }],
+      unfired: ["s2", "s3", "s4"],
+    });
+    // A call on an already-fired gun (s1) is ignored.
+    const c = summaryCounts(r, {
+      s1: { kind: "dismissed" },
+      s2: { kind: "fired", chapter: 3 },
+      s3: { kind: "dismissed" },
+    });
+    expect(c).toEqual({ planted: 4, fired: 2, neverFired: 1, uncertain: 0, inEnding: 0, firedByWriter: 1, setAside: 1 });
+    expect(c.fired + c.neverFired + c.uncertain + c.inEnding + c.setAside).toBe(c.planted);
+  });
+});

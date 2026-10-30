@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import { highlightSegments, type HighlightMark } from "@/lib/view/highlight";
+import type { Overrides } from "@/lib/view/overrides";
 
 export const markElementId = (id: string) => `mark-${id}`;
 
@@ -23,9 +24,11 @@ function markClass(i: Info): string {
 
 export default function StoryView({
   result,
+  overrides = {},
   target,
 }: {
   result: AnalysisResult;
+  overrides?: Overrides;
   target: { id: string; seq: number } | null;
 }) {
   // The jump (by seq) the writer dismissed; while a newer one is live, other highlights fade.
@@ -46,7 +49,15 @@ export default function StoryView({
       marksByChapter.set(chapter, list);
     };
     for (const s of result.setups) {
-      const state = fired.has(s.id) ? "fired" : inEnding.has(s.id) ? "inEnding" : "unfired";
+      const call = fired.has(s.id) ? undefined : overrides[s.id];
+      // The writer's calls: gold for "it does fire", muted like an ending detail for "not a gun".
+      const state = fired.has(s.id)
+        ? "fired"
+        : call?.kind === "fired"
+          ? "writer"
+          : call?.kind === "dismissed" || inEnding.has(s.id)
+            ? "inEnding"
+            : "unfired";
       add(s.chapter, { id: s.id, start: s.start, end: s.end, kind: "setup", state }, s.summary);
     }
     for (const p of result.payoffs) {
@@ -54,7 +65,7 @@ export default function StoryView({
       add(p.chapter, { id: p.id, start: p.start, end: p.end, kind: "payoff", state }, p.summary);
     }
     return { info, marksByChapter };
-  }, [result]);
+  }, [result, overrides]);
 
   useEffect(() => {
     if (!target) return;
@@ -85,6 +96,9 @@ export default function StoryView({
         <li><span className="mark mark-setup-unfired">Setup that never fires</span></li>
         <li><span className="mark mark-payoff-linked">Payoff</span></li>
         <li><span className="mark mark-payoff-unlinked">Payoff with no setup</span></li>
+        {Object.values(overrides).some((o) => o.kind === "fired") && (
+          <li><span className="mark mark-setup-writer">Fires, marked by you</span></li>
+        )}
         {(result.inEnding?.length ?? 0) > 0 && (
           <li><span className="mark mark-setup-inEnding">Setup in the ending</span></li>
         )}

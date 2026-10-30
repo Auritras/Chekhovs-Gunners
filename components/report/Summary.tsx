@@ -1,5 +1,6 @@
 import CountUp from "@/components/effects/CountUp";
 import type { AnalysisResult } from "@/lib/types";
+import type { Overrides } from "@/lib/view/overrides";
 import { summaryCounts } from "@/lib/view/summaryCounts";
 
 /** Jump to a report section; a collapsed list (<details>) opens on arrival. */
@@ -12,17 +13,23 @@ function jump(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
   el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
 }
 
-export default function Summary({ result }: { result: AnalysisResult }) {
-  // planted = fired + never fired + uncertain + in the ending (uncertain counts setups only).
-  const c = summaryCounts(result);
+export default function Summary({ result, overrides }: { result: AnalysisResult; overrides: Overrides }) {
+  // planted = fired + never fired + uncertain + in the ending + set aside (uncertain counts setups only).
+  const c = summaryCounts(result, overrides);
 
-  const items: { label: string; value: number; tone?: string; href?: string }[] = [
+  const items: { label: string; value: number; tone?: string; href?: string; note?: string }[] = [
     {
       label: c.planted === 1 ? "setup planted" : "setups planted",
       value: c.planted,
       href: c.planted > 0 ? "#arc-map" : undefined,
     },
-    { label: "fired", value: c.fired, tone: "text-brass", href: c.fired > 0 ? "#fired" : undefined },
+    {
+      label: "fired",
+      value: c.fired,
+      tone: "text-brass",
+      href: c.fired > 0 ? "#fired" : undefined,
+      note: c.firedByWriter > 0 ? `${c.firedByWriter} marked by you` : undefined,
+    },
     {
       label: "never fired",
       value: c.neverFired,
@@ -35,6 +42,9 @@ export default function Summary({ result }: { result: AnalysisResult }) {
   }
   if (c.inEnding > 0) {
     items.push({ label: "in the ending", value: c.inEnding, tone: "text-muted" });
+  }
+  if (c.setAside > 0) {
+    items.push({ label: "set aside by you", value: c.setAside, tone: "text-muted", href: "#set-aside" });
   }
 
   return (
@@ -57,6 +67,7 @@ export default function Summary({ result }: { result: AnalysisResult }) {
               ) : (
                 it.label
               )}
+              {it.note && <span className="block text-xs text-muted">{it.note}</span>}
             </dt>
             <dd className={`order-1 font-display text-6xl leading-none tabular-nums ${it.tone ?? ""}`}>
               {it.href ? (
