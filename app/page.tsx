@@ -223,9 +223,9 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="border-t border-line px-4 py-6 text-center text-sm text-muted">
+      <footer className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 border-t border-line px-4 py-6 text-center text-sm text-muted">
         {/* Hover (or tap) the motto and a little figure on stage takes a bow to the writer. */}
-        <span tabIndex={0} className="bow-group inline-flex items-end gap-2 rounded-sm outline-offset-4">
+        <span tabIndex={0} className="bow-group inline-flex items-center gap-2 rounded-sm outline-offset-4">
           <svg viewBox="0 0 20 24" aria-hidden className="h-6 w-5 text-brass">
             <line x1="0" y1="23.5" x2="20" y2="23.5" stroke="currentColor" strokeWidth="1" />
             <path d="M10 16 L7 23 M10 16 L13 23" stroke="currentColor" strokeWidth="1.2" fill="none" />
@@ -235,8 +235,8 @@ export default function Home() {
             </g>
           </svg>
           It suggests; the writer decides.
-        </span>{" "}
-        Your text is never changed.
+        </span>
+        <span>Your text is never changed.</span>
       </footer>
     </>
   );
