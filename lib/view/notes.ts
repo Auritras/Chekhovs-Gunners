@@ -18,7 +18,7 @@ export function notesMarkdown(result: AnalysisResult, overrides: Overrides, date
 
   out.push("# Notes from Chekhov's Gunners", "");
   out.push(
-    `${result.chapters.length} chapters, ${words.toLocaleString("en-US")} words · ${date.toISOString().slice(0, 10)}`,
+    `${result.chapters.length} chapters, ${words.toLocaleString("en-US")} words · ${date.toLocaleDateString("en-CA")}`,
     "",
   );
   out.push(
