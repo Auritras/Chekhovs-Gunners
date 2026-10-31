@@ -478,6 +478,11 @@ body {
   animation: arc-fade 500ms ease-out 400ms both;
 }
 
+/* Rewards under the summary fade in quietly. */
+.report-reward {
+  animation: arc-fade 900ms ease-out both;
+}
+
 /* Easter egg: the header gun's "BANG!" flag pops out of the barrel and retracts. */
 .bang-flag {
   transform-origin: left center;
@@ -649,6 +654,7 @@ body {
   .bow-group:focus .bow-upper,
   .arc-draw,
   .arc-fade,
+  .report-reward,
   .writer-arc,
   .gun-hang:hover,
   .wall-hang,

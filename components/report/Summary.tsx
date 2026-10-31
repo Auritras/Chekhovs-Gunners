@@ -13,9 +13,23 @@ function jump(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
   el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
 }
 
+/** A real gun (the literal kind) in chapter 1 that fires later: Chekhov's own example. */
+const FIREARM = /\b(gun|pistol|rifle|revolver|musket|shotgun|carbine|firearm)s?\b/i;
+
 export default function Summary({ result, overrides }: { result: AnalysisResult; overrides: Overrides }) {
   // planted = fired + never fired + uncertain + in the ending + set aside (uncertain counts setups only).
   const c = summaryCounts(result, overrides);
+  const allFired = c.planted > 0 && c.neverFired === 0 && c.uncertain === 0;
+  const firstChapter = result.chapters[0]?.index;
+  const firedIds = new Set([
+    ...result.matches.map((m) => m.setupId),
+    ...Object.entries(overrides)
+      .filter(([, o]) => o.kind === "fired")
+      .map(([id]) => id),
+  ]);
+  const original = result.setups.find(
+    (s) => s.chapter === firstChapter && firedIds.has(s.id) && FIREARM.test(`${s.quote} ${s.summary}`),
+  );
 
   const items: { label: string; value: number; tone?: string; href?: string; note?: string }[] = [
     {
@@ -69,7 +83,7 @@ export default function Summary({ result, overrides }: { result: AnalysisResult;
               )}
               {it.note && <span className="block text-xs text-muted">{it.note}</span>}
             </dt>
-            <dd className={`order-1 font-display text-6xl leading-none tabular-nums ${it.tone ?? ""}`}>
+            <dd className={`order-1 font-display text-6xl leading-none tabular-nums transition-colors duration-700 ${it.tone ?? ""}`}>
               {it.href ? (
                 <a href={it.href} onClick={(e) => jump(e, it.href!)} aria-hidden tabIndex={-1} className="hover:opacity-80">
                   <CountUp value={it.value} delay={i * 400} />
@@ -81,6 +95,23 @@ export default function Summary({ result, overrides }: { result: AnalysisResult;
           </div>
         ))}
       </dl>
+      {(allFired || original) && (
+        <div className="mt-5 flex flex-col gap-2">
+          {allFired && (
+            <p className="report-reward font-display text-xl italic text-brass">
+              Every gun fired. Chekhov would approve.
+            </p>
+          )}
+          {original && (
+            <p className="report-reward flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+              <span className="rounded-full border border-brass px-2.5 py-0.5 font-display text-base text-brass">
+                The original
+              </span>
+              A real gun on the wall in chapter 1, and it goes off: “{original.summary}”
+            </p>
+          )}
+        </div>
+      )}
     </section>
   );
 }
