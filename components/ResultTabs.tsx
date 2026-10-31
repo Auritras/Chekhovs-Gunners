@@ -246,6 +246,22 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
                 {/* The same filter again, so it's at hand when exploring the map. */}
                 <div className="flex flex-col gap-4">
                   <KindChips setups={view.setups} kind={kind} onChange={setKind} />
+                  {kind && (
+                    <p className="-mt-1 text-sm text-ink-soft">
+                      {view.setups.some(
+                        (s) => s.kind === kind && (view.matches.some((m) => m.setupId === s.id) || overrides[s.id]?.kind === "fired"),
+                      )
+                        ? `Showing ${kind} guns only.`
+                        : `No ${kind} gun fires yet, so no arc is lit.`}{" "}
+                      <button
+                        type="button"
+                        onClick={() => setKind(null)}
+                        className="min-h-11 text-brass underline decoration-line underline-offset-4 hover:text-ink"
+                      >
+                        Show all
+                      </button>
+                    </p>
+                  )}
                   <ArcMap result={view} overrides={overrides} kind={kind} />
                 </div>
                 <Divider />

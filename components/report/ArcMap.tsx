@@ -10,6 +10,9 @@ const TOP = 14;
 const DANGLE_ZONE = 44;
 const LABEL_ZONE = 26;
 const STAGGER_MS = 70;
+/** How far arcs and marks step back when something else is highlighted or filtered: still readable. */
+const DIM_ARC = 0.35;
+const DIM_MARK = 0.45;
 /** Id prefix for the payoff marker at the end of a gun the writer marked as firing. */
 const PAY = "writer-pay:";
 const MAX_STAGGER_MS = 1800;
@@ -90,7 +93,7 @@ function WriterArc({
       stroke="var(--gold)"
       strokeWidth="2.75"
       strokeLinecap="round"
-      strokeOpacity={dim ? 0.18 : 1}
+      strokeOpacity={dim ? DIM_ARC : 1}
       className={fromThread ? "writer-arc-pulled" : "writer-arc"}
     />
   );
@@ -347,7 +350,7 @@ export default function ArcMap({
                     strokeWidth={0.75 + importance * 0.6}
                     strokeDasharray={shaky ? "4 4" : undefined}
                     strokeLinecap="round"
-                    strokeOpacity={dim ? 0.18 : 1}
+                    strokeOpacity={dim ? DIM_ARC : 1}
                     className={shaky ? "arc-fade" : "arc-draw"}
                     style={{
                       animationDelay: `${Math.round(i * stagger)}ms`,
@@ -389,7 +392,7 @@ export default function ArcMap({
                     strokeWidth="2"
                     strokeDasharray={n.uncertain ? "3 3" : undefined}
                     strokeLinecap="round"
-                    strokeOpacity={dim ? 0.18 : 1}
+                    strokeOpacity={dim ? DIM_ARC : 1}
                     className={n.uncertain ? "arc-fade" : "arc-draw"}
                     style={{
                       animationDelay: `${Math.round(dangleDelay)}ms`,
@@ -449,7 +452,7 @@ export default function ArcMap({
                     aria-label={label}
                     aria-pressed={active === n.id}
                     className="cursor-pointer outline-none [&:focus-visible>circle:first-child]:stroke-[var(--focus)]"
-                    style={{ opacity: dim ? 0.3 : 1, transition: "opacity 160ms" }}
+                    style={{ opacity: dim ? DIM_MARK : 1, transition: "opacity 160ms" }}
                     onMouseEnter={() => setActive(n.id)}
                     onMouseLeave={() => setActive((cur) => (cur === n.id ? null : cur))}
                     onFocus={() => setActive(n.id)}
@@ -476,7 +479,7 @@ export default function ArcMap({
                     aria-label={`Payoff in ${chapterTitle(a.chapter)}, marked by you${a.quote ? `: ${a.quote}` : ""}`}
                     aria-pressed={active === pid}
                     className="cursor-pointer outline-none [&:focus-visible>circle:first-child]:stroke-[var(--focus)]"
-                    style={{ opacity: dim ? 0.3 : 1, transition: "opacity 160ms" }}
+                    style={{ opacity: dim ? DIM_MARK : 1, transition: "opacity 160ms" }}
                     onMouseEnter={() => setActive(pid)}
                     onMouseLeave={() => setActive((cur) => (cur === pid ? null : cur))}
                     onFocus={() => setActive(pid)}
