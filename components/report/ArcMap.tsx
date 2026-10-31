@@ -10,6 +10,8 @@ const TOP = 14;
 const DANGLE_ZONE = 44;
 const LABEL_ZONE = 26;
 const STAGGER_MS = 70;
+/** Id prefix for the payoff marker at the end of a gun the writer marked as firing. */
+const PAY = "writer-pay:";
 const MAX_STAGGER_MS = 1800;
 const DRAW_MS = 900;
 
@@ -145,8 +147,11 @@ export default function ArcMap({
       if (m.setupId === active) ids.add(m.payoffId);
       if (m.payoffId === active) ids.add(m.setupId);
     }
+    // A writer's call links the gun to its payoff marker, and back.
+    if (active.startsWith(PAY)) ids.add(active.slice(PAY.length));
+    else if (overrides[active]?.kind === "fired") ids.add(PAY + active);
     return ids;
-  }, [active, result.matches]);
+  }, [active, result.matches, overrides]);
 
   // With nothing under the pointer, show the first gun that never fires (else the first setup),
   // so the surtitle is never an empty band and touch screens see a line without hovering.
@@ -184,7 +189,7 @@ export default function ArcMap({
         const len = result.chapters.find((c) => c.index === call.chapter)?.text.length ?? 0;
         let x2 = call.start !== undefined && len > 0 ? tick.x + (call.start / len) * band : tick.x + band / 2;
         if (x2 <= node.x + 6) x2 = Math.min(node.x + Math.max(14, band * 0.3), plotW);
-        return [{ id, x1: node.x, x2 }];
+        return [{ id, x1: node.x, x2, chapter: call.chapter, quote: call.quote }];
       })
     : [];
 
@@ -204,7 +209,31 @@ export default function ArcMap({
           Fixed height so the chart below never moves when the text changes; a moving
           chart slid marks out from under a still pointer and made hover flicker. */}
       <div aria-live="polite" className="h-[10.5rem] overflow-hidden border-y border-line py-3 sm:h-[9rem]">
-        {activeItem && activeNode ? (
+        {shown?.startsWith(PAY) ? (
+          (() => {
+            const pay = writerArcs.find((a) => PAY + a.id === shown);
+            const gun = byId.get(shown.slice(PAY.length));
+            if (!pay) return null;
+            return (
+              <>
+                <p className="truncate text-sm text-ink-soft">
+                  Payoff in {chapterTitle(pay.chapter)}
+                  <span className="text-gold">, marked by you</span>
+                </p>
+                {pay.quote ? (
+                  <blockquote title={pay.quote} className="mt-1 line-clamp-3 font-serif text-lg italic leading-snug">
+                    “{pay.quote}”
+                  </blockquote>
+                ) : (
+                  <p className="mt-1 font-serif text-lg italic leading-snug text-muted">
+                    You marked the chapter. Use “Point to the line” in Guns that fired to quote the sentence.
+                  </p>
+                )}
+                <p className="mt-1 truncate text-sm text-ink-soft">Pays off: {gun?.summary}</p>
+              </>
+            );
+          })()
+        ) : activeItem && activeNode ? (
           <>
             <p className="truncate text-sm text-ink-soft">
               {activeNode.kind === "setup" ? "Setup" : "Payoff"} in {chapterTitle(activeItem.chapter)}
@@ -416,6 +445,37 @@ export default function ArcMap({
                     {/* Generous invisible hit area for pointers and the focus ring. */}
                     <circle cx={n.x} cy={base} r={11} fill="transparent" strokeWidth="2" />
                     {mark}
+                  </g>
+                );
+              })}
+              {/* Payoff markers at the end of the writer's gold arcs: hover to read the chosen line. */}
+              {writerArcs.map((a) => {
+                const pid = PAY + a.id;
+                const isActive = shown === pid;
+                const s = isActive ? 6.5 : 4.5;
+                const dim = related && !related.has(pid);
+                return (
+                  <g
+                    key={pid}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Payoff in ${chapterTitle(a.chapter)}, marked by you${a.quote ? `: ${a.quote}` : ""}`}
+                    aria-pressed={active === pid}
+                    className="cursor-pointer outline-none [&:focus-visible>circle:first-child]:stroke-[var(--focus)]"
+                    style={{ opacity: dim ? 0.3 : 1, transition: "opacity 160ms" }}
+                    onMouseEnter={() => setActive(pid)}
+                    onMouseLeave={() => setActive((cur) => (cur === pid ? null : cur))}
+                    onFocus={() => setActive(pid)}
+                    onBlur={() => setActive((cur) => (cur === pid ? null : cur))}
+                    onClick={() => setActive(pid)}
+                  >
+                    <circle cx={a.x2} cy={base} r={11} fill="transparent" strokeWidth="2" />
+                    <path
+                      d={`M ${a.x2} ${base - s} L ${a.x2 + s} ${base} L ${a.x2} ${base + s} L ${a.x2 - s} ${base} Z`}
+                      fill="var(--gold)"
+                      stroke="var(--paper)"
+                      strokeWidth="1.25"
+                    />
                   </g>
                 );
               })}
