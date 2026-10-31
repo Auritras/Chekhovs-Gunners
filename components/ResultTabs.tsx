@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useEffect, useId, useMemo, useRef, useState, ViewTransition } from "react";
-import type { AnalysisResult } from "@/lib/types";
+import type { AnalysisResult, SetupKind } from "@/lib/types";
 import {
   activeOverrides,
   loadGuns,
@@ -20,6 +20,7 @@ import ArcMap from "@/components/report/ArcMap";
 import TensionChart from "@/components/report/TensionChart";
 import IssueList from "@/components/report/IssueList";
 import Divider from "@/components/report/Divider";
+import KindChips from "@/components/report/KindChips";
 import FiredList from "@/components/report/FiredList";
 import StoryView from "@/components/story/StoryView";
 import { callAchievements } from "@/lib/view/achievements";
@@ -54,6 +55,8 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
   // Story pick mode: point to where a gun fires, or select a line that plants a missed gun.
   type Pick = { mode: "payoff"; setupId: string; chapter: number } | { mode: "setup" };
   const [pick, setPick] = useState<Pick | null>(null);
+  // Filter the lists and the arc map by gun type.
+  const [kind, setKind] = useState<SetupKind | null>(null);
   function pointOut(setupId: string) {
     const call = saved[setupId];
     if (call?.kind !== "fired") return;
@@ -216,6 +219,7 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
                 <Divider />
                 {/* The guns that never fire are why writers come, so they lead the report. */}
                 <div className="flex flex-col gap-6">
+                  <KindChips setups={view.setups} kind={kind} onChange={setKind} />
                   <IssueList
                     result={view}
                     overrides={overrides}
@@ -223,6 +227,7 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
                     onSelect={openInStory}
                     onAddGun={startAddGun}
                     onRemoveGun={removeGun}
+                    kind={kind}
                   />
                   <FiredList
                     result={view}
@@ -230,10 +235,15 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
                     onDecide={decide}
                     onSelect={openInStory}
                     onPointOut={pointOut}
+                    kind={kind}
                   />
                 </div>
                 <Divider />
-                <ArcMap result={view} overrides={overrides} />
+                {/* The same filter again, so it's at hand when exploring the map. */}
+                <div className="flex flex-col gap-4">
+                  <KindChips setups={view.setups} kind={kind} onChange={setKind} />
+                  <ArcMap result={view} overrides={overrides} kind={kind} />
+                </div>
                 <Divider />
                 <TensionChart result={result} />
               </div>

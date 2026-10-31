@@ -1,4 +1,4 @@
-import type { AnalysisResult, Payoff, Setup } from "@/lib/types";
+import type { AnalysisResult, Payoff, Setup, SetupKind } from "@/lib/types";
 import type { Override, Overrides } from "@/lib/view/overrides";
 
 type Gun = { setup: Setup; payoffs: Payoff[]; writerChapter?: number; writerQuote?: string };
@@ -10,6 +10,7 @@ export default function FiredList({
   onDecide,
   onSelect,
   onPointOut,
+  kind = null,
 }: {
   result: AnalysisResult;
   overrides: Overrides;
@@ -17,6 +18,7 @@ export default function FiredList({
   onSelect: (setupId: string) => void;
   /** Open the story to let the writer select the passage where it fires. */
   onPointOut?: (setupId: string) => void;
+  kind?: SetupKind | null;
 }) {
   const setups = new Map(result.setups.map((s) => [s.id, s]));
   const payoffs = new Map(result.payoffs.map((p) => [p.id, p]));
@@ -39,6 +41,7 @@ export default function FiredList({
     }
   }
   const guns = [...bySetup.values()]
+    .filter((g) => !kind || g.setup.kind === kind)
     .map((g) => ({ ...g, payoffs: g.payoffs.sort((a, b) => a.chapter - b.chapter || a.start - b.start) }))
     .sort((a, b) => a.setup.chapter - b.setup.chapter || a.setup.start - b.setup.start);
   if (guns.length === 0) return null;

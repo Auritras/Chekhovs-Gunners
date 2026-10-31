@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { AnalysisResult, Setup } from "@/lib/types";
+import type { AnalysisResult, Setup, SetupKind } from "@/lib/types";
 import { isWriterGun, type Override, type Overrides } from "@/lib/view/overrides";
 
 const IMPORTANCE = { 1: "Minor", 2: "Notable", 3: "Major" } as const;
@@ -16,6 +16,7 @@ export default function IssueList({
   onSelect,
   onAddGun,
   onRemoveGun,
+  kind = null,
 }: {
   result: AnalysisResult;
   overrides: Overrides;
@@ -24,6 +25,7 @@ export default function IssueList({
   /** Select a line in the story that plants a gun the tool missed. */
   onAddGun?: () => void;
   onRemoveGun?: (setupId: string) => void;
+  kind?: SetupKind | null;
 }) {
   // Which card has its chapter picker open.
   const [picking, setPicking] = useState<string | null>(null);
@@ -49,6 +51,7 @@ export default function IssueList({
   const uncertain = new Set(result.uncertain);
   const unfired = new Set(result.unfired);
   const all: Setup[] = result.setups
+    .filter((s) => !kind || s.kind === kind)
     .filter((s) => unfired.has(s.id))
     .sort(
       (a, b) =>
@@ -71,7 +74,9 @@ export default function IssueList({
         <p className="mt-1 max-w-[62ch] text-sm text-ink-soft">
           {issues.length > 0
             ? "Select one to see it in the story. If it does pay off, or isn't really a gun, say so: it's your call."
-            : all.length > 0
+            : kind
+              ? `No ${kind} guns are left on the wall.`
+              : all.length > 0
               ? "Every gun is accounted for."
               : "Every setup we found pays off later in the story."}
         </p>

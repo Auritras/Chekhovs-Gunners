@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { AnalysisResult, Payoff, Setup } from "@/lib/types";
+import type { AnalysisResult, Payoff, Setup, SetupKind } from "@/lib/types";
 import { layoutArcs, type ArcNode } from "@/lib/view/arcLayout";
 import type { Override, Overrides } from "@/lib/view/overrides";
 
@@ -99,9 +99,12 @@ function WriterArc({
 export default function ArcMap({
   result,
   overrides = {},
+  kind = null,
 }: {
   result: AnalysisResult;
   overrides?: Overrides;
+  /** Show only guns of this type: everything else steps back. */
+  kind?: SetupKind | null;
 }) {
   const uid = useId();
   const boxRef = useRef<HTMLDivElement>(null);
@@ -179,6 +182,16 @@ export default function ArcMap({
   const activeCall = shown ? overrides[shown] : undefined;
 
   // Gold arcs for the guns the writer marked as firing: setup to the middle of the chapter they picked.
+  // The type filter: the guns of that type, their payoffs and their gold markers stay lit.
+  const inKind = useMemo(() => {
+    if (!kind) return null;
+    const ids = new Set(result.setups.filter((s) => s.kind === kind).map((s) => s.id));
+    for (const m of result.matches) if (ids.has(m.setupId)) ids.add(m.payoffId);
+    for (const id of [...ids]) ids.add(PAY + id);
+    return ids;
+  }, [kind, result]);
+  const offKind = (id: string) => !!inKind && !inKind.has(id);
+
   const writerArcs = layout
     ? Object.entries(overrides).flatMap(([id, call]) => {
         if (call.kind !== "fired") return [];
@@ -322,7 +335,8 @@ export default function ArcMap({
                 const d = `M ${a.x1} ${base} A ${rx} ${ry} 0 0 ${sweep} ${x2} ${base}`;
                 const shaky = uncertain.has(a.setupId) || uncertain.has(a.payoffId);
                 const importance = setupById.get(a.setupId)?.importance ?? 2;
-                const dim = related && !(related.has(a.setupId) && related.has(a.payoffId));
+                const dim =
+                  (related && !(related.has(a.setupId) && related.has(a.payoffId))) || offKind(a.setupId);
                 return (
                   <path
                     key={`${a.setupId}-${a.payoffId}`}
@@ -355,7 +369,7 @@ export default function ArcMap({
                     ry={ry}
                     threadLen={12 + (setupById.get(a.id)?.importance ?? 1) * 9}
                     fromThread={!firedAtMount.has(a.id)}
-                    dim={!!related && !related.has(a.id)}
+                    dim={(!!related && !related.has(a.id)) || offKind(a.id)}
                   />
                 );
               })}
@@ -364,7 +378,7 @@ export default function ArcMap({
               {unfiredNodes.map((n) => {
                 const len = 12 + (setupById.get(n.id)?.importance ?? 1) * 9;
                 const d = `M ${n.x} ${base} C ${n.x + 2} ${base + len * 0.4}, ${n.x - 3} ${base + len * 0.7}, ${n.x + 1} ${base + len}`;
-                const dim = related && !related.has(n.id);
+                const dim = (related && !related.has(n.id)) || offKind(n.id);
                 return (
                   <path
                     key={`dangle-${n.id}`}
@@ -389,7 +403,7 @@ export default function ArcMap({
               {layout.nodes.map((n) => {
                 const item = byId.get(n.id);
                 const isActive = shown === n.id;
-                const dim = related && !related.has(n.id);
+                const dim = (related && !related.has(n.id)) || offKind(n.id);
                 const call = overrides[n.id];
                 const label = nodeLabel(n, item, chapterTitle(item?.chapter ?? 0), call);
                 let mark: React.ReactNode;
@@ -453,7 +467,7 @@ export default function ArcMap({
                 const pid = PAY + a.id;
                 const isActive = shown === pid;
                 const s = isActive ? 6.5 : 4.5;
-                const dim = related && !related.has(pid);
+                const dim = (related && !related.has(pid)) || offKind(pid);
                 return (
                   <g
                     key={pid}
