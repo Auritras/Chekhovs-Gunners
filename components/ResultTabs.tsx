@@ -30,6 +30,7 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
   // `seq` makes repeat clicks on the same issue scroll again.
   const [target, setTarget] = useState<{ id: string; seq: number } | null>(null);
   const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ report: null, story: null });
+  const sectionRef = useRef<HTMLElement>(null);
   // The writer's calls on guns the tool says never fire, remembered per story.
   // (The page remounts this component for each new result, so the key is fixed here.)
   const [key] = useState(() => storyKey(result));
@@ -59,10 +60,18 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
     saveOverrides(key, next);
   }
 
+  /** A plain tab switch: the Story tab opens as the normal story, not the last jump. */
   function select(next: Tab, focus = false) {
+    if (next === tab) return;
     // A transition, so the <ViewTransition> below draws the curtain between views.
-    startTransition(() => setTab(next));
+    startTransition(() => {
+      if (next === "story") setTarget(null);
+      setTab(next);
+    });
     if (focus) tabRefs.current[next]?.focus();
+    // Start the other view from its top, not from wherever this one was scrolled to.
+    const top = sectionRef.current?.getBoundingClientRect().top ?? 0;
+    if (top < 0) sectionRef.current?.scrollIntoView({ block: "start" });
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
@@ -112,7 +121,7 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
 
 
   return (
-    <section aria-label="Results">
+    <section ref={sectionRef} aria-label="Results">
       <div
         role="tablist"
         aria-label="Results"
