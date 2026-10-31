@@ -597,6 +597,18 @@ body {
   animation: arc-glint 900ms ease-out 1000ms;
 }
 
+/* 404: the red thread under the never-planted gun sways a little, like a loose end. */
+.never-thread {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: thread-sway 4s ease-in-out infinite;
+}
+@keyframes thread-sway {
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
 /* Arc map: trajectories draw in once, in story order. */
 .arc-draw {
   stroke-dasharray: 1;
@@ -735,6 +747,7 @@ body {
   .card-enter,
   .type-caret,
   .ink-fill,
+  .never-thread,
   .arc-draw,
   .arc-fade,
   .reward-toast,
