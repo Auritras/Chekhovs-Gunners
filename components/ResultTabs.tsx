@@ -21,6 +21,7 @@ import TensionChart from "@/components/report/TensionChart";
 import IssueList from "@/components/report/IssueList";
 import Divider from "@/components/report/Divider";
 import KindChips from "@/components/report/KindChips";
+import DownloadNotes from "@/components/report/DownloadNotes";
 import FiredList from "@/components/report/FiredList";
 import StoryView from "@/components/story/StoryView";
 import { callAchievements } from "@/lib/view/achievements";
@@ -215,7 +216,10 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
           <div>
             {tab === "report" ? (
               <div className="flex flex-col gap-10">
-                <Summary result={view} overrides={overrides} />
+                <div className="flex flex-col gap-6">
+                  <DownloadNotes result={view} overrides={overrides} />
+                  <Summary result={view} overrides={overrides} />
+                </div>
                 <Divider />
                 {/* The guns that never fire are why writers come, so they lead the report. */}
                 <div className="flex flex-col gap-6">
