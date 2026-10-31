@@ -20,9 +20,21 @@ const ui = Instrument_Sans({
   subsets: ["latin"],
 });
 
+const description =
+  "Every gun you plant should fire. Find the setups in your story, see where they pay off, and spot the ones that never do.";
+
 export const metadata: Metadata = {
+  // Absolute base so the link-preview image resolves when the URL is shared.
+  metadataBase: new URL("https://chekhovs-gunners.vercel.app"),
   title: "Chekhov's Gunners",
-  description: "Every gun you plant should fire. Find the setups in your story, see where they pay off, and spot the ones that never do.",
+  description,
+  openGraph: {
+    title: "Chekhov's Gunners",
+    description,
+    siteName: "Chekhov's Gunners",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image", title: "Chekhov's Gunners", description },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
