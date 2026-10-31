@@ -233,16 +233,6 @@ body {
 }
 
 /* Rotating quotes while analysing: one entrance per line. */
-.type-char {
-  opacity: 0;
-  animation: type-in 1ms steps(1) forwards;
-  animation-delay: calc(var(--i) * 24ms);
-}
-@keyframes type-in {
-  to {
-    opacity: 1;
-  }
-}
 .quote-ink {
   display: inline-block;
   animation: ink-in 1100ms ease-out both;
@@ -634,7 +624,6 @@ body {
   .riso-title::before,
   .kinetic-word,
   .working-dots::after,
-  .type-char,
   .quote-ink,
   .quote-wipe,
   .quote-stamp,

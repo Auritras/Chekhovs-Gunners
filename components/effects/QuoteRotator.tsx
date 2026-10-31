@@ -40,6 +40,30 @@ const QUOTES: { text: string; by: string; entrance: Entrance; bang?: string }[] 
 const SHOW_MS = 7000;
 const OUT_MS = 400;
 
+const TYPE_MS = 24;
+
+/**
+ * Typewriter: reveals the text itself, a letter at a time. (A per-letter CSS animation
+ * left some letters stuck invisible, so "can" read "c n".)
+ */
+function TypeLine({ text }: { text: string }) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    const all = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const id = setInterval(() => setN((k) => (all || k >= text.length ? text.length : k + 1)), TYPE_MS);
+    return () => clearInterval(id);
+  }, [text]);
+  return (
+    <>
+      {text.slice(0, n)}
+      {/* The rest is laid out but invisible, so the line never reflows while it types. */}
+      <span aria-hidden className="invisible">
+        {text.slice(n)}
+      </span>
+    </>
+  );
+}
+
 function Line({ text, entrance, bang }: { text: string; entrance: Entrance; bang?: string }) {
   if (entrance === "words") {
     return text.split(" ").map((w, i) => (
@@ -53,13 +77,7 @@ function Line({ text, entrance, bang }: { text: string; entrance: Entrance; bang
       </span>
     ));
   }
-  if (entrance === "type") {
-    return [...text].map((ch, i) => (
-      <span key={i} className="type-char" style={{ "--i": i } as CSSProperties}>
-        {ch}
-      </span>
-    ));
-  }
+  if (entrance === "type") return <TypeLine text={text} />;
   return <span className={`quote-${entrance}`}>{text}</span>;
 }
 
