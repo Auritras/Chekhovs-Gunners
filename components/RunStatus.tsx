@@ -72,10 +72,11 @@ function Footlights({ of, current, finished }: { of: number; current: number; fi
         return (
           <li
             key={n}
-            className={`h-2 w-5 rounded-full ${
-              done ? "bg-brass" : live ? "footlight-live bg-curtain" : "bg-line"
-            }`}
-          />
+            className={`relative h-2 w-5 overflow-hidden rounded-full ${live ? "footlight-live bg-curtain" : "bg-line"}`}
+          >
+            {/* A finished chapter's light fills like ink spreading, instead of snapping on. */}
+            {done && <span className="ink-fill absolute inset-0 bg-brass" />}
+          </li>
         );
       })}
     </ol>
