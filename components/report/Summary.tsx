@@ -1,6 +1,7 @@
 import CountUp from "@/components/effects/CountUp";
+import RewardToasts from "@/components/effects/RewardToasts";
 import type { AnalysisResult } from "@/lib/types";
-import type { Overrides } from "@/lib/view/overrides";
+import { storyKey, type Overrides } from "@/lib/view/overrides";
 import { summaryCounts } from "@/lib/view/summaryCounts";
 
 /** Jump to a report section; a collapsed list (<details>) opens on arrival. */
@@ -20,6 +21,7 @@ export default function Summary({ result, overrides }: { result: AnalysisResult;
   // planted = fired + never fired + uncertain + in the ending + set aside (uncertain counts setups only).
   const c = summaryCounts(result, overrides);
   const allFired = c.planted > 0 && c.neverFired === 0 && c.uncertain === 0;
+  const storyId = storyKey(result);
   const firstChapter = result.chapters[0]?.index;
   const firedIds = new Set([
     ...result.matches.map((m) => m.setupId),
@@ -95,23 +97,28 @@ export default function Summary({ result, overrides }: { result: AnalysisResult;
           </div>
         ))}
       </dl>
-      {(allFired || original) && (
-        <div className="mt-5 flex flex-col gap-2">
-          {allFired && (
-            <p className="report-reward font-display text-xl italic text-brass">
-              Every gun fired. Chekhov would approve.
-            </p>
-          )}
-          {original && (
-            <p className="report-reward flex flex-wrap items-center gap-2 text-sm text-ink-soft">
-              <span className="rounded-full border border-brass px-2.5 py-0.5 font-display text-base text-brass">
-                The original
-              </span>
-              A real gun on the wall in chapter 1, and it goes off: “{original.summary}”
-            </p>
-          )}
-        </div>
-      )}
+      <RewardToasts
+        rewards={[
+          ...(allFired
+            ? [
+                {
+                  key: `${storyId}:all-fired`,
+                  title: "Every gun fired",
+                  text: "Chekhov would approve.",
+                },
+              ]
+            : []),
+          ...(original
+            ? [
+                {
+                  key: `${storyId}:original`,
+                  title: "The original",
+                  text: "A real gun in chapter 1, and it goes off.",
+                },
+              ]
+            : []),
+        ]}
+      />
     </section>
   );
 }
