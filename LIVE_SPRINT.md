@@ -41,6 +41,7 @@ Tick items off on the day. Order is a suggestion: the must-haves first, so there
 
 Anyone on the team can add an idea here. Write one line: what it does and why a writer would want it. We pick from this list on the day if there is time.
 
+- **"How could this fire?" (headline GenAI feature).** For each loose end, the AI suggests 2-3 places in later chapters where it could pay off, quoting the actual sentences there. The writer picks one (it becomes their call: the red thread pulls up into a gold arc at that line) or ignores them all. Real generative work on the writer's own text, shown live on stage, and it fits "It suggests; the writer decides". Measure how often writers accept a suggestion.
 - **"Fire this gun" loop (demo centrepiece).** The writer accepts a suggested fix; only the affected chapters are re-checked (the cache keeps the rest free). On the arc map, the red thread rewinds and a bright gold arc draws in its place, glints once and settles, staying a shade brighter than ordinary brass arcs so the guns the writer resolved stand out.
 - **Character promises as setups.** Track vows and promises ("I'll pay it back by Puja") explicitly; they are often a story's strongest guns.
 - **Severity ranking.** Order the unfired guns by how much the story leans on them (importance, how often they are mentioned).
