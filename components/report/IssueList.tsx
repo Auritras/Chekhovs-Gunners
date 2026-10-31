@@ -78,7 +78,9 @@ export default function IssueList({
               ? `No ${kind} guns are left on the wall.`
               : all.length > 0
               ? "Every gun is accounted for."
-              : "Every setup we found pays off later in the story."}
+              : result.setups.length === 0
+                ? "An empty stage. Bold choice. We found no setups in this story."
+                : "Every setup we found pays off later in the story."}
         </p>
         {onAddGun && (
           <button

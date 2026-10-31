@@ -115,8 +115,8 @@ export default function RunStatus({
       )}
       {showStoryNotices && wordCount > LONG_STORY_WORDS && (
         <Notice>
-          This story is {wordCount.toLocaleString("en-US")} words long. Analysis will take a while
-          and may use up today&apos;s free AI quota.
+          This story is {wordCount.toLocaleString("en-US")} words long. This may take a while
+          (Tolstoy took six years), and it may use up today&apos;s free AI quota.
         </Notice>
       )}
 

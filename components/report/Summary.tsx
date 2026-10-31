@@ -21,6 +21,7 @@ function jump(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
 export default function Summary({ result, overrides }: { result: AnalysisResult; overrides: Overrides }) {
   // planted = fired + never fired + uncertain + in the ending + set aside (uncertain counts setups only).
   const c = summaryCounts(result, overrides);
+  const mentionsChekhov = result.chapters.some((ch) => /\bchekhov\b/i.test(ch.text));
   // Story achievements (every gun fired, the original, long fuse, ...) unlock as earned.
   useEffect(() => {
     unlock(...storyAchievements(result, overrides));
@@ -90,6 +91,16 @@ export default function Summary({ result, overrides }: { result: AnalysisResult;
           </div>
         ))}
       </dl>
+      {mentionsChekhov && (
+        <p className="mt-4 flex items-center gap-2 text-sm text-ink-soft">
+          <svg viewBox="0 0 24 16" aria-hidden className="hat-tip h-4 w-6 text-brass">
+            <path d="M7 1 H17 V11 H7 Z" fill="currentColor" />
+            <path d="M2 12 Q12 15 22 12 L22 13.5 Q12 16.5 2 13.5 Z" fill="currentColor" />
+            <path d="M7 9 H17" stroke="var(--paper)" strokeWidth="1.2" />
+          </svg>
+          Your story mentions Chekhov. He tips his hat.
+        </p>
+      )}
     </section>
   );
 }

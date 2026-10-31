@@ -269,7 +269,7 @@ export default function ArcMap({
             <p className="mt-1 truncate text-sm text-ink-soft">{activeItem.summary}</p>
           </>
         ) : (
-          <p className="pt-2 font-serif italic text-muted">No setups were found in this story.</p>
+          <p className="pt-2 font-serif italic text-muted">An empty stage. Bold choice.</p>
         )}
       </div>
 

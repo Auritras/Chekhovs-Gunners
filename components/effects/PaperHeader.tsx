@@ -31,6 +31,16 @@ function Drape({ side }: { side: "left" | "right" }) {
 export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
   const gunRef = useRef<SVGSVGElement>(null);
 
+  // 29 January, Chekhov's birthday: the tagline wishes him well. Read on the client only,
+  // so the server-rendered page and the browser agree on first paint.
+  const [birthday, setBirthday] = useState(false);
+  useEffect(() => {
+    const now = new Date();
+    if (now.getMonth() !== 0 || now.getDate() !== 29) return;
+    const id = setTimeout(() => setBirthday(true), 0);
+    return () => clearTimeout(id);
+  }, []);
+
   // Easter egg: six clicks (six chambers) and the gun fires a "BANG!" flag, once per visit.
   const clicks = useRef<{ n: number; last: number }>({ n: 0, last: 0 });
   const [bang, setBang] = useState(false);
@@ -139,7 +149,7 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
             Chekhov’s Gunners
           </h1>
           <p className="mt-2 font-display text-xl italic opacity-90 sm:text-2xl">
-            Every gun you plant should fire.
+            {birthday ? "Happy birthday, Anton." : "Every gun you plant should fire."}
           </p>
         </div>
       </div>
