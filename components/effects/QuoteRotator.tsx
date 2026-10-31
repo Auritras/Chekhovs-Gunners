@@ -56,6 +56,9 @@ function TypeLine({ text }: { text: string }) {
   return (
     <>
       {text.slice(0, n)}
+      <span aria-hidden className="type-caret">
+        |
+      </span>
       {/* The rest is laid out but invisible, so the line never reflows while it types. */}
       <span aria-hidden className="invisible">
         {text.slice(n)}
@@ -106,7 +109,8 @@ export default function QuoteRotator() {
     <figure
       aria-hidden
       className={`flex min-h-[9rem] flex-col gap-2 transition-opacity duration-300 sm:min-h-[7.5rem] ${
-        leaving ? "opacity-0" : "opacity-100"
+        // The typed line leaves with a carriage return; the others fade.
+        leaving ? (q.entrance === "type" ? "quote-carriage" : "opacity-0") : "opacity-100"
       }`}
     >
       <blockquote key={index} className="font-display text-xl italic leading-snug text-ink-soft sm:text-2xl">
