@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GUN_BODY, GUN_TRIGGER } from "@/components/effects/GunGlyph";
 
 /** Paper layers carry data-depth: how far (px) they drift at the header edge; nearer layers move more. */
@@ -29,6 +29,30 @@ function Drape({ side }: { side: "left" | "right" }) {
  */
 export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
   const gunRef = useRef<SVGSVGElement>(null);
+
+  // Easter egg: six clicks (six chambers) and the gun fires a "BANG!" flag, once per visit.
+  const clicks = useRef<{ n: number; last: number }>({ n: 0, last: 0 });
+  const [bang, setBang] = useState(false);
+  function onGunClick() {
+    const now = Date.now();
+    const c = clicks.current;
+    c.n = now - c.last > 2500 ? 1 : c.n + 1;
+    c.last = now;
+    if (c.n < 6) return;
+    c.n = 0;
+    try {
+      if (window.sessionStorage.getItem("cg-bang")) return;
+      window.sessionStorage.setItem("cg-bang", "1");
+    } catch {
+      // Storage blocked: allow it anyway.
+    }
+    setBang(true);
+    const gun = gunRef.current;
+    gun?.classList.remove("gun-recoil");
+    void gun?.getBoundingClientRect();
+    gun?.classList.add("gun-recoil");
+    setTimeout(() => setBang(false), 2600);
+  }
 
   // A new report with guns left unfired: the gun on the wall fires once (recoil and gold dust).
   useEffect(() => {
@@ -67,8 +91,17 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
       <div
         aria-hidden
         data-depth="3"
+        onClick={onGunClick}
         className="paper-layer paper-shadow absolute right-[clamp(48px,15vw,240px)] top-1/2 z-10 hidden -translate-y-1/2 sm:block"
       >
+        {bang && (
+          <span className="bang-flag absolute left-[88%] top-[18%] flex items-center">
+            <span className="h-px w-6 bg-curtain-ink/80" />
+            <span className="bg-curtain-ink px-2 py-0.5 font-display text-sm font-bold tracking-wide text-curtain">
+              BANG!
+            </span>
+          </span>
+        )}
         <svg ref={gunRef} viewBox="0 0 80 50" className="gun-hang h-10 w-16 overflow-visible lg:h-14 lg:w-24">
           <path d="M40 2 L22 16 M40 2 L58 16" className="stroke-curtain-ink/60" strokeWidth="1.5" fill="none" />
           <circle cx="40" cy="3" r="2.5" className="fill-brass" />
