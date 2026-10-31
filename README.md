@@ -11,10 +11,10 @@ Chekhov's Gunners is a writing assistant for the oldest rule in dramatic craft. 
 
 ## Judge it in 60 seconds
 
-1. Open the live demo and click **The Locked Drawer** (or **See the full report** in the "What you get" card). The saved report opens instantly and uses no AI quota.
+1. Open the live demo and click any of the three samples (or **See the full report** in the "What you get" card). The saved report opens instantly and uses no AI quota.
 2. Read **Guns that never fire**: each card quotes the line that planted the gun. Click one to jump to it in the Story tab, where it stands in a spotlight and the other highlights step back.
 3. Open **Guns that fired** to check what the tool understood, then look at the **arc map** and the **tension** hill.
-4. To see a live run, click **The Sweet Shop** to load its text and press **Analyse** (about a minute).
+4. To see a live run, click **Or load its text to analyse yourself** under any sample, then press **Analyse** (about a minute).
 
 ## What you get
 
@@ -104,11 +104,18 @@ Sample stories ship with writer-made answer keys (`samples/<slug>/answer-key.jso
 
 | Sample | Recall | Wrong setups | Wrong matches | Unfired correct | Quote drop rate |
 | --- | --- | --- | --- | --- | --- |
-| the-locked-drawer | not yet measured | not yet measured | not yet measured | not yet measured | not yet measured |
-| the-sweet-shop | not yet measured | not yet measured | not yet measured | not yet measured | not yet measured |
-| the-stopped-clock | not yet measured | not yet measured | not yet measured | not yet measured | not yet measured |
+| the-locked-drawer | 100% | 2.0 | 0.0 | 1/1 | 0% |
+| the-sweet-shop | 83% | 0.0 | 1.0 | 0/1 | 0% |
+| the-stopped-clock | not yet measured | | | | |
 
-Produce it with `npm run prompt-check` (needs `GEMINI_API_KEY_DEV`). The latest numbers will be recorded here with the date, model and prompt versions (currently extract `x2`, match `m2`).
+**Before baseline:** 31 Oct 2026 · `gemini-3.5-flash`, medium thinking · prompts extract `x2`, match `m2` · **1 run per sample** (the free tier allows 20 requests a day; more runs will be added on later days). Produced with `npm run prompt-check -- --runs 1 --only the-locked-drawer,the-sweet-shop`.
+
+What the baseline misses, and what the live sprint targets:
+
+- **The Sweet Shop:** the brass bell (the story's deliberate unfired gun) is never found, so "unfired correct" is 0/1; the "hearing the syrup" skill is quoted from its payoff scene instead of where it is planted.
+- **The Stopped Clock** (saved result, not yet scored): both red herrings are treated like ordinary setups, the gardener's record is wrongly linked as fired, and the stopped clock itself is not picked up as a setup. This is the case for genre-aware prompts.
+
+These misses are why the app lets the writer overrule any verdict ("It does fire" / "Not a gun").
 
 **Prompt freeze:** no prompt changes during evaluation, 17-19 Nov 2026.
 

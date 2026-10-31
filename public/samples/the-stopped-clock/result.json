@@ -1,0 +1,163 @@
+{
+  "chapters": [
+    {
+      "index": 1,
+      "title": "Chapter 1: Twenty to Ten",
+      "text": "The hall clock at Glenmore Bungalow had stopped at twenty to ten, and everyone in the house agreed that this was exactly when the ring had vanished.\n\nInspector Rao arrived from Darjeeling at noon, in a jeep that had lost its windscreen to the monsoon. Mr. Bose met him on the veranda, still in his dressing gown, holding an empty velvet box as if it might fill itself again.\n\n\"My father's signet,\" he said. \"Gold, with a tiger's-eye stone. It was on the study desk at half past nine. By twenty to ten it was gone.\"\n\n\"And you know the time because of the clock.\"\n\n\"Everyone knows the time because of the clock.\"\n\nThere were four people in the house that night. Mr. Bose had been in the drawing room with his nephew Arun, who owed money to half the bookmakers in Siliguri and did not trouble to hide it. Lakshmi, the cook, had been in the kitchen with the wireless on. Miss Pereira, the secretary, had been typing letters in the room next to the study.\n\n\"I remember the time exactly,\" Miss Pereira said. She was a neat woman with a neat cardigan and a neat way of folding her hands. \"The clock struck the three-quarter, and then it simply stopped. I thought it was the damp.\"\n\nAnd then there was Tenzing, the gardener. Tenzing had served two years in Alipore jail for stealing from a Calcutta warehouse, and the whole household knew it. Mr. Bose said his name the way other men spat.\n\nRao said very little. He walked the length of the hall twice, looked at the clock, looked at the study, and looked, for rather a long time, at the floor by the typewriter. When Miss Pereira stood to fetch him tea, he noticed a rim of wet red clay along the welt of her left shoe.\n\nThe rest of Glenmore stood on grey shale. Rao filed that away and drank his tea."
+    },
+    {
+      "index": 2,
+      "title": "Chapter 2: The Window",
+      "text": "The study had one door, which opened onto the hall, and one window, which opened onto the garden below.\n\nThe brass latch on the study window had been oiled, very recently; it slid back without a sound. Rao rubbed the oil between finger and thumb and smelled it. Sewing-machine oil, not the heavy grease Tenzing used on the garden tools.\n\n\"Tenzing,\" said Mr. Bose from the doorway. \"Search his quarters. Search them now.\"\n\nRao searched them, because it was simpler than arguing. He found two blankets, a photograph of a woman in Kalimpong, a tin of pruning wire and nothing else. Mr. Bose was not satisfied. Mr. Bose said a man like that would know where to hide a ring.\n\nThat evening Rao asked the household to sit together in the drawing room with the door closed. Arun sulked. Lakshmi brought tea nobody wanted. Miss Pereira sat with her hands folded.\n\n\"I am going to step out,\" Rao said, \"and I would like you to tell me when you hear me in the study.\"\n\nHe went round by the garden, in the dark, and climbed in through the study window. He slid the oiled latch back and forth three times. He opened the desk drawer and closed it again. Then he walked back round to the drawing room.\n\n\"Well?\" said Mr. Bose. \"When are you going?\"\n\n\"I have been,\" said Rao. \"Nobody heard a thing. Whoever took the ring did not need the door.\"\n\nLakshmi put her cup down. \"Inspector,\" she said, \"the night it happened, the news on the wireless was just finishing when I saw someone come in from the garden. That's a quarter past ten.\"\n\nNobody looked at the clock. Everybody thought about it."
+    },
+    {
+      "index": 3,
+      "title": "Chapter 3: The Rose Bed",
+      "text": "In the morning Rao took the hall clock off the wall.\n\nThere was a hairpin wedged behind the pendulum, bent neatly into a hook. \"The clock did not stop at twenty to ten,\" he said. \"It was stopped at twenty to ten, by hand, some time later, so that everyone would agree on the wrong hour. The ring was taken at a quarter past ten, by someone who wanted to be typing next door at twenty to.\"\n\nMiss Pereira's hands came unfolded.\n\nThe only red clay on the whole estate was in the new rose bed beneath the study window, dug that week and not yet planted. Rao asked Tenzing for a spade. Tenzing dug, carefully, as if the earth might be hurt, and on the third spadeful turned up a handkerchief knotted round something small and heavy.\n\nThe signet ring. Gold, with a tiger's-eye stone, and red clay packed into the engraving.\n\n\"She meant to come back for it when the fuss died down,\" Rao said. \"Sewing-machine oil for the latch, a hairpin for the clock, and a rose bed nobody would dig until spring.\"\n\nMiss Pereira said nothing at all. Arun laughed, once, too loudly. Mr. Bose put the ring on his finger and turned it round and round, and did not look at anyone.\n\nRao went out to the jeep. The rain had stopped. Behind him, in the hall, somebody wound the clock, and it began to tick again."
+    }
+  ],
+  "setups": [
+    {
+      "quote": "\"My father's signet,\" he said. \"Gold, with a tiger's-eye stone. It was on the study desk at half past nine. By twenty to ten it was gone.\"",
+      "kind": "object",
+      "summary": "Mr. Bose's gold signet ring with a tiger's-eye stone has mysteriously disappeared from his desk.",
+      "importance": 3,
+      "id": "c1-s1",
+      "chapter": 1,
+      "start": 377,
+      "end": 513
+    },
+    {
+      "quote": "Mr. Bose had been in the drawing room with his nephew Arun, who owed money to half the bookmakers in Siliguri and did not trouble to hide it.",
+      "kind": "relationship",
+      "summary": "Arun owes substantial money to bookmakers, providing a potential motive for the theft.",
+      "importance": 2,
+      "id": "c1-s2",
+      "chapter": 1,
+      "start": 660,
+      "end": 801
+    },
+    {
+      "quote": "Tenzing had served two years in Alipore jail for stealing from a Calcutta warehouse, and the whole household knew it.",
+      "kind": "trait",
+      "summary": "Tenzing's past imprisonment for theft makes him an obvious suspect in the household.",
+      "importance": 2,
+      "id": "c1-s3",
+      "chapter": 1,
+      "start": 1217,
+      "end": 1334
+    },
+    {
+      "quote": "When Miss Pereira stood to fetch him tea, he noticed a rim of wet red clay along the welt of her left shoe.",
+      "kind": "secret",
+      "summary": "Inspector Rao observes wet red clay on Miss Pereira's shoe despite the surrounding terrain being grey shale.",
+      "importance": 3,
+      "id": "c1-s4",
+      "chapter": 1,
+      "start": 1555,
+      "end": 1662
+    },
+    {
+      "quote": "The brass latch on the study window had been oiled, very recently; it slid back without a sound. Rao rubbed the oil between finger and thumb and smelled it. Sewing-machine oil, not the heavy grease Tenzing used",
+      "kind": "object",
+      "summary": "The study window latch was lubricated with sewing-machine oil rather than Tenzing's garden grease.",
+      "importance": 2,
+      "id": "c2-s1",
+      "chapter": 2,
+      "start": 105,
+      "end": 315
+    },
+    {
+      "quote": "\"Inspector,\" she said, \"the night it happened, the news on the wireless was just finishing when I saw someone come in from the garden. That's a quarter past ten.\"",
+      "kind": "secret",
+      "summary": "Lakshmi reveals she saw someone enter from the garden at 10:15 p.m. on the night of the theft.",
+      "importance": 2,
+      "id": "c2-s2",
+      "chapter": 2,
+      "start": 1355,
+      "end": 1515
+    }
+  ],
+  "payoffs": [
+    {
+      "quote": "He found two blankets, a photograph of a woman in Kalimpong, a tin of pruning wire and nothing else. Mr. Bose was not satisfied. Mr. Bose said a man like that would know where to hide a ring.",
+      "summary": "A search of Tenzing's quarters yields no stolen ring, though Mr. Bose remains convinced of his guilt.",
+      "id": "c2-p1",
+      "chapter": 2,
+      "firesSetupId": "c1-s3",
+      "start": 478,
+      "end": 669
+    },
+    {
+      "quote": "The only red clay on the whole estate was in the new rose bed beneath the study window, dug that week and not yet planted.",
+      "summary": "The red clay found on Miss Pereira's shoe is traced directly to the rose bed where the stolen ring was hidden.",
+      "id": "c3-p1",
+      "chapter": 3,
+      "firesSetupId": "c1-s4",
+      "start": 427,
+      "end": 549
+    },
+    {
+      "quote": "The signet ring. Gold, with a tiger's-eye stone, and red clay packed into the engraving.",
+      "summary": "Mr. Bose's stolen gold signet ring with the tiger's-eye stone is recovered from the rose bed.",
+      "id": "c3-p2",
+      "chapter": 3,
+      "firesSetupId": "c1-s1",
+      "start": 729,
+      "end": 817
+    },
+    {
+      "quote": "\"She meant to come back for it when the fuss died down,\" Rao said. \"Sewing-machine oil for the latch, a hairpin for the clock, and a rose bed nobody would dig until spring.\"",
+      "summary": "Rao explicitly ties the sewing-machine oil on the study window latch to Miss Pereira's theft scheme.",
+      "id": "c3-p3",
+      "chapter": 3,
+      "firesSetupId": "c2-s1",
+      "start": 820,
+      "end": 991
+    }
+  ],
+  "matches": [
+    {
+      "setupId": "c1-s3",
+      "payoffId": "c2-p1",
+      "reasoning": "",
+      "source": "extract"
+    },
+    {
+      "setupId": "c1-s4",
+      "payoffId": "c3-p1",
+      "reasoning": "",
+      "source": "extract"
+    },
+    {
+      "setupId": "c1-s1",
+      "payoffId": "c3-p2",
+      "reasoning": "",
+      "source": "extract"
+    },
+    {
+      "setupId": "c2-s1",
+      "payoffId": "c3-p3",
+      "reasoning": "",
+      "source": "extract"
+    }
+  ],
+  "unfired": [
+    "c1-s2",
+    "c2-s2"
+  ],
+  "inEnding": [],
+  "tension": [
+    10,
+    12,
+    4
+  ],
+  "failedChapters": [],
+  "uncertain": [],
+  "droppedQuotes": 0,
+  "model": "gemini-3.5-flash",
+  "promptVersions": {
+    "extract": "x2",
+    "match": "m2"
+  }
+}
