@@ -6,6 +6,8 @@ import RunStatus, { type RunState } from "@/components/RunStatus";
 import ResultTabs from "@/components/ResultTabs";
 import OpeningCurtain, { markCurtainStart } from "@/components/effects/OpeningCurtain";
 import PaperHeader from "@/components/effects/PaperHeader";
+import AchievementToasts from "@/components/effects/AchievementToasts";
+import { unlock } from "@/lib/view/achievementStore";
 import { useStageTitle } from "@/components/effects/useStageTitle";
 import HowItWorks from "@/components/landing/HowItWorks";
 import SamplePreview from "@/components/landing/SamplePreview";
@@ -59,6 +61,24 @@ export default function Home() {
     setCurtain(true);
   }
 
+  /** Achievements for finishing an analysis of the writer's own story. */
+  function runAchievements(chapters: Chapter[]): string[] {
+    const ids = ["opening-night"];
+    let runs = 1;
+    try {
+      runs = Number(window.localStorage.getItem("cg-runs") ?? "0") + 1;
+      window.localStorage.setItem("cg-runs", String(runs));
+    } catch {
+      // Storage blocked: count this run only.
+    }
+    if (runs >= 2) ids.push("encore");
+    const words = chapters.reduce((n, c) => n + c.text.split(/\s+/).filter(Boolean).length, 0);
+    if (words >= 10_000) ids.push("marathon");
+    if (new Date().getHours() < 4) ids.push("night-owl");
+    if (document.hidden) ids.push("intermission");
+    return ids;
+  }
+
   async function start(chapters: Chapter[]) {
     const id = ++runId.current;
     setRun({ phase: "running", chapter: 1, of: chapters.length, stage: "extract" });
@@ -99,6 +119,7 @@ export default function Home() {
       const outcome = await analyze(chapters, httpDeps(), onProgress);
       if (id !== runId.current) return;
       if (outcome.status === "ok" && !everyChapterFailed(outcome.result)) {
+        unlock(...runAchievements(chapters));
         reveal(() => {
           setResult(outcome.result);
           setRun({ phase: "done" });
@@ -172,6 +193,7 @@ export default function Home() {
 
   return (
     <>
+      <AchievementToasts />
       {curtain && <OpeningCurtain onClosed={curtainClosed} onDone={closeCurtain} />}
       {/* The gun on the wall fires only when the story left guns unfired. */}
       <PaperHeader fireKey={showResults && result && result.unfired.length > 0 ? result : null} />

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { GUN_BODY, GUN_TRIGGER } from "@/components/effects/GunGlyph";
+import { unlock } from "@/lib/view/achievementStore";
 
 /** Paper layers carry data-depth: how far (px) they drift at the header edge; nearer layers move more. */
 function paperLayers(stage: HTMLElement) {
@@ -47,6 +48,7 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
       // Storage blocked: allow it anyway.
     }
     setBang(true);
+    unlock("six-chambers");
     const gun = gunRef.current;
     gun?.classList.remove("gun-recoil");
     void gun?.getBoundingClientRect();

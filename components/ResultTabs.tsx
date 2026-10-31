@@ -22,6 +22,8 @@ import IssueList from "@/components/report/IssueList";
 import Divider from "@/components/report/Divider";
 import FiredList from "@/components/report/FiredList";
 import StoryView from "@/components/story/StoryView";
+import { callAchievements } from "@/lib/view/achievements";
+import { unlock } from "@/lib/view/achievementStore";
 
 type Tab = "report" | "story";
 const TABS: { id: Tab; label: string }[] = [
@@ -44,6 +46,10 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
   const [guns, setGuns] = useState<WriterGun[]>(() => loadGuns(key));
   const view = useMemo(() => withWriterGuns(result, guns), [result, guns]);
   const overrides = activeOverrides(view, saved);
+  // The writer's own calls unlock achievements (script doctor, red herring, sharp eye, ...).
+  useEffect(() => {
+    unlock(...callAchievements(view, overrides));
+  });
 
   // Story pick mode: point to where a gun fires, or select a line that plants a missed gun.
   type Pick = { mode: "payoff"; setupId: string; chapter: number } | { mode: "setup" };

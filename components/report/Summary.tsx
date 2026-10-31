@@ -1,7 +1,11 @@
+"use client";
+
+import { useEffect } from "react";
 import CountUp from "@/components/effects/CountUp";
-import RewardToasts from "@/components/effects/RewardToasts";
 import type { AnalysisResult } from "@/lib/types";
-import { storyKey, type Overrides } from "@/lib/view/overrides";
+import type { Overrides } from "@/lib/view/overrides";
+import { storyAchievements } from "@/lib/view/achievements";
+import { unlock } from "@/lib/view/achievementStore";
 import { summaryCounts } from "@/lib/view/summaryCounts";
 
 /** Jump to a report section; a collapsed list (<details>) opens on arrival. */
@@ -14,24 +18,13 @@ function jump(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
   el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
 }
 
-/** A real gun (the literal kind) in chapter 1 that fires later: Chekhov's own example. */
-const FIREARM = /\b(gun|pistol|rifle|revolver|musket|shotgun|carbine|firearm)s?\b/i;
-
 export default function Summary({ result, overrides }: { result: AnalysisResult; overrides: Overrides }) {
   // planted = fired + never fired + uncertain + in the ending + set aside (uncertain counts setups only).
   const c = summaryCounts(result, overrides);
-  const allFired = c.planted > 0 && c.neverFired === 0 && c.uncertain === 0;
-  const storyId = storyKey(result);
-  const firstChapter = result.chapters[0]?.index;
-  const firedIds = new Set([
-    ...result.matches.map((m) => m.setupId),
-    ...Object.entries(overrides)
-      .filter(([, o]) => o.kind === "fired")
-      .map(([id]) => id),
-  ]);
-  const original = result.setups.find(
-    (s) => s.chapter === firstChapter && firedIds.has(s.id) && FIREARM.test(`${s.quote} ${s.summary}`),
-  );
+  // Story achievements (every gun fired, the original, long fuse, ...) unlock as earned.
+  useEffect(() => {
+    unlock(...storyAchievements(result, overrides));
+  }, [result, overrides]);
 
   const items: { label: string; value: number; tone?: string; href?: string; note?: string }[] = [
     {
@@ -97,30 +90,6 @@ export default function Summary({ result, overrides }: { result: AnalysisResult;
           </div>
         ))}
       </dl>
-      <RewardToasts
-        rewards={[
-          ...(allFired
-            ? [
-                {
-                  key: `${storyId}:all-fired`,
-                  title: "Chekhov Approves",
-                  text: "Every gun planted in your story fires by the end.",
-                  emblem: "curtain" as const,
-                },
-              ]
-            : []),
-          ...(original
-            ? [
-                {
-                  key: `${storyId}:original`,
-                  title: "The Original",
-                  text: "A real gun hangs on the wall in chapter 1, and it goes off later.",
-                  emblem: "gun" as const,
-                },
-              ]
-            : []),
-        ]}
-      />
     </section>
   );
 }
