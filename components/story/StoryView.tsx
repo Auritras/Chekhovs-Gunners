@@ -161,7 +161,7 @@ export default function StoryView({
         <div
           role="region"
           aria-label="Point to the line"
-          className="sticky top-16 z-[6] -mb-6 flex flex-col gap-2 rounded-sm border border-gold bg-paper p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+          className="sticky top-[calc(3.5rem+1px)] z-[6] -mx-4 flex flex-col gap-2 border-b-2 border-gold bg-paper px-4 py-2 sm:mx-0 sm:flex-row sm:items-center sm:justify-between sm:px-0"
         >
           <p className="text-sm">
             Select the line where <span className="font-medium">“{pick.summary}”</span> pays off, then press{" "}
@@ -190,13 +190,14 @@ export default function StoryView({
         </div>
       )}
 
+      {/* A strip attached under the tabs: the story scrolls beneath it instead of being covered. */}
       {!pick && (onBack || (focusId && target)) && (
-        <div className="sticky top-16 z-[5] -mb-6 flex flex-wrap justify-between gap-2">
+        <div className="sticky top-[calc(3.5rem+1px)] z-[5] -mx-4 flex flex-wrap items-center justify-between gap-x-6 border-b border-line bg-paper px-4 sm:mx-0 sm:px-0">
           {onBack ? (
             <button
               type="button"
               onClick={onBack}
-              className="min-h-11 rounded-sm border border-ink bg-paper px-4 text-sm font-medium shadow-sm transition-colors hover:bg-ink hover:text-paper"
+              className="min-h-11 text-sm font-medium text-brass transition-colors hover:text-ink"
             >
               ← Back to report
             </button>
@@ -207,7 +208,7 @@ export default function StoryView({
             <button
               type="button"
               onClick={() => setDismissed(target.seq)}
-              className="min-h-11 rounded-sm border border-ink bg-paper px-4 text-sm font-medium shadow-sm transition-colors hover:bg-ink hover:text-paper"
+              className="min-h-11 text-sm text-ink-soft underline decoration-line underline-offset-4 transition-colors hover:text-ink hover:decoration-current"
             >
               Show all highlights
             </button>
