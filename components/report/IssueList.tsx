@@ -27,6 +27,25 @@ export default function IssueList({
 }) {
   // Which card has its chapter picker open.
   const [picking, setPicking] = useState<string | null>(null);
+  // "Not a gun" takes the card off the wall (slides out) before it moves to "Set aside";
+  // Undo brings it back sliding in.
+  const [leaving, setLeaving] = useState<string | null>(null);
+  const [returning, setReturning] = useState<string | null>(null);
+  function setAsideGun(id: string) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      onDecide(id, { kind: "dismissed" });
+      return;
+    }
+    setLeaving(id);
+    setTimeout(() => {
+      setLeaving(null);
+      onDecide(id, { kind: "dismissed" });
+    }, 380);
+  }
+  function undoSetAside(id: string) {
+    setReturning(id);
+    onDecide(id, null);
+  }
   const uncertain = new Set(result.uncertain);
   const unfired = new Set(result.unfired);
   const all: Setup[] = result.setups
@@ -72,7 +91,13 @@ export default function IssueList({
             const unsure = uncertain.has(s.id);
             const laterChapters = result.chapters.filter((c) => c.index >= s.chapter);
             return (
-              <li key={s.id} id={`card-${s.id}`} className="scroll-mt-28 border-t border-line last:border-b">
+              <li
+                key={s.id}
+                id={`card-${s.id}`}
+                className={`scroll-mt-28 border-t border-line last:border-b ${
+                  leaving === s.id ? "card-leave" : returning === s.id ? "card-enter" : ""
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => onSelect(s.id)}
@@ -127,7 +152,7 @@ export default function IssueList({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => onDecide(s.id, { kind: "dismissed" })}
+                      onClick={() => setAsideGun(s.id)}
                       className={`${smallButton} border-line text-ink-soft hover:border-ink hover:text-ink`}
                     >
                       Not a gun
@@ -175,7 +200,7 @@ export default function IssueList({
                 </span>
                 <button
                   type="button"
-                  onClick={() => onDecide(s.id, null)}
+                  onClick={() => undoSetAside(s.id)}
                   className={`${smallButton} border-line text-ink-soft hover:border-ink hover:text-ink`}
                 >
                   Undo

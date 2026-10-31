@@ -478,6 +478,30 @@ body {
   animation: arc-fade 500ms ease-out 400ms both;
 }
 
+/* "Not a gun": the card is taken off the wall; Undo hangs it back. */
+.card-leave {
+  animation: card-leave 380ms ease-in forwards;
+}
+.card-leave .bg-curtain {
+  transition: opacity 200ms;
+  opacity: 0;
+}
+@keyframes card-leave {
+  to {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+}
+.card-enter {
+  animation: card-enter 450ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+}
+
 /* Rewards under the summary fade in quietly. */
 .report-reward {
   animation: arc-fade 900ms ease-out both;
@@ -652,6 +676,7 @@ body {
   .analyse-cock.cocking,
   .bow-group:hover .bow-upper,
   .bow-group:focus .bow-upper,
+  .card-enter,
   .arc-draw,
   .arc-fade,
   .report-reward,
