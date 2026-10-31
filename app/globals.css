@@ -478,6 +478,22 @@ body {
   animation: arc-fade 500ms ease-out 400ms both;
 }
 
+/* Footer: a little figure on stage bows when the motto is hovered or tapped. */
+.bow-upper {
+  transform-box: view-box;
+  transform-origin: 10px 16px;
+}
+.bow-group:hover .bow-upper,
+.bow-group:focus .bow-upper {
+  animation: bow 1.4s ease-in-out;
+}
+@keyframes bow {
+  35%,
+  65% {
+    transform: rotate(48deg);
+  }
+}
+
 /* Arc map: trajectories draw in once, in story order. */
 .arc-draw {
   stroke-dasharray: 1;
@@ -611,6 +627,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .analyse-cock:active,
   .analyse-cock.cocking,
+  .bow-group:hover .bow-upper,
+  .bow-group:focus .bow-upper,
   .arc-draw,
   .arc-fade,
   .writer-arc,

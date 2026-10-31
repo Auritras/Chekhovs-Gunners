@@ -224,7 +224,19 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-line px-4 py-6 text-center text-sm text-muted">
-        It suggests; the writer decides. Your text is never changed.
+        {/* Hover (or tap) the motto and a little figure on stage takes a bow to the writer. */}
+        <span tabIndex={0} className="bow-group inline-flex items-end gap-2 rounded-sm outline-offset-4">
+          <svg viewBox="0 0 20 24" aria-hidden className="h-6 w-5 text-brass">
+            <line x1="0" y1="23.5" x2="20" y2="23.5" stroke="currentColor" strokeWidth="1" />
+            <path d="M10 16 L7 23 M10 16 L13 23" stroke="currentColor" strokeWidth="1.2" fill="none" />
+            <g className="bow-upper">
+              <path d="M10 16 L10 9 M10 11 L6.5 14 M10 11 L13.5 14" stroke="currentColor" strokeWidth="1.2" fill="none" />
+              <circle cx="10" cy="6" r="2.4" fill="currentColor" />
+            </g>
+          </svg>
+          It suggests; the writer decides.
+        </span>{" "}
+        Your text is never changed.
       </footer>
     </>
   );
