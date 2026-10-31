@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AnalysisResult, Payoff, Setup } from "@/lib/types";
 import { layoutArcs, type ArcNode } from "@/lib/view/arcLayout";
 import type { Override, Overrides } from "@/lib/view/overrides";
@@ -36,6 +36,64 @@ function nodeLabel(
   return `${what} in ${chapterTitle}, ${state}: ${item?.summary ?? ""}`;
 }
 
+/**
+ * A gun the writer marked as firing: a gold arc. When the call was just made, the red
+ * thread hanging under the gun pulls up into the arc instead of being swapped for it.
+ */
+function WriterArc({
+  x1,
+  x2,
+  base,
+  ry,
+  threadLen,
+  fromThread,
+  dim,
+}: {
+  x1: number;
+  x2: number;
+  base: number;
+  ry: number;
+  threadLen: number;
+  fromThread: boolean;
+  dim: boolean;
+}) {
+  const ref = useRef<SVGPathElement>(null);
+  const played = useRef(false);
+  // Both shapes as one cubic curve, so the browser can morph one into the other.
+  const k = (ry * 4) / 3;
+  const arc = `M ${x1} ${base} C ${x1} ${base - k}, ${x2} ${base - k}, ${x2} ${base}`;
+  const thread = `M ${x1} ${base} C ${x1 + 2} ${base + threadLen * 0.4}, ${x1 - 3} ${base + threadLen * 0.7}, ${x1 + 1} ${base + threadLen}`;
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!fromThread || played.current || !el) return;
+    played.current = true;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const anim = el.animate(
+      [
+        { d: `path("${thread}")`, stroke: "var(--curtain)" },
+        { d: `path("${arc}")`, stroke: "var(--gold)" },
+      ],
+      { duration: 1100, easing: "cubic-bezier(0.3, 1.25, 0.5, 1)" },
+    );
+    return () => anim.cancel();
+  }, [fromThread, thread, arc]);
+
+  return (
+    <path
+      ref={ref}
+      d={arc}
+      pathLength={fromThread ? undefined : 1}
+      fill="none"
+      stroke="var(--gold)"
+      strokeWidth="2.75"
+      strokeLinecap="round"
+      strokeOpacity={dim ? 0.18 : 1}
+      className={fromThread ? "writer-arc-pulled" : "writer-arc"}
+    />
+  );
+}
+
 export default function ArcMap({
   result,
   overrides = {},
@@ -47,6 +105,11 @@ export default function ArcMap({
   const boxRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState<number | null>(null);
   const [active, setActive] = useState<string | null>(null);
+  // Guns already marked as firing when the map appeared draw in normally; ones marked
+  // while it is on screen pull up from their red thread.
+  const [firedAtMount] = useState(
+    () => new Set(Object.entries(overrides).filter(([, o]) => o.kind === "fired").map(([id]) => id)),
+  );
 
   useLayoutEffect(() => {
     const el = boxRef.current;
@@ -254,18 +317,16 @@ export default function ArcMap({
               {writerArcs.map((a) => {
                 const rx = Math.max((a.x2 - a.x1) / 2, 3);
                 const ry = Math.min(Math.max(rx * 0.9, 10), maxArc - 6);
-                const dim = related && !related.has(a.id);
                 return (
-                  <path
+                  <WriterArc
                     key={`writer-${a.id}`}
-                    d={`M ${a.x1} ${base} A ${rx} ${ry} 0 0 1 ${a.x2} ${base}`}
-                    pathLength={1}
-                    fill="none"
-                    stroke="var(--gold)"
-                    strokeWidth="2.75"
-                    strokeLinecap="round"
-                    strokeOpacity={dim ? 0.18 : 1}
-                    className="writer-arc"
+                    x1={a.x1}
+                    x2={a.x2}
+                    base={base}
+                    ry={ry}
+                    threadLen={12 + (setupById.get(a.id)?.importance ?? 1) * 9}
+                    fromThread={!firedAtMount.has(a.id)}
+                    dim={!!related && !related.has(a.id)}
                   />
                 );
               })}

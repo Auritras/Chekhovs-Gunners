@@ -577,6 +577,11 @@ body {
   }
 }
 
+/* A thread just pulled up into a gold arc glints once it lands. */
+.writer-arc-pulled {
+  animation: arc-glint 900ms ease-out 1000ms;
+}
+
 /* Arc map: trajectories draw in once, in story order. */
 .arc-draw {
   stroke-dasharray: 1;
