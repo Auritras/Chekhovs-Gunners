@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { AnalysisResult, Setup } from "@/lib/types";
-import type { Override, Overrides } from "@/lib/view/overrides";
+import { isWriterGun, type Override, type Overrides } from "@/lib/view/overrides";
 
 const IMPORTANCE = { 1: "Minor", 2: "Notable", 3: "Major" } as const;
 
@@ -14,11 +14,16 @@ export default function IssueList({
   overrides,
   onDecide,
   onSelect,
+  onAddGun,
+  onRemoveGun,
 }: {
   result: AnalysisResult;
   overrides: Overrides;
   onDecide: (setupId: string, call: Override | null) => void;
   onSelect: (setupId: string) => void;
+  /** Select a line in the story that plants a gun the tool missed. */
+  onAddGun?: () => void;
+  onRemoveGun?: (setupId: string) => void;
 }) {
   // Which card has its chapter picker open.
   const [picking, setPicking] = useState<string | null>(null);
@@ -51,6 +56,15 @@ export default function IssueList({
               ? "Every gun is accounted for."
               : "Every setup we found pays off later in the story."}
         </p>
+        {onAddGun && (
+          <button
+            type="button"
+            onClick={onAddGun}
+            className="mt-2 min-h-11 text-sm text-ink-soft underline decoration-line underline-offset-4 transition-colors hover:text-ink hover:decoration-current"
+          >
+            Missed one? Add a gun the tool didn&apos;t find
+          </button>
+        )}
       </div>
       {issues.length > 0 && (
         <ul className="flex flex-col">
@@ -75,8 +89,12 @@ export default function IssueList({
                   <span className="flex min-w-0 flex-col gap-1.5">
                     <span className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-ink-soft">
                       <span>{chapterTitle(s.chapter)}</span>
-                      <span className="capitalize">{s.kind}</span>
-                      <span>{IMPORTANCE[s.importance]} importance</span>
+                      {!isWriterGun(s.id) && <span className="capitalize">{s.kind}</span>}
+                      {isWriterGun(s.id) ? (
+                        <span className="text-gold">added by you</span>
+                      ) : (
+                        <span>{IMPORTANCE[s.importance]} importance</span>
+                      )}
                       {unsure && (
                         <span className="text-muted italic">may be affected by a failed chapter</span>
                       )}
@@ -98,13 +116,23 @@ export default function IssueList({
                   >
                     It does fire →
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => onDecide(s.id, { kind: "dismissed" })}
-                    className={`${smallButton} border-line text-ink-soft hover:border-ink hover:text-ink`}
-                  >
-                    Not a gun
-                  </button>
+                  {isWriterGun(s.id) ? (
+                    <button
+                      type="button"
+                      onClick={() => onRemoveGun?.(s.id)}
+                      className={`${smallButton} border-line text-ink-soft hover:border-ink hover:text-ink`}
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onDecide(s.id, { kind: "dismissed" })}
+                      className={`${smallButton} border-line text-ink-soft hover:border-ink hover:text-ink`}
+                    >
+                      Not a gun
+                    </button>
+                  )}
                   {picking === s.id && (
                     <div role="group" aria-label="Where does it pay off?" className="flex w-full flex-wrap gap-2 pt-1">
                       <span className="w-full text-sm text-ink-soft">Where does it pay off?</span>

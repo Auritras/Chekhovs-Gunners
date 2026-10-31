@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { activeOverrides, payoffPassage, storyKey } from "@/lib/view/overrides";
+import { activeOverrides, payoffPassage, storyKey, withWriterGuns } from "@/lib/view/overrides";
 import type { AnalysisResult } from "@/lib/types";
 
 function result(over: Partial<AnalysisResult>): AnalysisResult {
@@ -52,5 +52,18 @@ describe("payoffPassage", () => {
     expect(payoffPassage(text, 0, 2, setup, 1)).toHaveProperty("error");
     expect(payoffPassage(text, 2, 10, setup, 1)).toHaveProperty("error");
     expect(payoffPassage(text, 2, 10, setup, 2)).toHaveProperty("quote");
+  });
+});
+
+describe("withWriterGuns", () => {
+  it("adds valid writer guns as unfired setups and drops ones whose text no longer matches", () => {
+    const r = result({});
+    const out = withWriterGuns(r, [
+      { id: "writer-gun-a", chapter: 1, start: 2, end: 5, quote: "gun", summary: "the gun" },
+      { id: "writer-gun-b", chapter: 1, start: 0, end: 3, quote: "xyz", summary: "stale" },
+    ]);
+    expect(out.setups.map((s) => s.id)).toEqual(["writer-gun-a"]);
+    expect(out.unfired).toEqual(["writer-gun-a"]);
+    expect(withWriterGuns(r, [])).toBe(r);
   });
 });

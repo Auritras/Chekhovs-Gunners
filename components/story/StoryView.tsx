@@ -30,6 +30,7 @@ export default function StoryView({
   pick = null,
   onPicked,
   onCancelPick,
+  onAddGun,
 }: {
   result: AnalysisResult;
   overrides?: Overrides;
@@ -37,11 +38,14 @@ export default function StoryView({
   /** Return to the report card the writer came from. */
   onBack?: () => void;
   /** Pick mode: the writer selects the passage where this gun fires. */
-  pick?: { setupId: string; chapter: number; summary: string } | null;
-  onPicked?: (chapter: number, passage: { start: number; end: number; quote: string }) => void;
+  /** "payoff": where a gun the writer marked fires; "setup": a line planting a gun the tool missed. */
+  pick?: { mode: "payoff"; setupId: string; chapter: number; summary: string } | { mode: "setup" } | null;
+  onPicked?: (chapter: number, passage: { start: number; end: number; quote: string }, name?: string) => void;
   onCancelPick?: () => void;
+  onAddGun?: () => void;
 }) {
   const [pickError, setPickError] = useState<string | null>(null);
+  const [gunName, setGunName] = useState("");
 
   /** Read the writer's text selection as offsets into one chapter's text. */
   function applyPickedLine() {
@@ -61,7 +65,9 @@ export default function StoryView({
     const start = before.toString().length;
     const chapter = Number(container.dataset.chapter);
     const text = result.chapters.find((c) => c.index === chapter)?.text ?? "";
-    const setup = result.setups.find((x) => x.id === pick.setupId);
+    // A new gun can be planted anywhere; a payoff must come after its setup.
+    const setup =
+      pick.mode === "payoff" ? result.setups.find((x) => x.id === pick.setupId) : { chapter: 0, end: 0 };
     if (!setup) return;
     const passage = payoffPassage(text, start, start + range.toString().length, setup, chapter);
     if ("error" in passage) {
@@ -70,7 +76,8 @@ export default function StoryView({
     }
     setPickError(null);
     sel?.removeAllRanges();
-    onPicked?.(chapter, passage);
+    onPicked?.(chapter, passage, gunName);
+    setGunName("");
   }
 
   // The jump (by seq) the writer dismissed; while a newer one is live, other highlights fade.
@@ -155,6 +162,17 @@ export default function StoryView({
           <li><span className="mark mark-setup-inEnding">Setup in the ending</span></li>
         )}
         {hasUncertain && <li><span className="mark mark-uncertain">Uncertain</span></li>}
+        {onAddGun && !pick && (
+          <li>
+            <button
+              type="button"
+              onClick={onAddGun}
+              className="text-ink-soft underline decoration-line underline-offset-4 hover:text-ink hover:decoration-current"
+            >
+              + Add a gun the tool missed
+            </button>
+          </li>
+        )}
       </ul>
 
       {pick && (
@@ -163,11 +181,31 @@ export default function StoryView({
           aria-label="Point to the line"
           className="sticky top-[calc(3.5rem+1px)] z-[6] -mx-4 flex flex-col gap-2 border-b-2 border-gold bg-paper px-4 py-2 sm:mx-0 sm:flex-row sm:items-center sm:justify-between sm:px-0"
         >
-          <p className="text-sm">
-            Select the line where <span className="font-medium">“{pick.summary}”</span> pays off, then press{" "}
-            <em>Use this line</em>.
+          <div className="flex min-w-0 flex-col gap-2 text-sm">
+            {pick.mode === "payoff" ? (
+              <p>
+                Select the line where <span className="font-medium">“{pick.summary}”</span> pays off, then press{" "}
+                <em>Use this line</em>.
+              </p>
+            ) : (
+              <>
+                <p>
+                  Select the line that plants the gun, then press <em>Use this line</em>.
+                </p>
+                <label className="flex flex-wrap items-center gap-2">
+                  <span className="text-ink-soft">What is it? (optional)</span>
+                  <input
+                    id="writer-gun-name"
+                    value={gunName}
+                    onChange={(e) => setGunName(e.target.value)}
+                    placeholder="e.g. the brass bell over the door"
+                    className="min-h-11 min-w-0 flex-1 rounded-sm border border-line bg-surface px-3 text-ink placeholder:text-muted focus:border-ink focus:outline-none"
+                  />
+                </label>
+              </>
+            )}
             {pickError && <span className="block text-curtain">{pickError}</span>}
-          </p>
+          </div>
           <span className="flex shrink-0 gap-2">
             <button
               type="button"

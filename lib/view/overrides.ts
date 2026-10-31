@@ -83,3 +83,66 @@ export function activeOverrides(result: AnalysisResult, overrides: Overrides): O
     Object.entries(overrides).filter(([id]) => open.has(id) && !fired.has(id)),
   );
 }
+
+/** A gun the tool never found, which the writer added by selecting the line that plants it. */
+export interface WriterGun {
+  id: string;
+  chapter: number;
+  start: number;
+  end: number;
+  quote: string;
+  summary: string;
+}
+
+export const WRITER_GUN_PREFIX = "writer-gun-";
+export const isWriterGun = (id: string) => id.startsWith(WRITER_GUN_PREFIX);
+
+const gunsKey = (key: string) => `cg-guns-${key}`;
+
+/** The guns the writer added to this story; [] if none or storage is unavailable. */
+export function loadGuns(key: string): WriterGun[] {
+  try {
+    const data: unknown = JSON.parse(window.localStorage.getItem(gunsKey(key)) ?? "[]");
+    return Array.isArray(data) ? (data as WriterGun[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveGuns(key: string, guns: WriterGun[]): void {
+  try {
+    if (guns.length === 0) window.localStorage.removeItem(gunsKey(key));
+    else window.localStorage.setItem(gunsKey(key), JSON.stringify(guns));
+  } catch {
+    // Private mode or blocked storage: the guns still apply until the page closes.
+  }
+}
+
+/**
+ * The result as the writer sees it: the tool's own findings plus the guns the writer added,
+ * which start out unfired (the writer can then say where they fire, like any other).
+ */
+export function withWriterGuns(result: AnalysisResult, guns: WriterGun[]): AnalysisResult {
+  const valid = guns.filter((g) => {
+    const text = result.chapters.find((c) => c.index === g.chapter)?.text;
+    return text !== undefined && text.slice(g.start, g.end) === g.quote;
+  });
+  if (valid.length === 0) return result;
+  return {
+    ...result,
+    setups: [
+      ...result.setups,
+      ...valid.map((g) => ({
+        id: g.id,
+        chapter: g.chapter,
+        quote: g.quote,
+        start: g.start,
+        end: g.end,
+        kind: "other" as const,
+        summary: g.summary,
+        importance: 2 as const,
+      })),
+    ],
+    unfired: [...result.unfired, ...valid.map((g) => g.id)],
+  };
+}

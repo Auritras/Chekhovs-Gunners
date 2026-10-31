@@ -1,12 +1,17 @@
 "use client";
 
-import { startTransition, useEffect, useId, useRef, useState, ViewTransition } from "react";
+import { startTransition, useEffect, useId, useMemo, useRef, useState, ViewTransition } from "react";
 import type { AnalysisResult } from "@/lib/types";
 import {
   activeOverrides,
+  loadGuns,
   loadOverrides,
+  saveGuns,
   saveOverrides,
   storyKey,
+  withWriterGuns,
+  WRITER_GUN_PREFIX,
+  type WriterGun,
   type Override,
   type Overrides,
 } from "@/lib/view/overrides";
@@ -35,22 +40,58 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
   // (The page remounts this component for each new result, so the key is fixed here.)
   const [key] = useState(() => storyKey(result));
   const [saved, setSaved] = useState<Overrides>(() => loadOverrides(key));
-  const overrides = activeOverrides(result, saved);
+  // Guns the tool never found, added by the writer. `view` is the result the writer sees.
+  const [guns, setGuns] = useState<WriterGun[]>(() => loadGuns(key));
+  const view = useMemo(() => withWriterGuns(result, guns), [result, guns]);
+  const overrides = activeOverrides(view, saved);
 
-  // "Point to the line": the Story view in pick mode for a gun the writer marked as firing.
-  const [pick, setPick] = useState<{ setupId: string; chapter: number } | null>(null);
+  // Story pick mode: point to where a gun fires, or select a line that plants a missed gun.
+  type Pick = { mode: "payoff"; setupId: string; chapter: number } | { mode: "setup" };
+  const [pick, setPick] = useState<Pick | null>(null);
   function pointOut(setupId: string) {
     const call = saved[setupId];
     if (call?.kind !== "fired") return;
     startTransition(() => {
-      setPick({ setupId, chapter: call.chapter });
+      setPick({ mode: "payoff", setupId, chapter: call.chapter });
+      setTab("story");
+    });
+  }
+  function startAddGun() {
+    startTransition(() => {
+      setTarget(null);
+      setPick({ mode: "setup" });
       setTab("story");
     });
   }
   useEffect(() => {
-    if (tab !== "story" || !pick) return;
+    if (tab !== "story" || pick?.mode !== "payoff") return;
     document.getElementById(`story-ch-${pick.chapter}`)?.scrollIntoView({ block: "start" });
   }, [tab, pick]);
+
+  function addGun(chapter: number, passage: { start: number; end: number; quote: string }, name: string) {
+    const q = passage.quote.replace(/\s+/g, " ");
+    const gun: WriterGun = {
+      id: `${WRITER_GUN_PREFIX}${Date.now().toString(36)}`,
+      chapter,
+      ...passage,
+      summary: name.trim() || (q.length > 70 ? `${q.slice(0, 70).trimEnd()}…` : q),
+    };
+    const next = [...guns, gun];
+    setGuns(next);
+    saveGuns(key, next);
+    setPick(null);
+    // Back to the report, at the new gun's card.
+    startTransition(() => {
+      setBackTo({ id: gun.id, seq: handledBack.current + 1 });
+      setTab("report");
+    });
+  }
+  function removeGun(id: string) {
+    const next = guns.filter((g) => g.id !== id);
+    setGuns(next);
+    saveGuns(key, next);
+    decide(id, null);
+  }
 
   function decide(setupId: string, call: Override | null) {
     const next = { ...saved };
@@ -165,13 +206,20 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
           <div>
             {tab === "report" ? (
               <div className="flex flex-col gap-10">
-                <Summary result={result} overrides={overrides} />
+                <Summary result={view} overrides={overrides} />
                 <Divider />
                 {/* The guns that never fire are why writers come, so they lead the report. */}
                 <div className="flex flex-col gap-6">
-                  <IssueList result={result} overrides={overrides} onDecide={decide} onSelect={openInStory} />
+                  <IssueList
+                    result={view}
+                    overrides={overrides}
+                    onDecide={decide}
+                    onSelect={openInStory}
+                    onAddGun={startAddGun}
+                    onRemoveGun={removeGun}
+                  />
                   <FiredList
-                    result={result}
+                    result={view}
                     overrides={overrides}
                     onDecide={decide}
                     onSelect={openInStory}
@@ -179,26 +227,28 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
                   />
                 </div>
                 <Divider />
-                <ArcMap result={result} overrides={overrides} />
+                <ArcMap result={view} overrides={overrides} />
                 <Divider />
                 <TensionChart result={result} />
               </div>
             ) : (
               <StoryView
-                result={result}
+                result={view}
                 overrides={overrides}
                 target={target}
                 onBack={target ? backToReport : undefined}
                 pick={
-                  pick
-                    ? { ...pick, summary: result.setups.find((s) => s.id === pick.setupId)?.summary ?? "" }
-                    : null
+                  pick?.mode === "payoff"
+                    ? { ...pick, summary: view.setups.find((s) => s.id === pick.setupId)?.summary ?? "" }
+                    : pick
                 }
-                onPicked={(chapter, passage) => {
+                onPicked={(chapter, passage, name) => {
                   if (!pick) return;
+                  if (pick.mode === "setup") return addGun(chapter, passage, name ?? "");
                   decide(pick.setupId, { kind: "fired", chapter, ...passage });
                   setPick(null);
                 }}
+                onAddGun={startAddGun}
                 onCancelPick={() => setPick(null)}
               />
             )}
