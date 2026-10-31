@@ -103,8 +103,9 @@ export default function Summary({ result, overrides }: { result: AnalysisResult;
             ? [
                 {
                   key: `${storyId}:all-fired`,
-                  title: "Every gun fired",
-                  text: "Chekhov would approve.",
+                  title: "Chekhov Approves",
+                  text: "Every gun planted in your story fires by the end.",
+                  emblem: "curtain" as const,
                 },
               ]
             : []),
@@ -112,8 +113,9 @@ export default function Summary({ result, overrides }: { result: AnalysisResult;
             ? [
                 {
                   key: `${storyId}:original`,
-                  title: "The original",
-                  text: "A real gun in chapter 1, and it goes off.",
+                  title: "The Original",
+                  text: "A real gun hangs on the wall in chapter 1, and it goes off later.",
+                  emblem: "gun" as const,
                 },
               ]
             : []),

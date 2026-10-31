@@ -7,8 +7,33 @@ import { curtainOpened } from "@/components/effects/OpeningCurtain";
 export interface Reward {
   /** Stable per story and reward, so a reward pops up once per visit. */
   key: string;
+  /** A word or two. */
   title: string;
+  /** Why it was unlocked. */
   text: string;
+  emblem: "gun" | "curtain";
+}
+
+/** The achievement's emblem: a gold-framed tile, like a game badge. */
+function Emblem({ kind }: { kind: Reward["emblem"] }) {
+  return (
+    // Fixed dark tile and gold in both themes, so it always reads as a badge.
+    <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-sm border-2 border-[#d6b25b] bg-[#1b1310] text-[#d6b25b] shadow-inner">
+      {kind === "gun" ? (
+        <GunGlyph className="h-6 w-12" />
+      ) : (
+        <svg viewBox="0 0 40 40" aria-hidden className="h-11 w-11">
+          {/* A small proscenium: curtains drawn back, stars above. */}
+          <path d="M4 8 H36 V12 Q30 16 24 12 Q20 16 16 12 Q10 16 4 12 Z" fill="currentColor" />
+          <path d="M4 12 Q10 22 7 34 H4 Z M36 12 Q30 22 33 34 H36 Z" fill="currentColor" opacity="0.75" />
+          <path d="M4 34 H36" stroke="currentColor" strokeWidth="2" />
+          <path d="M20 17 l1.4 2.9 3.1.4-2.3 2.2.6 3.1-2.8-1.5-2.8 1.5.6-3.1-2.3-2.2 3.1-.4z" fill="currentColor" />
+          <circle cx="13" cy="24" r="1" fill="currentColor" />
+          <circle cx="27" cy="24" r="1" fill="currentColor" />
+        </svg>
+      )}
+    </span>
+  );
 }
 
 const SHOW_MS = 6000;
@@ -61,17 +86,12 @@ export default function RewardToasts({ rewards }: { rewards: Reward[] }) {
         <div
           key={reward.key}
           role="status"
-          className={`${leaving ? "reward-toast-out" : "reward-toast"} flex w-[min(19rem,calc(100vw-2rem))] items-center gap-3 rounded-sm border border-brass/60 bg-surface p-2 pr-3 shadow-lg`}
+          className={`${leaving ? "reward-toast-out" : "reward-toast"} flex w-[min(24rem,calc(100vw-2rem))] items-center gap-4 rounded-sm border border-line bg-surface p-3 pr-4 shadow-lg`}
         >
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-ink text-brass">
-            <GunGlyph className="h-4 w-8" />
-          </span>
-          <span className="flex min-w-0 flex-col">
-            <span className="text-[0.65rem] uppercase tracking-[0.16em] text-muted">Achievement unlocked</span>
-            <span className="truncate font-display text-base leading-tight text-ink">{reward.title}</span>
-            <span className="truncate text-xs text-ink-soft" title={reward.text}>
-              {reward.text}
-            </span>
+          <Emblem kind={reward.emblem} />
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="font-display text-xl leading-tight text-ink">{reward.title}</span>
+            <span className="text-sm leading-snug text-ink-soft">{reward.text}</span>
           </span>
         </div>
       ))}
