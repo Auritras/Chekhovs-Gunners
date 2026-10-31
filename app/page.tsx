@@ -6,6 +6,7 @@ import RunStatus, { type RunState } from "@/components/RunStatus";
 import ResultTabs from "@/components/ResultTabs";
 import OpeningCurtain, { markCurtainStart } from "@/components/effects/OpeningCurtain";
 import PaperHeader from "@/components/effects/PaperHeader";
+import { useStageTitle } from "@/components/effects/useStageTitle";
 import HowItWorks from "@/components/landing/HowItWorks";
 import SamplePreview from "@/components/landing/SamplePreview";
 import { chapterize } from "@/lib/chapterize";
@@ -26,6 +27,7 @@ export default function Home() {
   const [sample, setSample] = useState<Sample | null>(null);
   // The live "Found" wall shown while a story is read.
   const [wall, setWall] = useState<WallItem[]>([]);
+  useStageTitle(run);
   const runId = useRef(0);
   const resultsRef = useRef<HTMLDivElement>(null);
   const curtainPlayed = useRef(false);
