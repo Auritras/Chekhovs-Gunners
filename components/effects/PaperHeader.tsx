@@ -30,7 +30,7 @@ function Drape({ side }: { side: "left" | "right" }) {
 export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
   const gunRef = useRef<SVGSVGElement>(null);
 
-  // A new report opened: the gun on the wall fires once (recoil and a puff of smoke).
+  // A new report with guns left unfired: the gun on the wall fires once (recoil and gold dust).
   useEffect(() => {
     const gun = gunRef.current;
     if (!fireKey || !gun || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -76,10 +76,14 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
             <path d={GUN_BODY} className="fill-curtain-ink" />
             <path d={GUN_TRIGGER} className="stroke-curtain-ink" strokeWidth="2.5" fill="none" />
           </g>
-          <g className="gun-puff fill-curtain-ink/80">
+          {/* A puff of gold dust from the muzzle. */}
+          <g className="gun-puff fill-brass">
             <circle cx="82" cy="19" r="4" />
             <circle cx="89" cy="15" r="3" />
             <circle cx="88" cy="23" r="2.5" />
+            <circle cx="95" cy="12" r="1.2" />
+            <circle cx="97" cy="20" r="1" />
+            <circle cx="93" cy="27" r="1.2" />
           </g>
         </svg>
       </div>

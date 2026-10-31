@@ -171,7 +171,8 @@ export default function Home() {
   return (
     <>
       {curtain && <OpeningCurtain onClosed={curtainClosed} onDone={closeCurtain} />}
-      <PaperHeader fireKey={showResults ? result : null} />
+      {/* The gun on the wall fires only when the story left guns unfired. */}
+      <PaperHeader fireKey={showResults && result && result.unfired.length > 0 ? result : null} />
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-8 sm:px-8 sm:py-12">
         {/* Desktop: the input on the left, a miniature of a real report on the right
