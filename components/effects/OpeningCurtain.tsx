@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 
 const CLOSE_MS = 750;
-const HOLD_MS = 350;
+/** Long enough to read the stage manager's "Places, please." on the closed curtain. */
+const HOLD_MS = 1100;
 const PART_MS = 1000;
 /** Only safety nets: normally each step starts when the previous animation finishes. */
 const CLOSE_SAFETY_MS = CLOSE_MS + 500;
@@ -48,6 +49,7 @@ export default function OpeningCurtain({
 }) {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
+  const callRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     const left = leftRef.current;
@@ -68,6 +70,8 @@ export default function OpeningCurtain({
 
     const part = () => {
       if (cancelled) return;
+      const fade = callRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: "forwards" });
+      if (fade) anims.push(fade);
       const timing: KeyframeAnimationOptions = { duration: PART_MS, easing: EASE, fill: "forwards" };
       const l = left.animate(
         [{ transform: "none" }, { transform: "scaleX(0.22)", offset: 0.6 }, { transform: OFF_LEFT }],
@@ -86,6 +90,13 @@ export default function OpeningCurtain({
       if (cancelled || closedOnce) return;
       closedOnce = true;
       onClosed();
+      // The stage manager's call appears on the closed curtain.
+      const call = callRef.current?.animate([{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }], {
+        duration: 350,
+        easing: "ease-out",
+        fill: "forwards",
+      });
+      if (call) anims.push(call);
       // Hold for a beat, then wait two frames so the report behind is painted before parting.
       timers.push(
         setTimeout(() => {
@@ -137,6 +148,13 @@ export default function OpeningCurtain({
       <div ref={rightRef} className="opening-half opening-right">
         <div className="curtain h-full w-full" />
       </div>
+      <p
+        ref={callRef}
+        className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-display text-3xl italic text-curtain-ink opacity-0 sm:text-4xl"
+        style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}
+      >
+        Places, please.
+      </p>
     </div>
   );
 }
