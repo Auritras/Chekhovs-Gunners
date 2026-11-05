@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GUN_BODY, GUN_TRIGGER } from "@/components/effects/GunGlyph";
 import { unlock } from "@/lib/view/achievementStore";
+import HouseLights from "@/components/effects/HouseLights";
 
 /** Paper layers carry data-depth: how far (px) they drift at the header edge; nearer layers move more. */
 function paperLayers(stage: HTMLElement) {
@@ -138,6 +139,11 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
 
       <div aria-hidden data-depth="6" className="paper-layer paper-shadow absolute -inset-x-4 top-0">
         <div className="valance curtain h-8 sm:h-10" />
+      </div>
+
+      {/* The house lights switch, top right, below the valance. */}
+      <div className="absolute right-[calc(clamp(28px,8vw,130px)+0.5rem)] top-9 z-20 sm:top-11">
+        <HouseLights />
       </div>
 
       <div className="relative px-[clamp(28px,8vw,130px)] pb-14 pt-16 sm:pb-16 sm:pt-20">

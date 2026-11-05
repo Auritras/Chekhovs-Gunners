@@ -135,6 +135,7 @@ export default function TensionLandscape({ tension }: { tension: number[] }) {
     observer.observe(canvas);
     window.addEventListener("resize", onResize);
     dark.addEventListener("change", draw);
+    window.addEventListener("cg-theme", draw);
     reduce.addEventListener("change", start);
     return () => {
       cancelAnimationFrame(frame);
@@ -142,6 +143,7 @@ export default function TensionLandscape({ tension }: { tension: number[] }) {
       observer.disconnect();
       window.removeEventListener("resize", onResize);
       dark.removeEventListener("change", draw);
+      window.removeEventListener("cg-theme", draw);
       reduce.removeEventListener("change", start);
     };
   }, [tension]);

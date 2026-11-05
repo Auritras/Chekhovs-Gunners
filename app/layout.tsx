@@ -42,7 +42,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${display.variable} ${text.variable} ${ui.variable} h-full antialiased`}
+      // The theme script below may set data-theme before React loads.
+      suppressHydrationWarning
     >
+      <head>
+        {/* The House lights choice, applied before the first paint so the page never flashes the wrong theme. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('cg-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}",
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
