@@ -141,8 +141,8 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
         <div className="valance curtain h-8 sm:h-10" />
       </div>
 
-      {/* The house lights switch, top right, below the valance. */}
-      <div className="absolute right-[calc(clamp(28px,8vw,130px)+0.5rem)] top-9 z-20 sm:top-11">
+      {/* The house lights: a pull-cord hanging from the valance, just inside the left drape. */}
+      <div className="absolute left-[calc(clamp(28px,8vw,130px)-0.75rem)] top-6 z-20 sm:top-8">
         <HouseLights />
       </div>
 
