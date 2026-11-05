@@ -6,7 +6,12 @@ import { summaryCounts } from "@/lib/view/summaryCounts";
  * The report as notes a writer can take to their editor: the loose ends with quotes and
  * chapter references, the writer's own decisions, and the guns that fired.
  */
-export function notesMarkdown(result: AnalysisResult, overrides: Overrides, date = new Date()): string {
+export function notesMarkdown(
+  result: AnalysisResult,
+  overrides: Overrides,
+  date = new Date(),
+  storyTitle?: string,
+): string {
   const title = (n: number) => result.chapters.find((c) => c.index === n)?.title || `Chapter ${n}`;
   const byId = new Map(result.setups.map((s) => [s.id, s]));
   const payoffs = new Map(result.payoffs.map((p) => [p.id, p]));
@@ -16,7 +21,7 @@ export function notesMarkdown(result: AnalysisResult, overrides: Overrides, date
   const line = (s: Setup) => `**${s.summary}** (${title(s.chapter)}, ${s.kind})`;
   const out: string[] = [];
 
-  out.push("# Notes from Chekhov's Gunners", "");
+  out.push(storyTitle ? `# Programme notes: ${storyTitle}` : "# Programme notes", "");
   out.push(
     `${result.chapters.length} chapters, ${words.toLocaleString("en-US")} words · ${date.toLocaleDateString("en-CA")}`,
     "",
@@ -96,19 +101,26 @@ export function notesHtml(markdown: string): string {
   const body: string[] = [];
   for (const raw of markdown.split("\n")) {
     const l = raw.trimEnd();
-    if (l.startsWith("### ")) body.push(`<h3>${inline(l.slice(4))}</h3>`);
+    if (l.startsWith("# ")) {
+      // A playbill heading for the first line.
+      body.push(
+        `<header class="bill"><p class="presents">Chekhov&rsquo;s Gunners presents</p><h1>${inline(l.slice(2))}</h1>` +
+          `<svg class="orn" viewBox="0 10 80 40" width="44" height="22" aria-hidden="true"><path d="M6 16 H70 V22 H74 V28 H34 Q30 28 29 32 L25 46 Q24 48 21 48 H12 Q9 48 10 45 L15 28 H6 Z" fill="#96731f"/></svg></header>`,
+      );
+    } else if (l.startsWith("### ")) body.push(`<h3>${inline(l.slice(4))}</h3>`);
     else if (l.startsWith("## ")) body.push(`<h2>${inline(l.slice(3))}</h2>`);
-    else if (l.startsWith("# ")) body.push(`<h1>${inline(l.slice(2))}</h1>`);
     else if (l.startsWith("  > ")) body.push(`<blockquote>${inline(l.slice(4))}</blockquote>`);
     else if (l.startsWith("  - ")) body.push(`<p class="sub">${inline(l.slice(4))}</p>`);
     else if (l.startsWith("- ")) body.push(`<p class="item">${inline(l.slice(2))}</p>`);
     else if (l === "---") body.push("<hr>");
     else if (l) body.push(`<p>${inline(l)}</p>`);
   }
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Notes from Chekhov's Gunners</title>
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Programme notes · Chekhov's Gunners</title>
 <style>
   body { font: 11.5pt/1.5 Georgia, "Times New Roman", serif; color: #1d1714; margin: 2cm; }
-  h1 { font-size: 22pt; margin: 0 0 4pt; } h2 { font-size: 15pt; margin: 18pt 0 6pt; border-bottom: 1px solid #c9b88f; }
+  .bill { text-align: center; border-top: 3px double #96731f; border-bottom: 3px double #96731f; padding: 10pt 0 8pt; margin-bottom: 10pt; }
+  .presents { font-size: 9pt; letter-spacing: 0.25em; text-transform: uppercase; color: #6b5d50; margin: 0; }
+  h1 { font-size: 24pt; margin: 4pt 0; } .orn { display: block; margin: 4pt auto 0; } h2 { font-size: 15pt; margin: 18pt 0 6pt; border-bottom: 1px solid #c9b88f; }
   h3 { font-size: 12pt; margin: 12pt 0 4pt; } p { margin: 3pt 0; } .item { margin-top: 8pt; }
   .sub { margin-left: 1.2em; color: #4a3f37; } blockquote { margin: 2pt 0 0 1.2em; font-style: italic; color: #4a3f37; }
   hr { border: 0; border-top: 1px solid #c9b88f; margin: 18pt 0 6pt; }

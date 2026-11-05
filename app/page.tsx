@@ -240,7 +240,11 @@ export default function Home() {
 
         {showResults && result && (
           <div ref={resultsRef} className="scroll-mt-4">
-            <ResultTabs key={storyKey(result)} result={result} />
+            <ResultTabs
+              key={storyKey(result)}
+              result={result}
+              title={run.phase === "sample" ? run.title : undefined}
+            />
           </div>
         )}
       </main>

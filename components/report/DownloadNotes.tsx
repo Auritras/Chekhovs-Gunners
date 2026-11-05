@@ -8,9 +8,19 @@ const button =
   "min-h-11 rounded-sm border border-line px-3 text-sm font-medium text-ink-soft transition-colors hover:border-ink hover:text-ink";
 
 /** "Download notes": the loose ends and the writer's decisions, as Markdown or as a PDF. */
-export default function DownloadNotes({ result, overrides }: { result: AnalysisResult; overrides: Overrides }) {
+export default function DownloadNotes({
+  result,
+  overrides,
+  title,
+}: {
+  result: AnalysisResult;
+  overrides: Overrides;
+  /** The story's title, when known (a sample's), for the programme heading. */
+  title?: string;
+}) {
+  const notes = () => notesMarkdown(result, overrides, new Date(), title);
   function markdown() {
-    const blob = new Blob([notesMarkdown(result, overrides)], { type: "text/markdown;charset=utf-8" });
+    const blob = new Blob([notes()], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -28,7 +38,7 @@ export default function DownloadNotes({ result, overrides }: { result: AnalysisR
     const doc = frame.contentDocument;
     if (!doc || !frame.contentWindow) return frame.remove();
     doc.open();
-    doc.write(notesHtml(notesMarkdown(result, overrides)));
+    doc.write(notesHtml(notes()));
     doc.close();
     frame.contentWindow.focus();
     frame.contentWindow.print();

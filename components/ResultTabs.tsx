@@ -33,7 +33,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "story", label: "Story" },
 ];
 
-export default function ResultTabs({ result }: { result: AnalysisResult }) {
+export default function ResultTabs({ result, title }: { result: AnalysisResult; title?: string }) {
   const id = useId();
   const [tab, setTab] = useState<Tab>("report");
   // `seq` makes repeat clicks on the same issue scroll again.
@@ -217,7 +217,7 @@ export default function ResultTabs({ result }: { result: AnalysisResult }) {
             {tab === "report" ? (
               <div className="flex flex-col gap-10">
                 <div className="flex flex-col gap-6">
-                  <DownloadNotes result={view} overrides={overrides} />
+                  <DownloadNotes result={view} overrides={overrides} title={title} />
                   <Summary result={view} overrides={overrides} />
                 </div>
                 <Divider />
