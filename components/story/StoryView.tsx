@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import GunGlyph from "@/components/effects/GunGlyph";
 import type { AnalysisResult } from "@/lib/types";
 import { highlightSegments, type HighlightMark } from "@/lib/view/highlight";
 import { payoffPassage, type Overrides } from "@/lib/view/overrides";
@@ -31,6 +32,7 @@ export default function StoryView({
   onPicked,
   onCancelPick,
   onAddGun,
+  onSelect,
 }: {
   result: AnalysisResult;
   overrides?: Overrides;
@@ -43,7 +45,10 @@ export default function StoryView({
   onPicked?: (chapter: number, passage: { start: number; end: number; quote: string }, name?: string) => void;
   onCancelPick?: () => void;
   onAddGun?: () => void;
+  /** Spotlight a setup (from the margin guns or J / K). */
+  onSelect?: (setupId: string) => void;
 }) {
+  const articleRef = useRef<HTMLElement>(null);
   const [pickError, setPickError] = useState<string | null>(null);
   const [gunName, setGunName] = useState("");
 
@@ -148,8 +153,65 @@ export default function StoryView({
 
   const hasUncertain = result.uncertain.length > 0;
 
+  // The loose ends, in story order: what J / K walk through.
+  const loose = useMemo(
+    () =>
+      result.setups
+        .filter((s) => result.unfired.includes(s.id) && !overrides[s.id])
+        .sort((a, b) => a.chapter - b.chapter || a.start - b.start)
+        .map((s) => s.id),
+    [result, overrides],
+  );
+  useEffect(() => {
+    if (!onSelect || loose.length === 0) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // Typing in a field (the gun name, a search box) is not navigation.
+      if (e.target instanceof Element && e.target.closest("input, textarea, select, [contenteditable]")) return;
+      const key = e.key.toLowerCase();
+      if (key !== "j" && key !== "k") return;
+      e.preventDefault();
+      const at = target ? loose.indexOf(target.id) : -1;
+      const next =
+        key === "j"
+          ? loose[at < 0 ? 0 : (at + 1) % loose.length]
+          : loose[at < 0 ? loose.length - 1 : (at - 1 + loose.length) % loose.length];
+      onSelect(next);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onSelect, loose, target]);
+
+  // Guns in the margin: one per setup, beside the line that plants it, coloured by its fate.
+  const [pins, setPins] = useState<{ id: string; chapter: number; top: number; state: string; summary: string }[]>([]);
+  useEffect(() => {
+    const article = articleRef.current;
+    if (!article) return;
+    const measure = () => {
+      const next: typeof pins = [];
+      for (const s of result.setups) {
+        const mark = document.getElementById(markElementId(s.id));
+        const section = mark?.closest("section");
+        if (!mark || !section) continue;
+        const top = mark.getBoundingClientRect().top - section.getBoundingClientRect().top;
+        const state = info.get(s.id)?.uncertain ? "uncertain" : (info.get(s.id)?.state ?? "unfired");
+        next.push({ id: s.id, chapter: s.chapter, top, state, summary: s.summary });
+      }
+      // Guns planted on the same line stack downwards instead of overlapping.
+      next.sort((a, b) => a.chapter - b.chapter || a.top - b.top);
+      for (let i = 1; i < next.length; i++) {
+        const prev = next[i - 1];
+        if (prev.chapter === next[i].chapter && next[i].top < prev.top + 16) next[i].top = prev.top + 16;
+      }
+      setPins(next);
+    };
+    const ro = new ResizeObserver(measure);
+    ro.observe(article);
+    return () => ro.disconnect();
+  }, [result, info]);
+
   return (
-    <article className={`flex flex-col gap-10 ${focusId ? "story-focus" : ""}`} onClick={onClick}>
+    <article ref={articleRef} className={`flex flex-col gap-10 ${focusId ? "story-focus" : ""}`} onClick={onClick}>
       <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-soft" aria-label="Key">
         <li><span className="mark mark-setup-fired">Setup that fires</span></li>
         <li><span className="mark mark-setup-unfired">Setup that never fires</span></li>
@@ -162,6 +224,12 @@ export default function StoryView({
           <li><span className="mark mark-setup-inEnding">Setup in the ending</span></li>
         )}
         {hasUncertain && <li><span className="mark mark-uncertain">Uncertain</span></li>}
+        {onSelect && loose.length > 0 && (
+          <li className="text-muted">
+            <kbd className="rounded-sm border border-line px-1 font-sans text-xs">J</kbd> /{" "}
+            <kbd className="rounded-sm border border-line px-1 font-sans text-xs">K</kbd> next or previous loose end
+          </li>
+        )}
         {onAddGun && !pick && (
           <li>
             <button
@@ -259,7 +327,35 @@ export default function StoryView({
         const seen = new Set<string>();
         const failed = result.failedChapters.includes(c.index);
         return (
-          <section key={c.index} aria-labelledby={`story-ch-${c.index}`} className="max-w-[68ch]">
+          <section
+            key={c.index}
+            aria-labelledby={`story-ch-${c.index}`}
+            className="relative max-w-[calc(68ch+2.5rem)] pl-10"
+          >
+            {/* Margin guns: red never fires, brass fires, gold marked by you, grey set aside or uncertain. */}
+            {pins
+              .filter((p) => p.chapter === c.index)
+              .map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  title={p.summary}
+                  aria-label={`Spotlight: ${p.summary}`}
+                  onClick={() => onSelect?.(p.id)}
+                  className={`absolute left-0 flex h-6 w-8 items-center justify-center rounded-sm transition-opacity hover:opacity-70 ${
+                    p.state === "unfired"
+                      ? "text-curtain"
+                      : p.state === "fired"
+                        ? "text-brass"
+                        : p.state === "writer"
+                          ? "text-gold"
+                          : "text-muted"
+                  }`}
+                  style={{ top: p.top }}
+                >
+                  <GunGlyph className="h-3 w-6" />
+                </button>
+              ))}
             <h3 id={`story-ch-${c.index}`} className="font-display text-3xl">
               {c.title || `Chapter ${c.index}`}
             </h3>

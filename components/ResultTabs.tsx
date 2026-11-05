@@ -269,6 +269,7 @@ export default function ResultTabs({ result, title }: { result: AnalysisResult; 
               </div>
             ) : (
               <StoryView
+                onSelect={openInStory}
                 result={view}
                 overrides={overrides}
                 target={target}
