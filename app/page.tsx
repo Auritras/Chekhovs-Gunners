@@ -250,6 +250,7 @@ export default function Home() {
               key={storyKey(result)}
               result={result}
               title={run.phase === "sample" ? run.title : undefined}
+              sample={run.phase === "sample"}
               changes={run.phase === "done" ? changes : null}
               onDismissChanges={() => setChanges(null)}
             />

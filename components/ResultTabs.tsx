@@ -38,11 +38,14 @@ const TABS: { id: Tab; label: string }[] = [
 export default function ResultTabs({
   result,
   title,
+  sample = false,
   changes,
   onDismissChanges,
 }: {
   result: AnalysisResult;
   title?: string;
+  /** A ready-made sample report, not the writer's own story. */
+  sample?: boolean;
   /** What changed since the writer's last draft of this story, after a re-run. */
   changes?: Changes | null;
   onDismissChanges?: () => void;
@@ -236,7 +239,7 @@ export default function ResultTabs({
                   {/* The counts and the notes share a row; the notes wrap below on narrow screens. */}
                   <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-5">
                     <div className="min-w-0">
-                      <Summary result={view} overrides={overrides} />
+                      <Summary result={view} overrides={overrides} awardStory={!sample} />
                     </div>
                     <DownloadNotes result={view} overrides={overrides} title={title} />
                   </div>

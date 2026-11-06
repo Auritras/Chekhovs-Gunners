@@ -18,14 +18,24 @@ function jump(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
   el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
 }
 
-export default function Summary({ result, overrides }: { result: AnalysisResult; overrides: Overrides }) {
+export default function Summary({
+  result,
+  overrides,
+  awardStory = false,
+}: {
+  result: AnalysisResult;
+  overrides: Overrides;
+  /** Story achievements describe "your story", so only the writer's own analyses earn them. */
+  awardStory?: boolean;
+}) {
   // planted = fired + never fired + uncertain + in the ending + set aside (uncertain counts setups only).
   const c = summaryCounts(result, overrides);
   const mentionsChekhov = result.chapters.some((ch) => /\bchekhov\b/i.test(ch.text));
-  // Story achievements (every gun fired, the original, long fuse, ...) unlock as earned.
+  // Story achievements (every gun fired, the original, long fuse, ...) unlock as earned,
+  // but not on a sample: it isn't the writer's story.
   useEffect(() => {
-    unlock(...storyAchievements(result, overrides));
-  }, [result, overrides]);
+    if (awardStory) unlock(...storyAchievements(result, overrides));
+  }, [result, overrides, awardStory]);
 
   const items: { label: string; value: number; tone?: string; href?: string; note?: string }[] = [
     {
