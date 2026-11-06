@@ -663,6 +663,16 @@ body {
   }
 }
 
+/* "Point to the line": a soft spotlight that glides onto the chosen sentence. */
+.story-spot {
+  width: 22rem;
+  height: 9rem;
+  margin: -4.5rem 0 0 -11rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--spot), transparent);
+  opacity: 0;
+}
+
 /* Arc map: nothing plays until the map is in view. */
 .arc-map-wait .arc-draw,
 .arc-map-wait .arc-fade,

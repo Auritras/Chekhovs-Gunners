@@ -84,7 +84,45 @@ export default function StoryView({
     sel?.removeAllRanges();
     onPicked?.(chapter, passage, gunName);
     setGunName("");
+    // A gun pointed to its payoff: a spotlight finds the line.
+    if (pick.mode === "payoff") setSpot(`writer-${pick.setupId}`);
   }
+
+  // The spotlight on a line the writer just pointed to: it glides in from above, settles, fades.
+  const [spot, setSpot] = useState<string | null>(null);
+  const spotRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!spot) return;
+    let cancelled = false;
+    const frame = requestAnimationFrame(() => {
+      const el = document.getElementById(markElementId(spot));
+      const light = spotRef.current;
+      if (!el || !light || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setSpot(null);
+        return;
+      }
+      el.classList.remove("mark-flash");
+      void el.offsetWidth;
+      el.classList.add("mark-flash");
+      const r = el.getBoundingClientRect();
+      const to = `translate(${r.left + r.width / 2}px, ${r.top + r.height / 2}px)`;
+      const from = `translate(${window.innerWidth / 2}px, -80px)`;
+      const anim = light.animate(
+        [
+          { transform: from, opacity: 0 },
+          { transform: to, opacity: 1, offset: 0.4 },
+          { transform: to, opacity: 1, offset: 0.75 },
+          { transform: to, opacity: 0 },
+        ],
+        { duration: 2200, easing: "cubic-bezier(0.3, 0.7, 0.2, 1)", fill: "forwards" },
+      );
+      anim.finished.then(() => !cancelled && setSpot(null)).catch(() => {});
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [spot]);
 
   // The jump (by seq) the writer dismissed; while a newer one is live, other highlights fade.
   const [dismissed, setDismissed] = useState<number | null>(null);
@@ -212,6 +250,7 @@ export default function StoryView({
 
   return (
     <article ref={articleRef} className={`flex flex-col gap-10 ${focusId ? "story-focus" : ""}`} onClick={onClick}>
+      {spot && <div ref={spotRef} aria-hidden className="story-spot pointer-events-none fixed left-0 top-0 z-30" />}
       <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-soft" aria-label="Key">
         <li><span className="mark mark-setup-fired">Setup that fires</span></li>
         <li><span className="mark mark-setup-unfired">Setup that never fires</span></li>
