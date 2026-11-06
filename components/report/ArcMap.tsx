@@ -119,6 +119,16 @@ export default function ArcMap({
     () => new Set(Object.entries(overrides).filter(([, o]) => o.kind === "fired").map(([id]) => id)),
   );
 
+  // The arcs fire when the map comes into view (not off-screen while the writer reads above).
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.25 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   useLayoutEffect(() => {
     const el = boxRef.current;
     if (!el) return;
@@ -182,6 +192,24 @@ export default function ArcMap({
 
   const unfiredNodes =
     layout?.nodes.filter((n) => n.kind === "setup" && n.state === "unfired" && !overrides[n.id]) ?? [];
+  const threadPath = (x: number, id: string) => {
+    const len = 12 + (setupById.get(id)?.importance ?? 1) * 9;
+    return `M ${x} ${base} C ${x + 2} ${base + len * 0.4}, ${x - 3} ${base + len * 0.7}, ${x + 1} ${base + len}`;
+  };
+
+  // "Not a gun": the gun's red thread unties and falls off the map (when the map is next in view).
+  const [falling, setFalling] = useState<{ id: string; d: string }[]>([]);
+  const lastThreads = useRef(new Map<string, string>());
+  const threadKey = unfiredNodes.map((n) => `${n.id}@${Math.round(n.x)}`).join(" ");
+  useEffect(() => {
+    const now = new Map(unfiredNodes.map((n) => [n.id, threadPath(n.x, n.id)]));
+    const dropped = [...lastThreads.current].filter(([id]) => !now.has(id) && overrides[id]?.kind === "dismissed");
+    lastThreads.current = now;
+    if (dropped.length === 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    setFalling((f) => [...f, ...dropped.map(([id, d]) => ({ id, d }))]);
+    // Only the threads on the map and the writer's calls matter here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadKey]);
   const activeCall = shown ? overrides[shown] : undefined;
 
   // Gold arcs for the guns the writer marked as firing: setup to the middle of the chapter they picked.
@@ -282,7 +310,7 @@ export default function ArcMap({
             width={width}
             height={height}
             viewBox={`0 0 ${width} ${height}`}
-            className="block overflow-visible"
+            className={`block overflow-visible ${inView ? "" : "arc-map-wait"}`}
             role="group"
             aria-label="Arc map of setups and payoffs"
           >
@@ -341,8 +369,8 @@ export default function ArcMap({
                 const dim =
                   (related && !(related.has(a.setupId) && related.has(a.payoffId))) || offKind(a.setupId);
                 return (
+                  <g key={`${a.setupId}-${a.payoffId}`}>
                   <path
-                    key={`${a.setupId}-${a.payoffId}`}
                     d={d}
                     pathLength={shaky ? undefined : 1}
                     fill="none"
@@ -356,6 +384,21 @@ export default function ArcMap({
                       animationDelay: `${Math.round(i * stagger)}ms`,
                     }}
                   />
+                  {/* A small muzzle flash where the shot lands. */}
+                  {!shaky && !dim && (
+                    <g transform={`translate(${x2} ${base})`} aria-hidden>
+                      <g className="muzzle" style={{ animationDelay: `${Math.round(i * stagger + DRAW_MS * 0.92)}ms` }}>
+                        <circle r="3.5" fill="var(--gold)" />
+                        <path
+                          d="M0 -6 V-11 M4.5 -4.5 L8 -8 M-4.5 -4.5 L-8 -8 M6 0 H10.5 M-6 0 H-10.5"
+                          stroke="var(--gold)"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </g>
+                    </g>
+                  )}
+                  </g>
                 );
               })}
 
@@ -379,12 +422,16 @@ export default function ArcMap({
 
               {/* Dangling threads under guns that never fire */}
               {unfiredNodes.map((n) => {
-                const len = 12 + (setupById.get(n.id)?.importance ?? 1) * 9;
-                const d = `M ${n.x} ${base} C ${n.x + 2} ${base + len * 0.4}, ${n.x - 3} ${base + len * 0.7}, ${n.x + 1} ${base + len}`;
+                const d = threadPath(n.x, n.id);
                 const dim = (related && !related.has(n.id)) || offKind(n.id);
                 return (
-                  <path
+                  // Once drawn, each thread swings once from its gun, then settles.
+                  <g
                     key={`dangle-${n.id}`}
+                    className={n.uncertain ? undefined : "thread-swing"}
+                    style={{ animationDelay: `${Math.round(dangleDelay + 450)}ms` }}
+                  >
+                  <path
                     d={d}
                     pathLength={n.uncertain ? undefined : 1}
                     fill="none"
@@ -399,8 +446,22 @@ export default function ArcMap({
                       animationDuration: "500ms",
                     }}
                   />
+                  </g>
                 );
               })}
+              {falling.map((f) => (
+                <path
+                  key={`fall-${f.id}`}
+                  d={f.d}
+                  fill="none"
+                  stroke="var(--curtain)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  className="thread-fall"
+                  onAnimationEnd={() => setFalling((all) => all.filter((x) => x.id !== f.id))}
+                  aria-hidden
+                />
+              ))}
 
               {/* Nodes */}
               {layout.nodes.map((n) => {
