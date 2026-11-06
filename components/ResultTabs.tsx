@@ -22,6 +22,7 @@ import IssueList from "@/components/report/IssueList";
 import Divider from "@/components/report/Divider";
 import KindChips from "@/components/report/KindChips";
 import DownloadNotes from "@/components/report/DownloadNotes";
+import BiggestLooseEnd from "@/components/report/BiggestLooseEnd";
 import DraftChanges from "@/components/report/DraftChanges";
 import type { DraftChanges as Changes } from "@/lib/view/compare";
 import FiredList from "@/components/report/FiredList";
@@ -243,6 +244,7 @@ export default function ResultTabs({
                     </div>
                     <DownloadNotes result={view} overrides={overrides} title={title} />
                   </div>
+                  <BiggestLooseEnd result={view} overrides={overrides} onSelect={openInStory} />
                 </div>
                 <Divider />
                 {/* The guns that never fire are why writers come, so they lead the report. */}
