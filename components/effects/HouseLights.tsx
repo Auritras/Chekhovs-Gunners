@@ -61,7 +61,7 @@ export default function HouseLights() {
         <span className="h-2 w-2 rounded-full bg-[#d6b25b]" />
         <span className="h-3 w-2.5 rounded-b-sm bg-[#d6b25b] [clip-path:polygon(25%_0,75%_0,100%_100%,0_100%)]" />
       </span>
-      <span className="pointer-events-none absolute left-full top-full -mt-5 whitespace-nowrap rounded-sm bg-black/50 px-2 py-0.5 text-xs uppercase tracking-[0.14em] text-curtain-ink opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+      <span className="pointer-events-none absolute left-full top-10 ml-1 whitespace-nowrap rounded-sm bg-black/50 px-2 py-0.5 text-xs uppercase tracking-[0.14em] text-curtain-ink opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
         {label}
       </span>
     </button>
