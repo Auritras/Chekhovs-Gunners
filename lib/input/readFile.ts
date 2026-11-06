@@ -1,3 +1,5 @@
+import { joinPdfLines, linesFromItems, type PdfItem, type PdfLine } from "@/lib/input/pdfText";
+
 export type ReadFileResult =
   | { text: string }
   | { error: "unsupported" | "no_text" | "unreadable" };
@@ -12,18 +14,15 @@ async function readPdf(file: File): Promise<string> {
   ).toString();
   const data = new Uint8Array(await file.arrayBuffer());
   const pdf = await pdfjs.getDocument({ data }).promise;
-  const pages: string[] = [];
+  const pages: PdfLine[][] = [];
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const line = content.items
-      .map((item) => ("str" in item ? item.str + (item.hasEOL ? "\n" : " ") : ""))
-      .join("")
-      .replace(/[ \t]+/g, " ")
-      .trim();
-    pages.push(line);
+    const items: PdfItem[] = content.items.flatMap((item) => ("str" in item ? [item] : []));
+    pages.push(linesFromItems(items));
   }
-  return pages.join("\n\n");
+  // Rebuild paragraphs: a PDF breaks every printed line, often mid-sentence.
+  return joinPdfLines(pages);
 }
 
 export async function readFile(file: File): Promise<ReadFileResult> {
