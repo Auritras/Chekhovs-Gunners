@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import EmblemTile from "@/components/effects/EmblemTile";
 import { curtainOpened } from "@/components/effects/OpeningCurtain";
-import type { Achievement } from "@/lib/view/achievements";
+import { ACHIEVEMENTS, type Achievement } from "@/lib/view/achievements";
 import { nextUnlocked, onUnlock } from "@/lib/view/achievementStore";
 
 const SHOW_MS = 5000;
-const LEAVE_MS = 400;
+/** The stub tears off first, then the ticket slides away. */
+const LEAVE_MS = 650;
 
 /**
  * Achievement pop-ups in the bottom-right corner, one at a time: each slides up, holds,
@@ -57,16 +58,26 @@ export default function AchievementToasts() {
         bottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
       }}
     >
-      <div
-        key={a.id}
-        role="status"
-        className={`${leaving ? "reward-toast-out" : "reward-toast"} flex w-[min(24rem,calc(100vw-2rem))] items-center gap-4 rounded-sm border border-line bg-surface p-3 pr-4 shadow-lg`}
-      >
-        <EmblemTile kind={a.emblem} />
-        <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="font-display text-xl leading-tight text-ink">{a.title}</span>
-          <span className="text-sm leading-snug text-ink-soft">{a.text}</span>
-        </span>
+      <div key={a.id} role="status" className="flex w-[min(25rem,calc(100vw-2rem))] items-stretch drop-shadow-lg">
+        {/* An admission ticket: the body, then a stub behind a perforation that tears off as it leaves. */}
+        <div
+          className={`${leaving ? "reward-toast-out" : "reward-toast"} flex min-w-0 flex-1 items-center gap-4 rounded-l-[3px] border border-r-0 border-ticket-edge bg-ticket p-3 pr-4`}
+        >
+          <EmblemTile kind={a.emblem} />
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-[0.65rem] font-medium uppercase tracking-[0.25em] text-curtain">Admit one</span>
+            <span className="font-display text-xl leading-tight text-ink">{a.title}</span>
+            <span className="text-sm leading-snug text-ink-soft">{a.text}</span>
+          </span>
+        </div>
+        <div
+          aria-hidden
+          className={`${leaving ? "toast-stub-tear" : "reward-toast"} flex w-9 shrink-0 items-center justify-center rounded-r-[3px] border-y border-l-2 border-r border-ticket-edge bg-ticket [border-left-style:dashed]`}
+        >
+          <span className="font-display text-xs tracking-[0.15em] text-ink-soft [writing-mode:vertical-rl]">
+            No. {String(ACHIEVEMENTS.findIndex((x) => x.id === a.id) + 1).padStart(2, "0")}
+          </span>
+        </div>
       </div>
     </div>
   );

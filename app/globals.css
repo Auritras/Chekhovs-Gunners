@@ -603,7 +603,21 @@ body {
   }
 }
 .reward-toast-out {
-  animation: reward-toast-out 400ms ease-in forwards;
+  animation: reward-toast-out 400ms ease-in 220ms forwards;
+}
+/* The toast's ticket stub tears off at the perforation and drops away. */
+.toast-stub-tear {
+  transform-origin: 0 0;
+  animation: stub-tear 520ms cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+@keyframes stub-tear {
+  20% {
+    transform: translate(3px, -1px) rotate(-4deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(18px, 60px) rotate(24deg);
+  }
 }
 @keyframes reward-toast-out {
   to {
@@ -934,6 +948,7 @@ body {
   .arc-fade,
   .reward-toast,
   .reward-toast-out,
+  .toast-stub-tear,
   .writer-arc,
   .group:hover > .ticket-sway,
   .gun-hang:hover,
