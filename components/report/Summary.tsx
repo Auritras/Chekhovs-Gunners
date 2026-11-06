@@ -7,6 +7,8 @@ import type { Overrides } from "@/lib/view/overrides";
 import { storyAchievements } from "@/lib/view/achievements";
 import { unlock } from "@/lib/view/achievementStore";
 import { summaryCounts } from "@/lib/view/summaryCounts";
+import { storyKey } from "@/lib/view/overrides";
+import { curtainCall } from "@/components/effects/CurtainCall";
 
 /** Jump to a report section; a collapsed list (<details>) opens on arrival. */
 function jump(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
@@ -36,6 +38,11 @@ export default function Summary({
   useEffect(() => {
     if (awardStory) unlock(...storyAchievements(result, overrides));
   }, [result, overrides, awardStory]);
+  // Every gun fires: a curtain call (once per story per visit).
+  const allFire = c.planted > 0 && c.neverFired === 0 && c.uncertain === 0;
+  useEffect(() => {
+    if (allFire) curtainCall(storyKey(result));
+  }, [allFire, result]);
 
   const items: { label: string; value: number; tone?: string; href?: string; note?: string }[] = [
     {

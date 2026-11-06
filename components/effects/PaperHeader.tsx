@@ -68,6 +68,25 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
     setTimeout(() => setBang(false), 2600);
   }
 
+  // A curtain call: the gun on the wall takes a bow, muzzle dipping on its nail.
+  useEffect(() => {
+    const bow = () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      gunRef.current?.animate(
+        [
+          { transform: "none" },
+          { transform: "rotate(24deg)", offset: 0.35 },
+          { transform: "rotate(24deg)", offset: 0.6 },
+          { transform: "rotate(-4deg)", offset: 0.85 },
+          { transform: "none" },
+        ],
+        { duration: 1300, easing: "ease-in-out" },
+      );
+    };
+    window.addEventListener("cg-bow", bow);
+    return () => window.removeEventListener("cg-bow", bow);
+  }, []);
+
   // A new report with guns left unfired: the gun on the wall fires once (recoil and gold dust).
   useEffect(() => {
     const gun = gunRef.current;

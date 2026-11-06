@@ -8,6 +8,7 @@ import OpeningCurtain, { markCurtainStart } from "@/components/effects/OpeningCu
 import PaperHeader from "@/components/effects/PaperHeader";
 import AchievementToasts from "@/components/effects/AchievementToasts";
 import KeyboardHelp from "@/components/KeyboardHelp";
+import CurtainCall from "@/components/effects/CurtainCall";
 import { unlock } from "@/lib/view/achievementStore";
 import { useStageTitle } from "@/components/effects/useStageTitle";
 import HowItWorks from "@/components/landing/HowItWorks";
@@ -202,6 +203,7 @@ export default function Home() {
     <>
       <AchievementToasts />
       <KeyboardHelp />
+      <CurtainCall />
       {curtain && <OpeningCurtain onClosed={curtainClosed} onDone={closeCurtain} />}
       {/* The gun on the wall fires only when the story left guns unfired. */}
       <PaperHeader fireKey={showResults && result && result.unfired.length > 0 ? result : null} />
