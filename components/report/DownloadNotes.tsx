@@ -19,12 +19,14 @@ export default function DownloadNotes({
   title?: string;
 }) {
   const notes = () => notesMarkdown(result, overrides, new Date(), title);
+  // "Programme notes – The Locked Drawer", for both the .md file and the PDF.
+  const name = title ? `Programme notes – ${title}` : "Programme notes";
   function markdown() {
     const blob = new Blob([notes()], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "chekhovs-gunners-notes.md";
+    a.download = `${name.replace(/[\\/:*?"<>|]/g, "")}.md`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -45,7 +47,7 @@ export default function DownloadNotes({
     // Some browsers (Firefox, Safari) return from print() before the dialog reads the title,
     // so put the page's own title back only once printing is over.
     const pageTitle = document.title;
-    document.title = title ? `Programme notes – ${title}` : "Programme notes";
+    document.title = name;
     let restored = false;
     const restore = () => {
       if (restored) return;
