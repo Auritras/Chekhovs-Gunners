@@ -23,6 +23,8 @@ import IssueList from "@/components/report/IssueList";
 import Divider from "@/components/report/Divider";
 import KindChips from "@/components/report/KindChips";
 import DownloadNotes from "@/components/report/DownloadNotes";
+import ShareLink from "@/components/report/ShareLink";
+import { storyTitle } from "@/lib/view/recent";
 import BiggestLooseEnd from "@/components/report/BiggestLooseEnd";
 import DraftChanges from "@/components/report/DraftChanges";
 import type { DraftChanges as Changes } from "@/lib/view/compare";
@@ -252,7 +254,10 @@ export default function ResultTabs({
                     <div className="min-w-0">
                       <Summary result={view} overrides={overrides} awardStory={!sample} />
                     </div>
-                    <DownloadNotes result={view} overrides={overrides} title={title} />
+                    <div className="flex flex-col items-end gap-2">
+                      <DownloadNotes result={view} overrides={overrides} title={title} />
+                      <ShareLink result={result} overrides={saved} guns={guns} title={title ?? storyTitle(result)} />
+                    </div>
                   </div>
                   <BiggestLooseEnd result={view} overrides={overrides} onSelect={openInStory} />
                 </div>

@@ -12,6 +12,8 @@ export type RunState =
   | { phase: "done" }
   | { phase: "quota"; sampleAvailable: boolean }
   | { phase: "sample"; title: string }
+  /** A report reopened from a shared link or from the writer's recent reports. */
+  | { phase: "reopened"; title: string; shared: boolean; at?: number }
   /** `allFailed`: the run finished but no chapter could be analysed. */
   | { phase: "error"; allFailed: boolean; sampleAvailable: boolean };
 
@@ -105,7 +107,7 @@ export default function RunStatus({
 }) {
   if (run.phase === "idle") return null;
 
-  const showStoryNotices = run.phase !== "sample";
+  const showStoryNotices = run.phase !== "sample" && run.phase !== "reopened";
 
   return (
     <section aria-label="Analysis status" className="flex max-w-3xl flex-col gap-3">
@@ -187,6 +189,16 @@ export default function RunStatus({
 
       {run.phase === "sample" && (
         <Notice>Showing the sample analysis of “{run.title}”.</Notice>
+      )}
+
+      {run.phase === "reopened" && (
+        <Notice>
+          {run.shared
+            ? `Showing a shared report of “${run.title}”. Any calls you make on it stay in your browser.`
+            : `Showing your report of “${run.title}”${
+                run.at ? ` from ${new Date(run.at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}` : ""
+              }.`}
+        </Notice>
       )}
 
       {run.phase === "error" && (

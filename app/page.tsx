@@ -19,7 +19,10 @@ import { httpDeps } from "@/lib/pipeline/httpDeps";
 import { findSampleWithResult } from "@/lib/samples";
 import type { AnalysisResult, Chapter } from "@/lib/types";
 import type { WallItem } from "@/components/effects/FoundWall";
-import { storyKey } from "@/lib/view/overrides";
+import { loadGuns, loadOverrides, saveGuns, saveOverrides, storyKey } from "@/lib/view/overrides";
+import { loadRecent, removeRecent, saveRecent, type RecentReport } from "@/lib/view/recent";
+import { decodeReport } from "@/lib/view/share";
+import RecentReports from "@/components/landing/RecentReports";
 import { changesSinceLastDraft, type DraftChanges } from "@/lib/view/compare";
 
 type Prepared = { chapters: Chapter[]; autoSplit: boolean; wordCount: number };
@@ -32,6 +35,8 @@ export default function Home() {
   const [sample, setSample] = useState<Sample | null>(null);
   // After a re-run of an edited story: what changed since the last draft.
   const [changes, setChanges] = useState<DraftChanges | null>(null);
+  // The writer's last few reports, to reopen (read after mount: the server can't see them).
+  const [recent, setRecent] = useState<RecentReport[]>([]);
   // The live "Found" wall shown while a story is read.
   const [wall, setWall] = useState<WallItem[]>([]);
   useStageTitle(run);
@@ -65,6 +70,39 @@ export default function Home() {
     pendingReveal.current = show;
     setCurtain(true);
   }
+
+  /** A shared report's link stops describing the page once something else is shown. */
+  function clearShareLink() {
+    if (window.location.hash.startsWith("#r=")) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }
+
+  /** Show a report from a shared link or the recent list: no AI calls. */
+  function reopen(report: AnalysisResult, run: Extract<RunState, { phase: "reopened" }>) {
+    runId.current++; // ignore any run still reporting progress
+    reveal(() => {
+      setChanges(null);
+      setResult(report);
+      setRun(run);
+    });
+  }
+
+  // On arrival: recent reports, and a report shared in the link (if any).
+  useEffect(() => {
+    const id = setTimeout(() => setRecent(loadRecent()), 0);
+    void decodeReport(window.location.hash).then((shared) => {
+      if (!shared) return;
+      // The sharer's calls come along, unless this browser already has its own for the story.
+      const key = storyKey(shared.result);
+      if (Object.keys(loadOverrides(key)).length === 0) saveOverrides(key, shared.overrides);
+      if (loadGuns(key).length === 0) saveGuns(key, shared.guns);
+      reopen(shared.result, { phase: "reopened", title: shared.title || "a story", shared: true });
+    });
+    return () => clearTimeout(id);
+    // Once, on arrival.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** Achievements for finishing an analysis of the writer's own story. */
   function runAchievements(chapters: Chapter[]): string[] {
@@ -126,6 +164,7 @@ export default function Home() {
       if (outcome.status === "ok" && !everyChapterFailed(outcome.result)) {
         unlock(...runAchievements(chapters));
         const since = changesSinceLastDraft(outcome.result);
+        setRecent(saveRecent(outcome.result));
         reveal(() => {
           setChanges(since);
           setResult(outcome.result);
@@ -152,6 +191,7 @@ export default function Home() {
   }
 
   function onAnalyse(text: string) {
+    clearShareLink();
     setEditing(false);
     const p = chapterize(text);
     setPrepared(p);
@@ -164,6 +204,7 @@ export default function Home() {
   }
 
   function showSample(s: Sample) {
+    clearShareLink();
     runId.current++; // ignore any run still reporting progress
     reveal(() => {
       setChanges(null);
@@ -191,7 +232,8 @@ export default function Home() {
   }, [running]);
 
   // Bring the report into view when a run finishes.
-  const showResults = result !== null && (run.phase === "done" || run.phase === "sample");
+  const showResults =
+    result !== null && (run.phase === "done" || run.phase === "sample" || run.phase === "reopened");
   const compact = (running || showResults) && !editing;
   useEffect(() => {
     if (!showResults) return;
@@ -227,6 +269,16 @@ export default function Home() {
               compact={compact}
               onEdit={() => setEditing(true)}
             />
+            {!compact && (
+              <RecentReports
+                reports={recent}
+                onOpen={(r) => {
+                  clearShareLink();
+                  reopen(r.result, { phase: "reopened", title: r.title, shared: false, at: r.at });
+                }}
+                onForget={(key) => setRecent(removeRecent(key))}
+              />
+            )}
           </div>
           {!showResults && (
             <aside aria-label="Sample report" className="lg:sticky lg:top-8">
@@ -253,8 +305,8 @@ export default function Home() {
             <ResultTabs
               key={storyKey(result)}
               result={result}
-              title={run.phase === "sample" ? run.title : undefined}
-              sample={run.phase === "sample"}
+              title={run.phase === "sample" || run.phase === "reopened" ? run.title : undefined}
+              sample={run.phase === "sample" || (run.phase === "reopened" && run.shared)}
               changes={run.phase === "done" ? changes : null}
               onDismissChanges={() => setChanges(null)}
             />
