@@ -18,6 +18,7 @@ import { findSampleWithResult } from "@/lib/samples";
 import type { AnalysisResult, Chapter } from "@/lib/types";
 import type { WallItem } from "@/components/effects/FoundWall";
 import { storyKey } from "@/lib/view/overrides";
+import { changesSinceLastDraft, type DraftChanges } from "@/lib/view/compare";
 
 type Prepared = { chapters: Chapter[]; autoSplit: boolean; wordCount: number };
 type Sample = { title: string; result: AnalysisResult };
@@ -27,6 +28,8 @@ export default function Home() {
   const [run, setRun] = useState<RunState>({ phase: "idle" });
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [sample, setSample] = useState<Sample | null>(null);
+  // After a re-run of an edited story: what changed since the last draft.
+  const [changes, setChanges] = useState<DraftChanges | null>(null);
   // The live "Found" wall shown while a story is read.
   const [wall, setWall] = useState<WallItem[]>([]);
   useStageTitle(run);
@@ -120,7 +123,9 @@ export default function Home() {
       if (id !== runId.current) return;
       if (outcome.status === "ok" && !everyChapterFailed(outcome.result)) {
         unlock(...runAchievements(chapters));
+        const since = changesSinceLastDraft(outcome.result);
         reveal(() => {
+          setChanges(since);
           setResult(outcome.result);
           setRun({ phase: "done" });
         });
@@ -159,6 +164,7 @@ export default function Home() {
   function showSample(s: Sample) {
     runId.current++; // ignore any run still reporting progress
     reveal(() => {
+      setChanges(null);
       setResult(s.result);
       setRun({ phase: "sample", title: s.title });
     });
@@ -244,6 +250,8 @@ export default function Home() {
               key={storyKey(result)}
               result={result}
               title={run.phase === "sample" ? run.title : undefined}
+              changes={run.phase === "done" ? changes : null}
+              onDismissChanges={() => setChanges(null)}
             />
           </div>
         )}

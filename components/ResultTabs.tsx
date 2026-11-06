@@ -22,6 +22,8 @@ import IssueList from "@/components/report/IssueList";
 import Divider from "@/components/report/Divider";
 import KindChips from "@/components/report/KindChips";
 import DownloadNotes from "@/components/report/DownloadNotes";
+import DraftChanges from "@/components/report/DraftChanges";
+import type { DraftChanges as Changes } from "@/lib/view/compare";
 import FiredList from "@/components/report/FiredList";
 import StoryView from "@/components/story/StoryView";
 import { callAchievements } from "@/lib/view/achievements";
@@ -33,7 +35,18 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "story", label: "Story" },
 ];
 
-export default function ResultTabs({ result, title }: { result: AnalysisResult; title?: string }) {
+export default function ResultTabs({
+  result,
+  title,
+  changes,
+  onDismissChanges,
+}: {
+  result: AnalysisResult;
+  title?: string;
+  /** What changed since the writer's last draft of this story, after a re-run. */
+  changes?: Changes | null;
+  onDismissChanges?: () => void;
+}) {
   const id = useId();
   const [tab, setTab] = useState<Tab>("report");
   // `seq` makes repeat clicks on the same issue scroll again.
@@ -218,6 +231,9 @@ export default function ResultTabs({ result, title }: { result: AnalysisResult; 
               <div className="flex flex-col gap-10">
                 <div className="flex flex-col gap-6">
                   <DownloadNotes result={view} overrides={overrides} title={title} />
+                  {changes && (
+                    <DraftChanges changes={changes} onSelect={openInStory} onDismiss={() => onDismissChanges?.()} />
+                  )}
                   <Summary result={view} overrides={overrides} />
                 </div>
                 <Divider />
