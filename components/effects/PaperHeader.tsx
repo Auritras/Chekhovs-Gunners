@@ -43,7 +43,7 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
     return () => clearTimeout(id);
   }, []);
 
-  // Easter egg: six clicks (six chambers) and the gun fires a "BANG!" flag, once per visit.
+  // Easter egg: six clicks (six chambers) and the gun fires a "BANG!" flag.
   const clicks = useRef<{ n: number; last: number }>({ n: 0, last: 0 });
   const [bang, setBang] = useState(false);
   function onGunClick() {
@@ -53,12 +53,6 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
     c.last = now;
     if (c.n < 6) return;
     c.n = 0;
-    try {
-      if (window.sessionStorage.getItem("cg-bang")) return;
-      window.sessionStorage.setItem("cg-bang", "1");
-    } catch {
-      // Storage blocked: allow it anyway.
-    }
     setBang(true);
     unlock("six-chambers");
     const gun = gunRef.current;
@@ -120,12 +114,13 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
     >
       <div aria-hidden className="halftone" />
 
-      {/* The gun on the back wall, hung beside the title (above the title's box, so it can be hovered). */}
+      {/* The gun on the back wall, hung beside the title (above the title's box, so it can be hovered),
+          with room for its BANG! flag, which passes under the programme ticket. */}
       <div
         aria-hidden
         data-depth="3"
         onClick={onGunClick}
-        className="paper-layer paper-shadow absolute right-[clamp(48px,15vw,240px)] top-1/2 z-10 hidden -translate-y-1/2 sm:block"
+        className="paper-layer paper-shadow absolute right-[calc(clamp(48px,15vw,240px)+2rem)] top-1/2 z-10 hidden -translate-y-1/2 sm:block"
       >
         {bang && (
           <span className="bang-flag absolute left-[88%] top-[18%] flex items-center">

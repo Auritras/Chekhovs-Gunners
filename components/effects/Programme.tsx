@@ -113,7 +113,7 @@ export default function Programme() {
       >
         <span aria-hidden className="ticket-sway flex flex-col items-center">
           {/* The string, then a small ticket with the count. */}
-          <span className="h-7 w-px bg-[#d6b25b]/80 sm:h-[4.5rem]" />
+          <span className="h-7 w-px bg-[#d6b25b]/80 sm:h-9" />
           <svg viewBox="0 0 56 34" className="h-9 w-[3.75rem] drop-shadow-[0_2px_2px_rgba(0,0,0,0.45)] sm:h-[2.85rem] sm:w-[4.75rem]">
             <path
               d="M3 1 H53 A2 2 0 0 1 55 3 V13 A4 4 0 0 0 55 21 V31 A2 2 0 0 1 53 33 H3 A2 2 0 0 1 1 31 V21 A4 4 0 0 0 1 13 V3 A2 2 0 0 1 3 1 Z"
