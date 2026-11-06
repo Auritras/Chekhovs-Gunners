@@ -711,6 +711,13 @@ body {
   }
 }
 
+/* The house lights fade between themes (a view transition, only while the cord is pulled). */
+:root.lights-fade::view-transition-old(root),
+:root.lights-fade::view-transition-new(root) {
+  animation-duration: 700ms;
+  animation-timing-function: ease-in-out;
+}
+
 /* Arc map: nothing plays until the map is in view. */
 .arc-map-wait .arc-draw,
 .arc-map-wait .arc-fade,
