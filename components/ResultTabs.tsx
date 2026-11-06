@@ -230,11 +230,16 @@ export default function ResultTabs({
             {tab === "report" ? (
               <div className="flex flex-col gap-10">
                 <div className="flex flex-col gap-6">
-                  <DownloadNotes result={view} overrides={overrides} title={title} />
                   {changes && (
                     <DraftChanges changes={changes} onSelect={openInStory} onDismiss={() => onDismissChanges?.()} />
                   )}
-                  <Summary result={view} overrides={overrides} />
+                  {/* The counts and the notes share a row; the notes wrap below on narrow screens. */}
+                  <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-5">
+                    <div className="min-w-0">
+                      <Summary result={view} overrides={overrides} />
+                    </div>
+                    <DownloadNotes result={view} overrides={overrides} title={title} />
+                  </div>
                 </div>
                 <Divider />
                 {/* The guns that never fire are why writers come, so they lead the report. */}
