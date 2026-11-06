@@ -644,6 +644,26 @@ body {
   }
 }
 
+/* With room beside the gun (wide screens), the flag shoots out of the barrel sideways instead. */
+@media (min-width: 1680px) {
+  .bang-flag {
+    transform-origin: left center;
+    animation-name: bang-flag-side;
+  }
+}
+@keyframes bang-flag-side {
+  0% {
+    transform: scaleX(0);
+  }
+  14%,
+  80% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}
+
 /* Footer: a little figure on stage bows when the motto is hovered or tapped. */
 .bow-upper {
   transform-box: view-box;

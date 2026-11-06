@@ -124,12 +124,14 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
         className="paper-layer paper-shadow absolute right-[max(calc(clamp(28px,8vw,130px)_+_5rem),calc((100%_-_64rem)/2_-_2rem))] top-1/2 z-10 hidden -translate-y-1/2 sm:block"
       >
         {bang && (
-          <span className="absolute bottom-[64%] left-[94%] -translate-x-full">
-            <span className="bang-flag flex flex-col items-end">
+          // Out of the barrel to the side where there is room (wide screens); straight up otherwise,
+          // so it never runs into the programme ticket beside the gun.
+          <span className="absolute bottom-[64%] left-[94%] -translate-x-full min-[1680px]:bottom-auto min-[1680px]:left-[88%] min-[1680px]:top-[18%] min-[1680px]:translate-x-0">
+            <span className="bang-flag flex flex-col items-end min-[1680px]:flex-row min-[1680px]:items-center">
               <span className="bg-curtain-ink px-2 py-0.5 font-display text-sm font-bold tracking-wide text-curtain">
                 BANG!
               </span>
-              <span className="h-6 w-px bg-curtain-ink/80" />
+              <span className="h-6 w-px bg-curtain-ink/80 min-[1680px]:order-first min-[1680px]:h-px min-[1680px]:w-6" />
             </span>
           </span>
         )}
