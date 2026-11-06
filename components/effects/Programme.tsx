@@ -21,14 +21,14 @@ function Ticket({ a, no, stub, at }: { a: Achievement; no: number; stub: string;
   return (
     <li
       className={`ticket relative flex min-h-[5.5rem] items-stretch rounded-[3px] ${
-        got ? "border border-[#c9a85a] bg-[#f6e7bf] text-[#2b2014]" : "border border-dashed border-[#b3a27e] text-[#8d7f6c]"
+        got ? "border border-ticket-edge bg-ticket text-ink" : "border border-dashed border-muted/60 text-muted"
       }`}
     >
       <span className={`flex items-center pl-3 ${got ? "" : "opacity-35 grayscale"}`}>
         <EmblemTile kind={a.emblem} small />
       </span>
       <span className="flex min-w-0 flex-1 flex-col justify-center px-3 py-2">
-        <span className={`text-[0.65rem] font-medium uppercase tracking-[0.25em] ${got ? "text-[#8c1c22]" : ""}`}>
+        <span className={`text-[0.65rem] font-medium uppercase tracking-[0.25em] ${got ? "text-curtain" : ""}`}>
           Admit one
         </span>
         <span className="font-display text-xl leading-tight">
@@ -36,7 +36,7 @@ function Ticket({ a, no, stub, at }: { a: Achievement; no: number; stub: string;
           {!got && <span className="sr-only"> (not yet earned)</span>}
         </span>
         <span className="font-serif text-xs leading-snug">{secret ? "A secret, for the curious." : a.text}</span>
-        <span className="mt-1 text-[0.65rem] uppercase tracking-[0.12em] text-[#7a6a55]">
+        <span className="mt-1 text-[0.65rem] uppercase tracking-[0.12em] text-ink-soft">
           No. {String(no).padStart(2, "0")}
           {got ? (at ? ` · ${dateFmt(at)}` : " · Admitted") : " · Not yet admitted"}
         </span>
@@ -45,7 +45,7 @@ function Ticket({ a, no, stub, at }: { a: Achievement; no: number; stub: string;
       <span
         aria-hidden
         className={`flex w-8 shrink-0 items-center justify-center border-l-2 border-dashed ${
-          got ? "border-[#c9a85a]" : "border-[#c9b88f]"
+          got ? "border-ticket-edge" : "border-muted/40"
         }`}
       >
         <span className="font-display text-xs tracking-[0.15em] [writing-mode:vertical-rl]">{stub}</span>
@@ -142,30 +142,33 @@ export default function Programme() {
         onClick={(e) => {
           if (e.target === e.currentTarget) e.currentTarget.close();
         }}
-        className="programme m-auto max-h-[min(46rem,calc(100dvh-2rem))] w-[min(48rem,calc(100vw-1.5rem))] rounded-[2px] border-[5px] border-double border-[#96731f] bg-[#efe6d2] p-0 text-left text-[#1d1714] shadow-2xl"
+        className="programme m-auto max-h-[min(46rem,calc(100dvh-2rem))] w-[min(48rem,calc(100vw-1.5rem))] rounded-[2px] border-[5px] border-double border-brass bg-paper p-0 text-left text-ink shadow-2xl"
       >
         <div className="flex flex-col gap-6 px-4 py-5 sm:px-8 sm:py-7">
-          <div className="relative border-y-[3px] border-double border-[#96731f] py-3 text-center">
+          <div className="relative border-y-[3px] border-double border-brass pb-3 pt-11 text-center sm:pt-3">
             <button
               type="button"
               onClick={() => dialogRef.current?.close()}
-              className="-mt-2 ml-auto block min-h-11 rounded-sm sm:absolute sm:right-0 sm:top-1/2 sm:mt-0 sm:-translate-y-1/2 px-2 text-sm text-[#5a4f47] underline decoration-[#c9b88f] underline-offset-4 hover:text-[#1d1714]"
+              aria-label="Close the programme"
+              className="absolute -right-1 top-0.5 flex h-11 w-11 items-center justify-center rounded-sm text-ink-soft sm:right-0 sm:top-1/2 sm:-translate-y-1/2 transition-colors hover:text-curtain"
             >
-              Close
+              <svg viewBox="0 0 20 20" aria-hidden className="h-5 w-5">
+                <path d="M4 4 L16 16 M16 4 L4 16" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+              </svg>
             </button>
-            <p className="text-[0.7rem] uppercase tracking-[0.28em] text-[#6b5d50]">Chekhov&rsquo;s Gunners presents</p>
+            <p className="text-[0.7rem] uppercase tracking-[0.28em] text-ink-soft">Chekhov&rsquo;s Gunners presents</p>
             <h2 id="programme-heading" className="font-display text-4xl leading-tight">
               The Programme
             </h2>
-            <p className="font-serif text-sm italic text-[#5a4f47]">
-              {count} of {total} tickets collected, kept in this browser
+            <p className="font-serif text-sm italic text-ink-soft">
+              {count} of {total} tickets collected
             </p>
           </div>
           {ACTS.map((act) => (
             <section key={act.id} aria-label={act.title} className="flex flex-col gap-3">
-              <h3 className="flex items-center gap-3 font-display text-sm uppercase tracking-[0.18em] text-[#8c1c22]">
+              <h3 className="flex items-center gap-3 font-display text-sm uppercase tracking-[0.18em] text-curtain">
                 {act.title}
-                <span aria-hidden className="h-px flex-1 bg-[#c9b88f]" />
+                <span aria-hidden className="h-px flex-1 bg-line" />
               </h3>
               <ul className="grid gap-3 sm:grid-cols-2">
                 {ACHIEVEMENTS.map((a, i) => ({ a, no: i + 1 }))
@@ -182,7 +185,7 @@ export default function Programme() {
               </ul>
             </section>
           ))}
-          <p className="text-center font-serif text-xs italic text-[#6b5d50]">
+          <p className="text-center font-serif text-xs italic text-ink-soft">
             It suggests; the writer decides.
           </p>
         </div>

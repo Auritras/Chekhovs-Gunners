@@ -26,6 +26,9 @@
   --spot: rgba(214, 170, 70, 0.34);
   /* Brighter than brass: guns the writer marked as firing. */
   --gold: #b8860b;
+  /* A printed ticket in the programme. */
+  --ticket: #f6e7bf;
+  --ticket-edge: #c9a85a;
 }
 
 /* Dark palette: the system's dark mode, unless the writer turned the house lights up;
@@ -48,6 +51,8 @@
     --focus: #8fb2ff;
     --spot: rgba(255, 214, 150, 0.22);
     --gold: #f2c94c;
+    --ticket: #2b2116;
+    --ticket-edge: #7d6430;
     color-scheme: dark;
   }
 }
@@ -68,6 +73,8 @@
   --focus: #8fb2ff;
   --spot: rgba(255, 214, 150, 0.22);
   --gold: #f2c94c;
+  --ticket: #2b2116;
+  --ticket-edge: #7d6430;
   color-scheme: dark;
 }
 :root[data-theme="light"] {
@@ -87,6 +94,8 @@
   --color-curtain-ink: var(--curtain-ink);
   --color-brass: var(--brass);
   --color-gold: var(--gold);
+  --color-ticket: var(--ticket);
+  --color-ticket-edge: var(--ticket-edge);
   --color-focus: var(--focus);
   --font-sans: var(--font-instrument);
   --font-display: var(--font-fell);
@@ -831,6 +840,22 @@ body {
 }
 
 /* The achievements programme (a modal <dialog>): a dimmed house behind it, a short rise in. */
+/* A thin brass scrollbar, so the playbill doesn't get the browser's grey one. */
+.programme {
+  scrollbar-width: thin;
+  scrollbar-color: var(--brass) transparent;
+}
+.programme::-webkit-scrollbar {
+  width: 8px;
+}
+.programme::-webkit-scrollbar-track {
+  background: transparent;
+}
+.programme::-webkit-scrollbar-thumb {
+  background: var(--brass);
+  border-radius: 4px;
+  border: 2px solid var(--paper);
+}
 .programme::backdrop {
   background: rgb(10 6 4 / 0.65);
 }
