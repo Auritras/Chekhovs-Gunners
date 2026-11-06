@@ -24,7 +24,7 @@ Chekhov's Gunners is a writing assistant for the oldest rule in dramatic craft. 
 
 | Tab | Contents |
 | --- | --- |
-| Report | Summary counts (each links to its section), **guns that never fire** with quotes, a collapsible list of **guns that fired** (one row per gun, every payoff listed), the animated **arc map** (setup to payoff; red threads for unfired guns), and the per-chapter **tension** landscape and bars |
+| Report | Summary counts (each links to its section) and the **biggest loose end**, **guns that never fire** with quotes, a collapsible list of **guns that fired** (one row per gun, every payoff listed), the animated **arc map** (setup to payoff; red threads for unfired guns), the per-chapter **tension** landscape and bars (select a chapter to filter the lists to it), and the **rhythm** of guns planted against guns fired, with a line on the balance (a rushed ending, a front-loaded story) |
 | Story | The chapter text with setups and payoffs highlighted inline; jumping from a card spotlights that passage and fades the rest. Gun pins in the margin mark every setup; **J / K** walk the loose ends |
 
 ![The report: counts, a filter by gun type, and the guns that never fire, each with its quote](docs/screenshots/report.png)
@@ -40,11 +40,13 @@ Chekhov's Gunners is a writing assistant for the oldest rule in dramatic craft. 
 - **Missed one? Add a gun**: select the line that plants a gun the tool missed, and name it.
 - **Filter by type** (object, secret, skill, promise...) across the lists and the arc map.
 - **Download notes**: the loose ends with their quotes, your decisions and the guns that fired, as Markdown or a print-ready PDF playbill.
+- **Share and reopen**: **Copy link** packs the whole report, with your calls, into a link (compressed into the part after `#`, which never reaches a server). Your last five reports are listed under the story box to reopen without any AI calls.
+- **Keyboard**: **J / K** move between guns, **F** says it fires, **X** sets it aside, **?** lists every shortcut.
 - **Compare drafts**: after you edit the story and analyse it again, **Since your last draft** lists the guns that now fire, the new loose ends, and loose ends whose line you cut. Each run words its findings afresh, so guns are paired across runs by the line they quote and by how alike their summaries read.
 
 Three sample stories with writer-made answer keys: **The Locked Drawer**, **The Sweet Shop**, and **The Stopped Clock**, a detective case with two deliberate red herrings (useful for the genre work planned for the live sprint). A sample whose `public/samples/<slug>/result.json` exists opens instantly with no API call; otherwise its button loads the text for a live analysis.
 
-The interface is a paper toy theatre: a cut-paper header whose layers drift with the pointer, curtains that close and part on the first report, a live "Found" wall of guns as each chapter is read, rotating public-domain lines on setup and payoff (Chekhov, Poe, Twain, Aristotle), a house-lights pull-cord for the light and dark themes, and small achievements (a story where every gun fires, a gun that fires twice). Every animation is off under `prefers-reduced-motion`; everything works by keyboard and at phone width.
+The interface is a paper toy theatre: a cut-paper header whose layers drift with the pointer, curtains that close and part on the first report, an open book that turns a page for each chapter read and a live "Found" wall of guns, rotating public-domain lines on setup and payoff (Chekhov, Poe, Twain, Aristotle), an arc map that fires when it comes into view (a muzzle flash where each arc lands; a set-aside gun's thread falls off), a spotlight that glides onto the line you point to, a curtain call with a bow from the header gun when every gun fires, and a house-lights pull-cord that stretches and fades the stage between light and dark. Achievements arrive as admission tickets and collect in **the Programme**, a playbill that opens from the ticket hanging on the right of the stage. Every animation is off under `prefers-reduced-motion`; everything works by keyboard and at phone width. When the day's free AI quota runs out, the house is full: the app says so and offers a sample performance.
 
 **Limits and timing.** One AI request per chapter plus one to link payoffs. Text without chapter headings is split into ~1,500-word parts. A 1,500-2,000-word story takes roughly 30-90 s; ~25,000 words (about 18 requests) is the practical maximum for one day on the free tier. Re-running a story is instant: results are cached per chapter in the browser.
 
@@ -121,7 +123,7 @@ Measured on chapter 1 of the sample (Oct 2026, free tier): `gemini-3.5-flash` at
 | Command | What it does |
 | --- | --- |
 | `npm run dev` / `build` / `start` | Next.js dev server, production build, serve the build |
-| `npm test` | Vitest unit tests (chapterize, ledger, cache keys, quote verification, resolve, uncertainty, tension, routes, overrides, notes, compare drafts). 152 tests, no AI calls |
+| `npm test` | Vitest unit tests (chapterize, ledger, cache keys, quote verification, resolve, uncertainty, tension, routes, overrides, notes, compare drafts, PDF paragraphs, rhythm, share links). 168 tests, no AI calls |
 | `npm run lint` | ESLint |
 | `npm run build-samples` | Analyses each sample once and writes `public/samples/<slug>/result.json` (the static results the app loads instantly; until it has been run, no sample result exists) |
 | `npm run prompt-check` | Runs every sample 5 times (`-- --runs N` to change, `--only slug,slug` for a subset) against its answer key and prints a Markdown metrics table |
@@ -160,7 +162,8 @@ components/     Input, run status, Report tab, Story tab; effects/ (theatre head
 lib/ai/         ModelProvider + Gemini, prompts (versioned), Zod schemas
 lib/analysis/   verifyQuotes, resolve, tension (pure code)
 lib/pipeline/   The chapter-by-chapter analysis loop
-lib/view/       Pure view logic: overrides, writer-added guns, notes, compare drafts,
+lib/view/       Pure view logic: overrides, writer-added guns, notes, compare drafts, rhythm,
+                share links, recent reports, biggest loose end,
                 achievements, arc layout, summary counts
 lib/            chapterize, ledger, cache, metrics, input readers
 docs/           README screenshots
@@ -179,8 +182,8 @@ This repo is the pre-built half. The features to be built live in the 6-hour spr
 | The UI: report, story view, arc map, tension, the theatre | A verifier pass that scores each link's confidence |
 | Backend routes, rate limiting, the key kept server-side | Cheap-twist detection: payoffs that come from nowhere |
 | The basic Gemini pipeline (extract, match) and code-side quote checks | Fix suggestions in the author's style, with accept / reject |
-| Free-tier resilience: waiting out 503s, lite-model fallback | Ideas if time allows: "How could this fire?", genre-aware prompts, implied payoffs |
-| Writer tools that use no AI: overrides, added guns, filters, notes, compare drafts | |
+| Free-tier resilience: waiting out 503s, lite-model fallback | Ideas if time allows: "How could this fire?", genre-aware prompts, implied payoffs, a character view, "Ask the story", live writing mode |
+| Writer tools that use no AI: overrides, added guns, filters, notes, compare drafts, rhythm, share links, shortcuts | |
 
 The prompts have only had bug fixes so far, so the prompt-check numbers above are the *before* baseline.
 
