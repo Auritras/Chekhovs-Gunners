@@ -9,29 +9,59 @@ Chekhov's Gunners is a writing assistant for the oldest rule in dramatic craft. 
 - **Live demo:** https://chekhovs-gunners.vercel.app
 - Demo video: _coming soon_
 
+![The landing page: a paper toy theatre, three sample stories and a miniature of a real report](docs/screenshots/landing.png)
+
 ## Judge it in 60 seconds
 
 1. Open the live demo and click any of the three samples (or **See the full report** in the "What you get" card). The saved report opens instantly and uses no AI quota.
 2. Read **Guns that never fire**: each card quotes the line that planted the gun. Click one to jump to it in the Story tab, where it stands in a spotlight and the other highlights step back.
 3. Open **Guns that fired** to check what the tool understood, then look at the **arc map** and the **tension** hill.
-4. To see a live run, click **Or load its text to analyse yourself** under any sample, then press **Analyse** (about a minute).
+4. Disagree with it: on a card, press **It does fire →** and select the line where it pays off (a gold arc appears on the map), or **Not a gun** to set it aside. **Missed one? Add a gun** lets you select a line the tool missed.
+5. **Download notes** as Markdown or PDF to take the loose ends to an editor.
+6. To see a live run, click **Or load its text to analyse yourself** under any sample, then press **Analyse** (about a minute). Edit a line and analyse again to see **Since your last draft**.
 
 ## What you get
 
 | Tab | Contents |
 | --- | --- |
 | Report | Summary counts (each links to its section), **guns that never fire** with quotes, a collapsible list of **guns that fired** (one row per gun, every payoff listed), the animated **arc map** (setup to payoff; red threads for unfired guns), and the per-chapter **tension** landscape and bars |
-| Story | The chapter text with setups and payoffs highlighted inline; jumping from a card spotlights that passage and fades the rest |
+| Story | The chapter text with setups and payoffs highlighted inline; jumping from a card spotlights that passage and fades the rest. Gun pins in the margin mark every setup; **J / K** walk the loose ends |
+
+![The report: counts, a filter by gun type, and the guns that never fire, each with its quote](docs/screenshots/report.png)
+
+| Arc map | Story tab |
+| --- | --- |
+| ![Arcs from each setup to its payoff; red threads hang from guns that never fire](docs/screenshots/arc-map.png) | ![A card's quote spotlighted in the story, with a gun pin in the margin](docs/screenshots/story.png) |
+
+**The writer has the last word.** Every verdict can be overruled. Your calls are kept in your browser, per story, and never change the tool's own findings (both are shown).
+
+- **It does fire →**: pick the chapter, then select the line where the gun pays off. It moves to "fired (marked by you)" and a gold arc grows on the map.
+- **Not a gun**: set a finding aside (with Undo).
+- **Missed one? Add a gun**: select the line that plants a gun the tool missed, and name it.
+- **Filter by type** (object, secret, skill, promise...) across the lists and the arc map.
+- **Download notes**: the loose ends with their quotes, your decisions and the guns that fired, as Markdown or a print-ready PDF playbill.
+- **Compare drafts**: after you edit the story and analyse it again, **Since your last draft** lists the guns that now fire, the new loose ends, and loose ends whose line you cut. Each run words its findings afresh, so guns are paired across runs by the line they quote and by how alike their summaries read.
 
 Three sample stories with writer-made answer keys: **The Locked Drawer**, **The Sweet Shop**, and **The Stopped Clock**, a detective case with two deliberate red herrings (useful for the genre work planned for the live sprint). A sample whose `public/samples/<slug>/result.json` exists opens instantly with no API call; otherwise its button loads the text for a live analysis.
 
-The interface is a paper toy theatre: a cut-paper header whose layers drift with the pointer, curtains that part on the first report, rotating public-domain lines on setup and payoff (Chekhov, Poe, Twain, Aristotle) while a story is read, and a running clock so long chapters visibly progress. Every animation is off under `prefers-reduced-motion`.
+The interface is a paper toy theatre: a cut-paper header whose layers drift with the pointer, curtains that close and part on the first report, a live "Found" wall of guns as each chapter is read, rotating public-domain lines on setup and payoff (Chekhov, Poe, Twain, Aristotle), a house-lights pull-cord for the light and dark themes, and small achievements (a story where every gun fires, a gun that fires twice). Every animation is off under `prefers-reduced-motion`; everything works by keyboard and at phone width.
 
 **Limits and timing.** One AI request per chapter plus one to link payoffs. Text without chapter headings is split into ~1,500-word parts. A 1,500-2,000-word story takes roughly 30-90 s; ~25,000 words (about 18 requests) is the practical maximum for one day on the free tier. Re-running a story is instant: results are cached per chapter in the browser.
 
-## How it works
+## How the AI is used
 
-The Gemini calls are the easy part. The reliability comes from the code around them.
+Gemini does the reading; code decides what counts.
+
+| Step | Who does it | What happens |
+| --- | --- | --- |
+| Split into chapters | Code | Headings ("Chapter 3: ...", Markdown `#`), or ~1,500-word parts |
+| Find setups and payoffs | **Gemini** (`/api/extract`, one call per chapter) | Returns each setup and payoff with an exact quote, its kind and importance, and links to earlier setups by ledger id |
+| Link the leftovers | **Gemini** (`/api/match`, one call per story) | Sees only unmatched setups and unlinked payoffs, and explains each link |
+| Check every quote | Code | Anything not found word for word in its chapter is dropped |
+| Order, unfired guns, tension, uncertainty | Code | Payoffs must come after their setups; the rest is counted, not asked |
+| Overrule, add, compare | The writer | The tool suggests; the writer decides |
+
+Prompts and response schemas live in `lib/ai/`: prompts are versioned, and responses are Zod-validated JSON. The Gemini calls are the easy part. The reliability comes from the code around them:
 
 1. **Ledger.** Chapters are analysed in order. Each `/api/extract` call gets the chapter text plus a compact **ledger** of the verified setups from earlier chapters (id, chapter, kind, short summary). The model can recognise a payoff to a setup it never saw the text of by citing the ledger id, and the cost per chapter stays flat as the story grows. A second `/api/match` call sees only the leftovers (unmatched setups, unlinked payoffs), not the full text.
 2. **Quote verification (hallucination guard).** The model must return an exact quote for every setup and payoff. In code, after normalising whitespace and quote marks, anything whose quote is not found in its chapter is dropped and counted. Only verified setups enter the ledger, so one hallucination cannot poison later chapters.
@@ -49,6 +79,8 @@ flowchart TD
     LOOP <--> CACHE[("localStorage cache per chapter")]
     LOOP --> GUARD["Code-side guards:<br/>quote verification, earlier-chapter rule,<br/>uncertainty, tension"]
     GUARD --> VIEWS["Report tab and Story tab"]
+    VIEWS <--> WRITER[("Writer's calls, added guns,<br/>last draft (localStorage)")]
+    VIEWS --> NOTES["Notes: Markdown / PDF"]
   end
   LOOP -- "chapter + ledger" --> EX["POST /api/extract"]
   LOOP -- "unmatched setups + unlinked payoffs" --> MA["POST /api/match"]
@@ -89,7 +121,7 @@ Measured on chapter 1 of the sample (Oct 2026, free tier): `gemini-3.5-flash` at
 | Command | What it does |
 | --- | --- |
 | `npm run dev` / `build` / `start` | Next.js dev server, production build, serve the build |
-| `npm test` | Vitest unit tests (chapterize, ledger, cache keys, quote verification, resolve, uncertainty, tension, routes). No AI calls |
+| `npm test` | Vitest unit tests (chapterize, ledger, cache keys, quote verification, resolve, uncertainty, tension, routes, overrides, notes, compare drafts). 152 tests, no AI calls |
 | `npm run lint` | ESLint |
 | `npm run build-samples` | Analyses each sample once and writes `public/samples/<slug>/result.json` (the static results the app loads instantly; until it has been run, no sample result exists) |
 | `npm run prompt-check` | Runs every sample 5 times (`-- --runs N` to change, `--only slug,slug` for a subset) against its answer key and prints a Markdown metrics table |
@@ -102,18 +134,18 @@ Measured on chapter 1 of the sample (Oct 2026, free tier): `gemini-3.5-flash` at
 
 Sample stories ship with writer-made answer keys (`samples/<slug>/answer-key.json`). Metrics are averaged over the runs stated under the table; the free tier's 20 requests a day limit how many fit in one day.
 
-| Sample | Recall | Wrong setups | Wrong matches | Unfired correct | Quote drop rate |
-| --- | --- | --- | --- | --- | --- |
-| the-locked-drawer | 100% | 2.0 | 0.0 | 1/1 | 0% |
-| the-sweet-shop | 83% | 0.0 | 1.0 | 0/1 | 0% |
-| the-stopped-clock | not yet measured | | | | |
+| Sample | Runs | Recall | Wrong setups | Wrong matches | Unfired correct | Quote drop rate |
+| --- | --- | --- | --- | --- | --- | --- |
+| the-locked-drawer | 2 | 100% | 2.0 | 0.5 | 1/1 | 0% |
+| the-sweet-shop | 2 | 75% | 0.0 | 0.5 | 0/1 | 0% |
+| the-stopped-clock | 1 | 67% | 1.0 | 1.0 | 1/2 | 0% |
 
-**Before baseline:** 31 Oct 2026 · `gemini-3.5-flash`, medium thinking · prompts extract `x2`, match `m2` · **1 run per sample** (the free tier allows 20 requests a day; more runs will be added on later days). Produced with `npm run prompt-check -- --runs 1 --only the-locked-drawer,the-sweet-shop`.
+**Before baseline:** `gemini-3.5-flash`, medium thinking · prompts extract `x2`, match `m2` (unchanged between runs) · one run per sample on 31 Oct and one on 6 Nov 2026, averaged (the free tier allows 20 requests a day). Produced with `npm run prompt-check -- --runs 1`. Single runs vary: The Sweet Shop's recall was 83% on the first run and 67% on the second.
 
 What the baseline misses, and what the live sprint targets:
 
 - **The Sweet Shop:** the brass bell (the story's deliberate unfired gun) is never found, so "unfired correct" is 0/1; the "hearing the syrup" skill is quoted from its payoff scene instead of where it is planted.
-- **The Stopped Clock** (saved result, not yet scored): both red herrings are treated like ordinary setups, the gardener's record is wrongly linked as fired, and the stopped clock itself is not picked up as a setup. This is the case for genre-aware prompts.
+- **The Stopped Clock:** only one of its two deliberate unfired guns is flagged, with one wrong setup and one false link. A detective story's red herrings are meant to stay unfired, which is the case for genre-aware prompts.
 
 These misses are why the app lets the writer overrule any verdict ("It does fire" / "Not a gun").
 
@@ -128,7 +160,10 @@ components/     Input, run status, Report tab, Story tab; effects/ (theatre head
 lib/ai/         ModelProvider + Gemini, prompts (versioned), Zod schemas
 lib/analysis/   verifyQuotes, resolve, tension (pure code)
 lib/pipeline/   The chapter-by-chapter analysis loop
+lib/view/       Pure view logic: overrides, writer-added guns, notes, compare drafts,
+                achievements, arc layout, summary counts
 lib/            chapterize, ledger, cache, metrics, input readers
+docs/           README screenshots
 samples/        Answer keys; public/samples has the stories and results
 scripts/        build-samples and prompt-check
 tests/          Vitest suites
@@ -138,9 +173,16 @@ tests/          Vitest suites
 
 This repo is the pre-built half. The features to be built live in the 6-hour sprint on 21 Nov 2026 are listed in [LIVE_SPRINT.md](LIVE_SPRINT.md).
 
-**Pre-built (as the organizers confirmed is allowed):** file input, UI, backend routes, and the basic Gemini pipeline that extracts and matches setups/payoffs, with code-side quote checks. Also pre-built, as error handling so the online demo keeps working on the free tier: waiting out 503 "high demand" errors and falling back to a lite model when the daily quota runs out.
+| Pre-built (allowed, as the organizers confirmed) | Built live in the sprint |
+| --- | --- |
+| File input (`.txt`, `.md`, `.docx`, `.pdf`) and chapter splitting | Deep prompt tuning against the answer keys, with before/after tables |
+| The UI: report, story view, arc map, tension, the theatre | A verifier pass that scores each link's confidence |
+| Backend routes, rate limiting, the key kept server-side | Cheap-twist detection: payoffs that come from nowhere |
+| The basic Gemini pipeline (extract, match) and code-side quote checks | Fix suggestions in the author's style, with accept / reject |
+| Free-tier resilience: waiting out 503s, lite-model fallback | Ideas if time allows: "How could this fire?", genre-aware prompts, implied payoffs |
+| Writer tools that use no AI: overrides, added guns, filters, notes, compare drafts | |
 
-**Not pre-built:** the prompts have only had bug fixes so far. The prompt-check numbers above are the *before* baseline; deep prompt tuning happens live, with before/after tables.
+The prompts have only had bug fixes so far, so the prompt-check numbers above are the *before* baseline.
 
 ## Constraints
 
