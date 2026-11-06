@@ -18,6 +18,7 @@ import {
 import Summary from "@/components/report/Summary";
 import ArcMap from "@/components/report/ArcMap";
 import TensionChart from "@/components/report/TensionChart";
+import RhythmChart from "@/components/report/RhythmChart";
 import IssueList from "@/components/report/IssueList";
 import Divider from "@/components/report/Divider";
 import KindChips from "@/components/report/KindChips";
@@ -315,6 +316,8 @@ export default function ResultTabs({
                 </div>
                 <Divider />
                 <TensionChart result={result} chapter={chapter} onChapter={filterChapter} />
+                <Divider />
+                <RhythmChart result={view} overrides={overrides} />
               </div>
             ) : (
               <StoryView
