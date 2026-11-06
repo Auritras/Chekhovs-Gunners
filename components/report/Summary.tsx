@@ -70,7 +70,7 @@ export default function Summary({ result, overrides }: { result: AnalysisResult;
                 <a
                   href={it.href}
                   onClick={(e) => jump(e, it.href!)}
-                  className="underline decoration-line decoration-1 underline-offset-4 transition-colors hover:text-ink hover:decoration-current"
+                  className="-my-3 inline-block py-3 underline decoration-line decoration-1 underline-offset-4 transition-colors hover:text-ink hover:decoration-current"
                 >
                   {it.label} <span aria-hidden>↓</span>
                 </a>
