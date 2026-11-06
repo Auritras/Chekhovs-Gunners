@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PageBook from "@/components/effects/PageBook";
 import FoundWall, { type WallItem } from "@/components/effects/FoundWall";
 import QuoteRotator from "@/components/effects/QuoteRotator";
 import type { Chapter } from "@/lib/types";
@@ -122,6 +123,9 @@ export default function RunStatus({
 
       {run.phase === "running" && (
         <div className="flex flex-col gap-2 py-2" aria-live="polite">
+          <div className="flex items-center gap-5">
+          <PageBook current={run.chapter} of={run.of} finished={run.stage === "match"} />
+          <div className="flex min-w-0 flex-col gap-2">
           <p className="font-display text-2xl">
             {run.stage === "match"
               ? "Following every gun to its payoff"
@@ -138,6 +142,8 @@ export default function RunStatus({
             </span>
             <Elapsed />
           </p>
+          </div>
+          </div>
           <Footlights of={run.of} current={run.chapter} finished={run.stage === "match"} />
           <div className="mt-4">
             <FoundWall items={wall} />
