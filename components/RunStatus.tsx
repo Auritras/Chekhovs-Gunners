@@ -168,14 +168,14 @@ export default function RunStatus({
           action={
             run.sampleAvailable ? (
               <button type="button" className={buttonClass} onClick={onLoadSample}>
-                Load sample analysis
+                See the sample
               </button>
             ) : undefined
           }
         >
           {run.sampleAvailable
-            ? "Today's free AI quota is used up. Here's the sample analysis instead."
-            : "Today's free AI quota is used up. Please try again tomorrow."}
+            ? "The house is full today: the free AI quota is used up. Come back tomorrow, or watch a sample performance now."
+            : "The house is full today: the free AI quota is used up. Come back tomorrow."}
         </Banner>
       )}
 
