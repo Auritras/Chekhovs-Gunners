@@ -137,12 +137,13 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
       <Drape side="left" />
       <Drape side="right" />
 
-      <div aria-hidden data-depth="6" className="paper-layer paper-shadow absolute -inset-x-4 top-0">
+      {/* The valance sits in front of the house-lights cord, so the cord hangs from behind it. */}
+      <div aria-hidden data-depth="6" className="paper-layer paper-shadow absolute -inset-x-4 top-0 z-10">
         <div className="valance curtain h-8 sm:h-10" />
       </div>
 
       {/* The house lights: a pull-cord hanging from the valance, just inside the left drape. */}
-      <div className="absolute left-[calc(clamp(28px,8vw,130px)-0.75rem)] top-6 z-20 sm:top-8">
+      <div className="absolute left-[calc(clamp(28px,8vw,130px)-0.75rem)] top-2 z-[5]">
         <HouseLights />
       </div>
 
