@@ -7,7 +7,6 @@ import ResultTabs from "@/components/ResultTabs";
 import OpeningCurtain, { markCurtainStart } from "@/components/effects/OpeningCurtain";
 import PaperHeader from "@/components/effects/PaperHeader";
 import AchievementToasts from "@/components/effects/AchievementToasts";
-import Programme from "@/components/effects/Programme";
 import { unlock } from "@/lib/view/achievementStore";
 import { useStageTitle } from "@/components/effects/useStageTitle";
 import HowItWorks from "@/components/landing/HowItWorks";
@@ -273,8 +272,6 @@ export default function Home() {
           It suggests; the writer decides.
         </span>
         <span>Your text is never changed.</span>
-        <span aria-hidden>·</span>
-        <Programme />
       </footer>
     </>
   );

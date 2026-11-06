@@ -381,6 +381,14 @@ body {
   }
 }
 
+/* The programme ticket on the valance swings on its string when hovered. */
+.ticket-sway {
+  transform-origin: 50% 0;
+}
+.group:hover > .ticket-sway {
+  animation: swing 1.6s ease-in-out;
+}
+
 /* Hover over the header gun and it swings a little on its nail. */
 .gun-hang {
   transform-origin: 50% 6%;
@@ -790,6 +798,7 @@ body {
   .reward-toast,
   .reward-toast-out,
   .writer-arc,
+  .group:hover > .ticket-sway,
   .gun-hang:hover,
   .wall-hang,
   .wall-thread,

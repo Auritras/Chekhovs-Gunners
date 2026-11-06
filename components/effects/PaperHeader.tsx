@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GUN_BODY, GUN_TRIGGER } from "@/components/effects/GunGlyph";
 import { unlock } from "@/lib/view/achievementStore";
+import Programme from "@/components/effects/Programme";
 import HouseLights from "@/components/effects/HouseLights";
 
 /** Paper layers carry data-depth: how far (px) they drift at the header edge; nearer layers move more. */
@@ -145,6 +146,11 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
       {/* The house lights: a pull-cord hanging from the valance, just inside the left drape. */}
       <div className="absolute left-[calc(clamp(28px,8vw,130px)-0.75rem)] top-2 z-[5]">
         <HouseLights />
+      </div>
+
+      {/* The programme: a ticket on a string from the valance, just inside the right drape. */}
+      <div className="absolute right-[calc(clamp(28px,8vw,130px)-1.25rem)] top-2 z-[5]">
+        <Programme />
       </div>
 
       <div className="relative px-[clamp(28px,8vw,130px)] pb-14 pt-16 sm:pb-16 sm:pt-20">
