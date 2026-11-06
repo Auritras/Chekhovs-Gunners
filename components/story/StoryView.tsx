@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { isTypingOrBusy } from "@/lib/view/keys";
 import GunGlyph from "@/components/effects/GunGlyph";
 import type { AnalysisResult } from "@/lib/types";
 import { highlightSegments, type HighlightMark } from "@/lib/view/highlight";
@@ -165,9 +166,8 @@ export default function StoryView({
   useEffect(() => {
     if (!onSelect || loose.length === 0) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
       // Typing in a field (the gun name, a search box) is not navigation.
-      if (e.target instanceof Element && e.target.closest("input, textarea, select, [contenteditable]")) return;
+      if (isTypingOrBusy(e)) return;
       const key = e.key.toLowerCase();
       if (key !== "j" && key !== "k") return;
       e.preventDefault();

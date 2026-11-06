@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { isTypingOrBusy } from "@/lib/view/keys";
 import type { AnalysisResult, Setup, SetupKind } from "@/lib/types";
 import { isWriterGun, type Override, type Overrides } from "@/lib/view/overrides";
 
@@ -62,6 +63,49 @@ export default function IssueList({
     );
   const issues = all.filter((s) => !overrides[s.id]);
   const setAside = all.filter((s) => overrides[s.id]?.kind === "dismissed");
+  // Keyboard: J / K move between the cards, F says it fires (pick the chapter), X sets it aside.
+  const ids = issues.map((s) => s.id).join(" ");
+  useEffect(() => {
+    const order = ids ? ids.split(" ") : [];
+    if (order.length === 0) return;
+    const cardOf = (el: Element | null) => el?.closest<HTMLElement>('li[id^="card-"]')?.id.slice(5) ?? null;
+    const focusCard = (id: string) => {
+      const main = document.querySelector<HTMLElement>(`#card-${CSS.escape(id)} > button`);
+      main?.focus({ preventScroll: true });
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      main?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (isTypingOrBusy(e)) return;
+      const key = e.key.toLowerCase();
+      if (!["j", "k", "f", "x"].includes(key)) return;
+      const current = cardOf(document.activeElement);
+      const at = current ? order.indexOf(current) : -1;
+      if (key === "j" || key === "k") {
+        e.preventDefault();
+        const next = key === "j" ? (at < 0 ? 0 : (at + 1) % order.length) : at < 0 ? order.length - 1 : (at - 1 + order.length) % order.length;
+        focusCard(order[next]);
+        return;
+      }
+      if (at < 0) return; // F and X act on the focused card only
+      e.preventDefault();
+      if (key === "f") {
+        setPicking(current);
+        // Hand focus to the first chapter choice once it is drawn.
+        setTimeout(() => document.querySelector<HTMLElement>(`#card-${CSS.escape(current!)} [role="group"] button`)?.focus(), 0);
+      } else if (!isWriterGun(current!)) {
+        // The next card takes focus, so X can be pressed again.
+        const following = order[at + 1] ?? order[at - 1];
+        setAsideGun(current!);
+        if (following) setTimeout(() => focusCard(following), 400);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // setAsideGun only reads stable setters and props.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ids]);
+
   const chapterTitle = (n: number) =>
     result.chapters.find((c) => c.index === n)?.title || `Chapter ${n}`;
 
@@ -82,6 +126,13 @@ export default function IssueList({
                 ? "An empty stage. Bold choice. We found no setups in this story."
                 : "Every setup we found pays off later in the story."}
         </p>
+        {issues.length > 0 && (
+          <p className="mt-1 hidden text-xs text-muted sm:block">
+            Keys: <kbd className="font-sans">J</kbd> / <kbd className="font-sans">K</kbd> move between guns,{" "}
+            <kbd className="font-sans">F</kbd> it fires, <kbd className="font-sans">X</kbd> not a gun,{" "}
+            <kbd className="font-sans">?</kbd> all shortcuts.
+          </p>
+        )}
         {onAddGun && (
           <button
             type="button"
