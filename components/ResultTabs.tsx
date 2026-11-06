@@ -75,6 +75,15 @@ export default function ResultTabs({
   const [pick, setPick] = useState<Pick | null>(null);
   // Filter the lists and the arc map by gun type.
   const [kind, setKind] = useState<SetupKind | null>(null);
+  // Filter the lists to one chapter, from the tension chart.
+  const [chapter, setChapter] = useState<number | null>(null);
+  function filterChapter(next: number | null) {
+    setChapter(next);
+    if (next === null) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById("issues")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }
+  const chapterName = (n: number) => view.chapters.find((c) => c.index === n)?.title || `Chapter ${n}`;
   function pointOut(setupId: string) {
     const call = saved[setupId];
     if (call?.kind !== "fired") return;
@@ -250,6 +259,18 @@ export default function ResultTabs({
                 {/* The guns that never fire are why writers come, so they lead the report. */}
                 <div className="flex flex-col gap-6">
                   <KindChips setups={view.setups} kind={kind} onChange={setKind} />
+                  {chapter !== null && (
+                    <p className="-mt-2 text-sm text-ink-soft">
+                      Showing guns planted or fired in {chapterName(chapter)}.{" "}
+                      <button
+                        type="button"
+                        onClick={() => setChapter(null)}
+                        className="min-h-11 text-brass underline decoration-line underline-offset-4 hover:text-ink"
+                      >
+                        Show all chapters
+                      </button>
+                    </p>
+                  )}
                   <IssueList
                     result={view}
                     overrides={overrides}
@@ -258,6 +279,7 @@ export default function ResultTabs({
                     onAddGun={startAddGun}
                     onRemoveGun={removeGun}
                     kind={kind}
+                    chapter={chapter}
                   />
                   <FiredList
                     result={view}
@@ -266,6 +288,7 @@ export default function ResultTabs({
                     onSelect={openInStory}
                     onPointOut={pointOut}
                     kind={kind}
+                    chapter={chapter}
                   />
                 </div>
                 <Divider />
@@ -291,7 +314,7 @@ export default function ResultTabs({
                   <ArcMap result={view} overrides={overrides} kind={kind} />
                 </div>
                 <Divider />
-                <TensionChart result={result} />
+                <TensionChart result={result} chapter={chapter} onChapter={filterChapter} />
               </div>
             ) : (
               <StoryView

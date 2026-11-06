@@ -2,7 +2,17 @@ import TensionLandscape from "@/components/report/TensionLandscape";
 import type { AnalysisResult } from "@/lib/types";
 
 /** Horizontal bars so long chapter titles stay readable at phone width. */
-export default function TensionChart({ result }: { result: AnalysisResult }) {
+export default function TensionChart({
+  result,
+  chapter = null,
+  onChapter,
+}: {
+  result: AnalysisResult;
+  /** The chapter the lists are filtered to, if any. */
+  chapter?: number | null;
+  /** Filter the lists to a chapter (or clear the filter with null). */
+  onChapter?: (chapter: number | null) => void;
+}) {
   const max = Math.max(1, ...result.tension);
   const failed = new Set(result.failedChapters);
   const peak = Math.max(...result.tension);
@@ -15,19 +25,24 @@ export default function TensionChart({ result }: { result: AnalysisResult }) {
         </h2>
         <p className="mt-1 max-w-[62ch] text-sm text-ink-soft">
           How much is still loaded at the end of each chapter: setups planted but not yet fired,
-          weighted by importance.
+          weighted by importance. Select a chapter to see its guns in the lists above.
         </p>
       </div>
       <TensionLandscape tension={result.tension} />
-      <ol className="flex flex-col gap-2.5">
+      <ol className="flex flex-col gap-1">
         {result.chapters.map((c, i) => {
           const value = result.tension[i] ?? 0;
           const isPeak = value > 0 && value === peak;
           return (
-            <li
-              key={c.index}
-              className="grid grid-cols-[minmax(0,1fr)_2.5rem] items-center gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,17rem)_minmax(0,1fr)_2.5rem]"
-            >
+            <li key={c.index}>
+              <button
+                type="button"
+                aria-pressed={chapter === c.index}
+                onClick={() => onChapter?.(chapter === c.index ? null : c.index)}
+                className={`grid w-full grid-cols-[minmax(0,1fr)_2.5rem] items-center gap-x-3 gap-y-1 rounded-sm px-1 py-1 text-left transition-colors hover:bg-surface sm:grid-cols-[minmax(0,17rem)_minmax(0,1fr)_2.5rem] ${
+                  chapter === c.index ? "bg-surface outline outline-1 outline-brass" : ""
+                }`}
+              >
               <span className="col-span-2 truncate text-sm sm:col-span-1" title={c.title}>
                 {c.title || `Chapter ${c.index}`}
                 {failed.has(c.index) && <span className="text-muted"> (not analysed)</span>}
@@ -42,6 +57,7 @@ export default function TensionChart({ result }: { result: AnalysisResult }) {
                 <span className="sr-only">Tension </span>
                 {value}
               </span>
+              </button>
             </li>
           );
         })}

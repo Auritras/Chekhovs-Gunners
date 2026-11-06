@@ -11,6 +11,7 @@ export default function FiredList({
   onSelect,
   onPointOut,
   kind = null,
+  chapter = null,
 }: {
   result: AnalysisResult;
   overrides: Overrides;
@@ -19,6 +20,8 @@ export default function FiredList({
   /** Open the story to let the writer select the passage where it fires. */
   onPointOut?: (setupId: string) => void;
   kind?: SetupKind | null;
+  /** Only guns planted or firing in this chapter. */
+  chapter?: number | null;
 }) {
   const setups = new Map(result.setups.map((s) => [s.id, s]));
   const payoffs = new Map(result.payoffs.map((p) => [p.id, p]));
@@ -42,6 +45,13 @@ export default function FiredList({
   }
   const guns = [...bySetup.values()]
     .filter((g) => !kind || g.setup.kind === kind)
+    .filter(
+      (g) =>
+        chapter === null ||
+        g.setup.chapter === chapter ||
+        g.writerChapter === chapter ||
+        g.payoffs.some((p) => p.chapter === chapter),
+    )
     .map((g) => ({ ...g, payoffs: g.payoffs.sort((a, b) => a.chapter - b.chapter || a.start - b.start) }))
     .sort((a, b) => a.setup.chapter - b.setup.chapter || a.setup.start - b.setup.start);
   if (guns.length === 0) return null;

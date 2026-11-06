@@ -18,6 +18,7 @@ export default function IssueList({
   onAddGun,
   onRemoveGun,
   kind = null,
+  chapter = null,
 }: {
   result: AnalysisResult;
   overrides: Overrides;
@@ -27,6 +28,8 @@ export default function IssueList({
   onAddGun?: () => void;
   onRemoveGun?: (setupId: string) => void;
   kind?: SetupKind | null;
+  /** Only guns planted in this chapter. */
+  chapter?: number | null;
 }) {
   // Which card has its chapter picker open.
   const [picking, setPicking] = useState<string | null>(null);
@@ -53,6 +56,7 @@ export default function IssueList({
   const unfired = new Set(result.unfired);
   const all: Setup[] = result.setups
     .filter((s) => !kind || s.kind === kind)
+    .filter((s) => chapter === null || s.chapter === chapter)
     .filter((s) => unfired.has(s.id))
     .sort(
       (a, b) =>
@@ -118,7 +122,9 @@ export default function IssueList({
         <p className="mt-1 max-w-[62ch] text-sm text-ink-soft">
           {issues.length > 0
             ? "Select one to see it in the story. If it does pay off, or isn't really a gun, say so: it's your call."
-            : kind
+            : chapter !== null
+              ? "No gun planted in this chapter is left on the wall."
+              : kind
               ? `No ${kind} guns are left on the wall.`
               : all.length > 0
               ? "Every gun is accounted for."
