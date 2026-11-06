@@ -820,3 +820,22 @@ body {
     animation: none;
   }
 }
+
+/* The achievements programme (a modal <dialog>): a dimmed house behind it, a short rise in. */
+.programme::backdrop {
+  background: rgb(10 6 4 / 0.65);
+}
+.programme[open] {
+  animation: programme-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes programme-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .programme[open] {
+    animation: none;
+  }
+}

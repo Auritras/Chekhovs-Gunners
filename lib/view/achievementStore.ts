@@ -38,6 +38,11 @@ export function unlock(...ids: string[]): void {
   listeners.forEach((l) => l());
 }
 
+/** Every achievement unlocked so far in this browser. */
+export function unlockedIds(): Set<string> {
+  return new Set(load());
+}
+
 /** Take the next achievement waiting for its pop-up. */
 export function nextUnlocked(): Achievement | undefined {
   return queue.shift();

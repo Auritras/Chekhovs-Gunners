@@ -11,31 +11,33 @@ export interface Achievement {
   /** Why it was unlocked. */
   text: string;
   emblem: Emblem;
+  /** Earned by the story, by the writer's actions, or a secret (its text stays hidden until found). */
+  group: "story" | "writer" | "secret";
 }
 
 export const ACHIEVEMENTS: Achievement[] = [
   // About the story
-  { id: "chekhov-approves", title: "Chekhov Approves", text: "Every gun planted in your story fires by the end.", emblem: "curtain" },
-  { id: "the-original", title: "The Original", text: "A real gun hangs on the wall in chapter 1, and it goes off later.", emblem: "gun" },
-  { id: "long-fuse", title: "Long Fuse", text: "A gun planted in chapter 1 waits until the final chapter to fire.", emblem: "gun" },
-  { id: "same-scene", title: "Same Scene", text: "A gun is planted and fired within a single chapter.", emblem: "gun" },
-  { id: "full-house", title: "Full House", text: "Your story plants ten or more guns.", emblem: "curtain" },
-  { id: "promise-kept", title: "Promise Kept", text: "A character makes a promise, and the story keeps it.", emblem: "quill" },
-  { id: "double-tap", title: "Double Tap", text: "One gun fires twice: two separate payoffs for the same setup.", emblem: "gun" },
-  { id: "tight-ship", title: "Tight Ship", text: "Every payoff in your story was set up first. No twists out of nowhere.", emblem: "star" },
+  { id: "chekhov-approves", title: "Chekhov Approves", text: "Every gun planted in your story fires by the end.", emblem: "curtain", group: "story" },
+  { id: "the-original", title: "The Original", text: "A real gun hangs on the wall in chapter 1, and it goes off later.", emblem: "gun", group: "story" },
+  { id: "long-fuse", title: "Long Fuse", text: "A gun planted in chapter 1 waits until the final chapter to fire.", emblem: "gun", group: "story" },
+  { id: "same-scene", title: "Same Scene", text: "A gun is planted and fired within a single chapter.", emblem: "gun", group: "story" },
+  { id: "full-house", title: "Full House", text: "Your story plants ten or more guns.", emblem: "curtain", group: "story" },
+  { id: "promise-kept", title: "Promise Kept", text: "A character makes a promise, and the story keeps it.", emblem: "quill", group: "story" },
+  { id: "double-tap", title: "Double Tap", text: "One gun fires twice: two separate payoffs for the same setup.", emblem: "gun", group: "story" },
+  { id: "tight-ship", title: "Tight Ship", text: "Every payoff in your story was set up first. No twists out of nowhere.", emblem: "star", group: "story" },
   // About the writer
-  { id: "opening-night", title: "Opening Night", text: "You analysed your first story of your own.", emblem: "curtain" },
-  { id: "encore", title: "Encore", text: "You analysed a second story of your own.", emblem: "curtain" },
-  { id: "marathon", title: "Marathon", text: "You analysed a story of 10,000 words or more.", emblem: "quill" },
-  { id: "intermission", title: "Intermission", text: "You stepped out during an analysis and came back to a finished report.", emblem: "moon" },
-  { id: "night-owl", title: "Night Owl", text: "You analysed a story between midnight and 4 am.", emblem: "moon" },
-  { id: "script-doctor", title: "Script Doctor", text: "You overruled the tool: a gun it said never fires, you showed does.", emblem: "quill" },
-  { id: "red-herring", title: "Red Herring", text: "You set aside a gun that was never meant to fire.", emblem: "quill" },
-  { id: "case-closed", title: "Case Closed", text: "You set aside a red herring in The Stopped Clock.", emblem: "star" },
-  { id: "sharp-eye", title: "Sharp Eye", text: "You added a gun the tool missed.", emblem: "star" },
-  { id: "pinpoint", title: "Pinpoint", text: "You pointed to the exact line where a gun fires.", emblem: "quill" },
+  { id: "opening-night", title: "Opening Night", text: "You analysed your first story of your own.", emblem: "curtain", group: "writer" },
+  { id: "encore", title: "Encore", text: "You analysed a second story of your own.", emblem: "curtain", group: "writer" },
+  { id: "marathon", title: "Marathon", text: "You analysed a story of 10,000 words or more.", emblem: "quill", group: "writer" },
+  { id: "intermission", title: "Intermission", text: "You stepped out during an analysis and came back to a finished report.", emblem: "moon", group: "writer" },
+  { id: "night-owl", title: "Night Owl", text: "You analysed a story between midnight and 4 am.", emblem: "moon", group: "writer" },
+  { id: "script-doctor", title: "Script Doctor", text: "You overruled the tool: a gun it said never fires, you showed does.", emblem: "quill", group: "writer" },
+  { id: "red-herring", title: "Red Herring", text: "You set aside a gun that was never meant to fire.", emblem: "quill", group: "writer" },
+  { id: "case-closed", title: "Case Closed", text: "You set aside a red herring in The Stopped Clock.", emblem: "star", group: "writer" },
+  { id: "sharp-eye", title: "Sharp Eye", text: "You added a gun the tool missed.", emblem: "star", group: "writer" },
+  { id: "pinpoint", title: "Pinpoint", text: "You pointed to the exact line where a gun fires.", emblem: "quill", group: "writer" },
   // Secret
-  { id: "six-chambers", title: "Six Chambers", text: "You found the gun's secret. Six clicks, one bang.", emblem: "gun" },
+  { id: "six-chambers", title: "Six Chambers", text: "You found the gun's secret. Six clicks, one bang.", emblem: "gun", group: "secret" },
 ];
 
 export const achievement = (id: string) => ACHIEVEMENTS.find((a) => a.id === id);
