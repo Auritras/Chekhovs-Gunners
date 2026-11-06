@@ -42,11 +42,20 @@ export default function DownloadNotes({
     doc.close();
     frame.contentWindow.focus();
     // Browsers name the saved PDF after the page's title, so lend it the notes' title.
+    // Some browsers (Firefox, Safari) return from print() before the dialog reads the title,
+    // so put the page's own title back only once printing is over.
     const pageTitle = document.title;
     document.title = title ? `Programme notes – ${title}` : "Programme notes";
+    let restored = false;
+    const restore = () => {
+      if (restored) return;
+      restored = true;
+      document.title = pageTitle;
+      frame.remove();
+    };
+    frame.contentWindow.addEventListener("afterprint", restore, { once: true });
     frame.contentWindow.print();
-    document.title = pageTitle;
-    setTimeout(() => frame.remove(), 60_000);
+    setTimeout(restore, 60_000);
   }
 
   return (
