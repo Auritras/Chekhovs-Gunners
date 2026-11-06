@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { GUN_BODY, GUN_TRIGGER } from "@/components/effects/GunGlyph";
+import { GUN_BODY, GUN_DETAIL, GUN_TRIGGER } from "@/components/effects/GunGlyph";
 
 export const metadata: Metadata = { title: "Never planted · Chekhov's Gunners" };
 
@@ -13,7 +13,7 @@ export default function NotFound() {
         <circle cx="60" cy="10" r="3" className="fill-brass" />
         <path d="M60 10 L40 34 M60 10 L80 34" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.5" fill="none" />
         <g transform="translate(22 22)">
-          <path d={GUN_BODY} fill="currentColor" />
+          <path d={GUN_BODY + GUN_DETAIL} fill="currentColor" fillRule="evenodd" />
           <path d={GUN_TRIGGER} stroke="currentColor" strokeWidth="2.5" fill="none" />
         </g>
         {/* The red thread: a gun that never fires. */}

@@ -105,7 +105,7 @@ export function notesHtml(markdown: string): string {
       // A playbill heading for the first line.
       body.push(
         `<header class="bill"><p class="presents">Chekhov&rsquo;s Gunners presents</p><h1>${inline(l.slice(2))}</h1>` +
-          `<svg class="orn" viewBox="0 10 80 40" width="44" height="22" aria-hidden="true"><path d="M6 16 H70 V22 H74 V28 H34 Q30 28 29 32 L25 46 Q24 48 21 48 H12 Q9 48 10 45 L15 28 H6 Z" fill="#96731f"/></svg></header>`,
+          `<svg class="orn" viewBox="0 10 80 40" width="44" height="22" aria-hidden="true"><path d="M18 11.6 Q18.2 10.8 19 11 L21.3 12.4 Q21.8 12.8 21.8 13.4 V14 H27.5 V13.2 Q27.5 11.9 28.8 11.9 H43 Q44.4 11.9 44.4 13.3 V15.5 H70.8 L71.2 13.6 Q72.3 12.6 73.2 13.4 L73.6 15.5 H74.6 Q75.2 15.6 75.2 16.4 V19.8 Q75.2 20.6 74.4 20.6 H61.5 V23.2 Q61.5 24 60.7 24 H58.5 Q57.8 24 57.6 23 L57.4 22.4 H44.4 V26.6 Q44.4 28 43 28 H26.2 Q24.6 28 24.4 29.8 L25.2 45.2 Q25.3 46.6 24 46.6 H14.8 Q13.4 46.6 13.6 45.2 L18.2 17.6 Q18.4 16.2 18.3 15 Z M31.2 16.4 H44.4 V17.4 H31.2 Z M31.2 22.8 H44.4 V23.8 H31.2 Z M17.6 38 a1.3 1.3 0 1 0 2.6 0 a1.3 1.3 0 1 0 -2.6 0 Z" fill="#96731f" fill-rule="evenodd"/><path d="M27 28 V32.5 Q27 36.6 31 36.6 H34.4 Q38.2 36.6 38.2 32.5 V28 M30 28.2 Q30.4 31.4 32.2 33.4" stroke="#96731f" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></header>`,
       );
     } else if (l.startsWith("### ")) body.push(`<h3>${inline(l.slice(4))}</h3>`);
     else if (l.startsWith("## ")) body.push(`<h2>${inline(l.slice(3))}</h2>`);

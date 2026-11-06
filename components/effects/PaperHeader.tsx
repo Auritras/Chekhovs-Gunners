@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { GUN_BODY, GUN_TRIGGER } from "@/components/effects/GunGlyph";
+import { GUN_BODY, GUN_DETAIL, GUN_TRIGGER } from "@/components/effects/GunGlyph";
 import { unlock } from "@/lib/view/achievementStore";
 import Programme from "@/components/effects/Programme";
 import HouseLights from "@/components/effects/HouseLights";
@@ -139,7 +139,7 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
           <path d="M40 2 L22 16 M40 2 L58 16" className="stroke-curtain-ink/60" strokeWidth="1.5" fill="none" />
           <circle cx="40" cy="3" r="2.5" className="fill-brass" />
           <g className="gun-body">
-            <path d={GUN_BODY} className="fill-curtain-ink" />
+            <path d={GUN_BODY + GUN_DETAIL} fillRule="evenodd" className="fill-curtain-ink" />
             <path d={GUN_TRIGGER} className="stroke-curtain-ink" strokeWidth="2.5" fill="none" />
           </g>
           {/* A puff of gold dust from the muzzle. */}
