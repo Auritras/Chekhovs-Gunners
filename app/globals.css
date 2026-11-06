@@ -626,21 +626,21 @@ body {
   }
 }
 
-/* Easter egg: the header gun's "BANG!" flag pops out of the barrel and retracts. */
+/* Easter egg: the header gun's "BANG!" flag springs up out of the barrel and retracts. */
 .bang-flag {
-  transform-origin: left center;
+  transform-origin: bottom right;
   animation: bang-flag 2.6s cubic-bezier(0.3, 1.5, 0.5, 1) both;
 }
 @keyframes bang-flag {
   0% {
-    transform: scaleX(0);
+    transform: scaleY(0);
   }
   14%,
   80% {
-    transform: scaleX(1);
+    transform: scaleY(1);
   }
   100% {
-    transform: scaleX(0);
+    transform: scaleY(0);
   }
 }
 

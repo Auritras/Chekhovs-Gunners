@@ -114,19 +114,21 @@ export default function PaperHeader({ fireKey }: { fireKey?: unknown }) {
     >
       <div aria-hidden className="halftone" />
 
-      {/* The gun on the back wall, hung beside the title (above the title's box, so it can be hovered),
-          with room for its BANG! flag, which passes under the programme ticket. */}
+      {/* The gun on the back wall, hung just left of the programme ticket (above the title's box,
+          so it can be hovered). Its BANG! flag springs straight up, so it needs no room beside it. */}
       <div
         aria-hidden
         data-depth="3"
         onClick={onGunClick}
-        className="paper-layer paper-shadow absolute right-[calc(clamp(48px,15vw,240px)+2rem)] top-1/2 z-10 hidden -translate-y-1/2 sm:block"
+        className="paper-layer paper-shadow absolute right-[calc(clamp(28px,8vw,130px)+5rem)] top-1/2 z-10 hidden -translate-y-1/2 sm:block"
       >
         {bang && (
-          <span className="bang-flag absolute left-[88%] top-[18%] flex items-center">
-            <span className="h-px w-6 bg-curtain-ink/80" />
-            <span className="bg-curtain-ink px-2 py-0.5 font-display text-sm font-bold tracking-wide text-curtain">
-              BANG!
+          <span className="absolute bottom-[64%] left-[94%] -translate-x-full">
+            <span className="bang-flag flex flex-col items-end">
+              <span className="bg-curtain-ink px-2 py-0.5 font-display text-sm font-bold tracking-wide text-curtain">
+                BANG!
+              </span>
+              <span className="h-6 w-px bg-curtain-ink/80" />
             </span>
           </span>
         )}
