@@ -57,7 +57,7 @@ export default function HouseLights() {
     >
       <span ref={cordRef} aria-hidden className="flex flex-col items-center">
         {/* The cord, then the brass tassel. */}
-        <span className="h-6 w-px bg-[#d6b25b]/80 sm:h-12" />
+        <span className="h-9 w-px bg-[#d6b25b]/80 sm:h-24" />
         <span className="h-2 w-2 rounded-full bg-[#d6b25b]" />
         <span className="h-3 w-2.5 rounded-b-sm bg-[#d6b25b] [clip-path:polygon(25%_0,75%_0,100%_100%,0_100%)]" />
       </span>

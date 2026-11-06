@@ -41,7 +41,11 @@ export default function DownloadNotes({
     doc.write(notesHtml(notes()));
     doc.close();
     frame.contentWindow.focus();
+    // Browsers name the saved PDF after the page's title, so lend it the notes' title.
+    const pageTitle = document.title;
+    document.title = title ? `Programme notes – ${title}` : "Programme notes";
     frame.contentWindow.print();
+    document.title = pageTitle;
     setTimeout(() => frame.remove(), 60_000);
   }
 
