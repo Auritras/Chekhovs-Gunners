@@ -1,6 +1,25 @@
 # Live sprint plan (21 Nov 2026)
 
-Everything below is deliberately **not** in the pre-built MVP. It will be built live during the 6-hour sprint; git history is the evidence.
+Everything below is deliberately **not** in the pre-built MVP. It will be built live during the 6-hour sprint; git history is the evidence (everything after the `pre-event-50` tag).
+
+## Headline: genre-aware analysis, powered by Adaption
+
+**Why:** our clearest measured weakness is genre. In *The Stopped Clock* (a detective story) the deliberate red herrings are flagged as loose ends, when in a mystery they are meant to stay unfired. A romance's promises and a fantasy's rules of magic need the same care.
+
+**What the writer sees:** genre choices above the story box (Detective, Romance, Fantasy, Literary, Detect for me). In detective mode a red herring is labelled "red herring (meant to stay unfired)" instead of being flagged.
+
+**How Adaption is used** (sponsor track "Best Use of Adaption"):
+
+1. **Invent a Dataset** (`POST /api/v1/datasets/invent`) generates short stories in each genre. `datasets.adapt()` restructures them into story + answer-key pairs (the line that plants each gun, its kind, where it fires or that it never does, red herrings). A script writes them to `samples/<slug>/` so `prompt-check` can score them; our quote checker rejects any answer key whose quotes are not in its story. Check the cost first with `estimate=True`.
+2. **Genre detection with the Adaption Responses API**: one small call with a JSON-schema function ("record_genre") picks the genre for "Detect for me". It runs on the server like the Gemini calls; the key stays in Vercel's environment variables.
+3. **Genre-aware prompts**: the extract and match prompts get per-genre guidance plus one or two worked examples taken from the Adaption dataset. The genre becomes part of the cache key.
+4. **Proof**: `prompt-check` per genre, before and after, with both tables in the README.
+
+**Not planned:** AutoScientist. Its trained models come as a checkpoint to self-host, and there is no free host that can run one for the live app.
+
+**Open questions** (ask Adaption, or find out with a two-story trial run before the day): does `invent` take free-text instructions or only preset domains and subdomains; how long can a generated story be; are Responses API inputs stored or used for training (writers' text must not be kept).
+
+## Other live features
 
 | Feature | Planned approach |
 | --- | --- |
@@ -19,12 +38,16 @@ Tick items off on the day. Order is a suggestion: the must-haves first, so there
 
 **Must have**
 - [ ] Run `npm run prompt-check` for the "before" numbers
-- [ ] Verifier step with confidence score
-- [ ] Cheap-twist detection
+- [ ] Adaption: generate the genre benchmark and convert it into samples with answer keys
+- [ ] Adaption: genre detection through the Responses API, and the genre choices in the UI
+- [ ] Genre-aware prompts (red herrings in detective mode)
 - [ ] Prompt tuning: catch the brass bell in *The Sweet Shop* and stop flagging ending details as setups
-- [ ] Run `npm run prompt-check` again for the "after" numbers; put both tables in the README
+- [ ] Run `npm run prompt-check` again, per genre, for the "after" numbers; put the tables in the README
 
 **Should have**
+- [ ] "How could this fire?" suggestions for loose ends (see Ideas)
+- [ ] Verifier step with confidence score
+- [ ] Cheap-twist detection
 - [ ] Fix suggestions in the author's style
 - [ ] Accept / reject updates the Story tab and export
 

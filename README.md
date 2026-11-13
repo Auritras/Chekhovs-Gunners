@@ -11,6 +11,31 @@ Chekhov's Gunners is a writing assistant for the oldest rule in dramatic craft. 
 
 ![The landing page: a paper toy theatre, three sample stories and a miniature of a real report](docs/screenshots/landing.png)
 
+> **This is our 50% MVP.** The writer-facing app, the analysis pipeline and the first version of the prompts are built and live. The remaining 50%, the AI co-writing layer (genre-aware analysis with Adaption, "How could this fire?", a verifier pass, cheap-twist detection and fix suggestions), is built live at the finale. See [What is left for the live sprint](#what-is-left-for-the-live-sprint).
+
+## The problem
+
+*"If in the first act you have hung a pistol on the wall, then in the following one it should be fired. Otherwise don't put it there."* (Anton Chekhov)
+
+Every story makes promises. A locked drawer, a skill mentioned in passing, a vow, a secret: each one tells the reader "this will matter". When a promise is never kept, readers feel cheated; when a payoff arrives with no setup, the twist feels unearned.
+
+Keeping track of these threads is one of the hardest parts of revising a manuscript. A novel plants dozens of them across hundreds of pages and many drafts, and writers lose track of what they planted, what they cut and what still dangles. Today they rely on memory, spreadsheets, sticky notes or a patient editor. Grammar tools and general chatbots do not help: they read sentences, not the architecture of a story, and they cannot point to the exact line that made a promise.
+
+**Who it is for:** novelists and short-story writers revising a draft, screenwriters checking an act, writing students learning structure, and editors giving structural notes.
+
+## Our solution
+
+Chekhov's Gunners reads the manuscript chapter by chapter and keeps a ledger of every promise the story makes. It shows which setups pay off, where, and which never fire, each one backed by the exact line from the text so the writer can check it in a second. The AI does the reading; code verifies every quote and every link; **the writer has the last word** and can overrule any verdict. Nothing in the manuscript is ever changed.
+
+## Team
+
+| Name | Role |
+| --- | --- |
+| Auritras Maitra | Team lead |
+| Tanmoy Ghosh | Team member |
+| Deepanjan Mandal | Team member |
+| Anusree Mandal | Team member |
+
 ## Judge it in 60 seconds
 
 1. Open the live demo and click any of the three samples (or **See the full report** in the "What you get" card). The saved report opens instantly and uses no AI quota.
@@ -27,7 +52,7 @@ Chekhov's Gunners is a writing assistant for the oldest rule in dramatic craft. 
 | Report | Summary counts (each links to its section) and the **biggest loose end**, **guns that never fire** with quotes, a collapsible list of **guns that fired** (one row per gun, every payoff listed), the animated **arc map** (setup to payoff; red threads for unfired guns), the per-chapter **tension** landscape and bars (select a chapter to filter the lists to it), and the **rhythm** of guns planted against guns fired, with a line on the balance (a rushed ending, a front-loaded story) |
 | Story | The chapter text with setups and payoffs highlighted inline; jumping from a card spotlights that passage and fades the rest. Gun pins in the margin mark every setup; **J / K** walk the loose ends |
 
-![The report: counts, a filter by gun type, and the guns that never fire, each with its quote](docs/screenshots/report.png)
+![The report: counts, the biggest loose end, a filter by gun type, and the guns that never fire, each with its quote](docs/screenshots/report.png)
 
 | Arc map | Story tab |
 | --- | --- |
@@ -48,7 +73,9 @@ Three sample stories with writer-made answer keys: **The Locked Drawer**, **The 
 
 The interface is a paper toy theatre: a cut-paper header whose layers drift with the pointer, curtains that close and part on the first report, an open book that turns a page for each chapter read and a live "Found" wall of guns, rotating public-domain lines on setup and payoff (Chekhov, Poe, Twain, Aristotle), an arc map that fires when it comes into view (a muzzle flash where each arc lands; a set-aside gun's thread falls off), a spotlight that glides onto the line you point to, a curtain call with a bow from the header gun when every gun fires, and a house-lights pull-cord that stretches and fades the stage between light and dark. Achievements arrive as admission tickets and collect in **the Programme**, a playbill that opens from the ticket hanging on the right of the stage. Every animation is off under `prefers-reduced-motion`; everything works by keyboard and at phone width. When the day's free AI quota runs out, the house is full: the app says so and offers a sample performance.
 
-**Limits and timing.** One AI request per chapter plus one to link payoffs. Text without chapter headings is split into ~1,500-word parts. A 1,500-2,000-word story takes roughly 30-90 s; ~25,000 words (about 18 requests) is the practical maximum for one day on the free tier. Re-running a story is instant: results are cached per chapter in the browser.
+**Limits and timing.** One AI request per chapter plus one to link payoffs. Text without chapter headings is split into ~1,500-word parts. A 1,500-2,000-word story takes roughly 30-90 s. On the free tier, about 25,000 words (about 18 requests) can be analysed per day, so the app is built for short stories, novellas and screenplay acts. Re-running a story is instant: results are cached per chapter in the browser.
+
+**Where your text goes.** Each chapter is sent to the AI model (Google Gemini) through our server only to be analysed; nothing is stored on our side, and the API key never reaches the browser. Your calls on the report, saved drafts and recent reports stay in your own browser. Share links carry the report after the `#`, which browsers never send to a server.
 
 ## How the AI is used
 
@@ -69,6 +96,23 @@ Prompts and response schemas live in `lib/ai/`: prompts are versioned, and respo
 2. **Quote verification (hallucination guard).** The model must return an exact quote for every setup and payoff. In code, after normalising whitespace and quote marks, anything whose quote is not found in its chapter is dropped and counted. Only verified setups enter the ledger, so one hallucination cannot poison later chapters.
 3. **Code-side rules, not prompt hopes.** A payoff must come after its setup (later chapter, or later in the same chapter); links to unknown ids are dropped; unfired guns and per-chapter tension are computed in code.
 4. **Failed-chapter uncertainty.** If a chapter fails (invalid JSON after 3 attempts), the run continues and the writer sees a banner with a **Retry chapter k** button. Results that a failed chapter could change are marked uncertain: an unfired setup is uncertain if a failed chapter comes after it, an unlinked payoff if a failed chapter comes before it. They are drawn dashed and counted separately instead of being presented as fact.
+
+## Prompt design
+
+Two prompts, each with one job, chained through code (`lib/ai/prompts.ts`):
+
+| Prompt | Sees | Returns (Zod-validated JSON) |
+| --- | --- | --- |
+| **Extract** (`x2`), once per chapter | The chapter text, plus the **ledger** of setups verified in earlier chapters (`id \| chapter \| kind \| summary`) | `setups: [{ quote, kind, summary, importance 1-3 }]`, `payoffs: [{ quote, summary, firesSetupId }]` |
+| **Match** (`m2`), once per story | Only the leftovers: setups no payoff has claimed, and payoffs not yet linked, each with its quote | `matches: [{ setupId, payoffId, reasoning }]` |
+
+What makes the chain robust:
+
+- **Grounded output.** Every item must carry an 8-40 word quote copied character for character from the chapter: *"No ellipses, no paraphrase, no fixing of typos or punctuation, no joining separate passages."* Code then checks each quote against the text and drops any that is not there, so the model cannot invent a line.
+- **Closed vocabulary.** Setup kinds come from a fixed list (object, trait, secret, promise, skill, relationship, other); importance is a defined 1-3 scale; links may only use ids printed in the prompt: *"Use only ids from the ledger above, copied exactly. Never invent ids."*
+- **Precision over recall.** *"Fewer, high-confidence items beat many weak ones... An empty list is a valid answer."* A tool writers trust must not cry wolf.
+- **Order rules stated, then enforced.** The match prompt says a payoff must come after its setup; code enforces it again, so a prompt slip cannot produce a payoff before its setup.
+- **Versioned and measured.** Each prompt has a version (`x2`, `m2`) that is part of the cache key, and `npm run prompt-check` scores every version against writer-made answer keys (see [Prompt-check metrics](#prompt-check-metrics)).
 
 ## Architecture
 
@@ -94,6 +138,18 @@ flowchart TD
 ```
 
 The Gemini key never reaches the browser. Prompts are versioned (`x2` extract, `m2` match); the version, model and ledger are part of every cache key, so a prompt change invalidates old results automatically.
+
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Framework | Next.js 16 (App Router, Turbopack), React 19, TypeScript |
+| Styling | Tailwind CSS 4, hand-drawn SVG, Web Animations API, view transitions |
+| AI | Google Gemini (`gemini-3.5-flash`, with `gemini-3.5-flash-lite` as a fallback) via `@google/genai`; Zod for structured output |
+| File input | `mammoth` (.docx), `pdfjs-dist` (.pdf, rebuilt into paragraphs) |
+| Testing | Vitest (168 unit tests), ESLint |
+| Hosting | Vercel (Hobby), serverless route handlers keep the API key on the server |
+| Storage | None on the server; the browser's localStorage for caches, the writer's calls and recent reports |
 
 ## Local setup
 
@@ -174,22 +230,33 @@ tests/          Vitest suites
 
 ## 50/50 rule
 
-This repo is the pre-built half. The features to be built live in the 6-hour sprint on 21 Nov 2026 are listed in [LIVE_SPRINT.md](LIVE_SPRINT.md).
+The event rules allow teams to pre-build up to half of the project (*"wireframes, boilerplate code, trained prompts, or baseline UI"*) and require the rest (*"prompt tuning, API orchestration & inference hooks"*) to be built live in the 6-hour sprint on 21 Nov 2026. This repository is the pre-built half. The git tag `pre-event-50` marks the commit we submitted; everything after it is sprint work.
 
-| Pre-built (allowed, as the organizers confirmed) | Built live in the sprint |
+| Pre-built: baseline UI, boilerplate and trained prompts | Built live: prompt tuning, API orchestration and inference hooks |
 | --- | --- |
-| File input (`.txt`, `.md`, `.docx`, `.pdf`) and chapter splitting | Deep prompt tuning against the answer keys, with before/after tables |
-| The UI: report, story view, arc map, tension, the theatre | A verifier pass that scores each link's confidence |
-| Backend routes, rate limiting, the key kept server-side | Cheap-twist detection: payoffs that come from nowhere |
-| The basic Gemini pipeline (extract, match) and code-side quote checks | Fix suggestions in the author's style, with accept / reject |
-| Free-tier resilience: waiting out 503s, lite-model fallback | Ideas if time allows: "How could this fire?", genre-aware prompts, implied payoffs, a character view, "Ask the story", live writing mode |
-| Writer tools that use no AI: overrides, added guns, filters, notes, compare drafts, rhythm, share links, shortcuts | |
+| File input (`.txt`, `.md`, `.docx`, `.pdf`) and chapter splitting | **Genre-aware analysis with Adaption** (the headline, below) |
+| The UI: report, story view, arc map, tension, rhythm, the theatre | **"How could this fire?"**: for each loose end, the AI suggests where it could pay off, quoting real later lines |
+| Backend routes, rate limiting, the key kept server-side | **A verifier pass** that re-reads each link and scores its confidence |
+| The first version of the prompts (extract, match) and the code-side quote checks | **Cheap-twist detection**: payoffs that come from nowhere |
+| Free-tier resilience: waiting out 503s, lite-model fallback | **Fix suggestions** in the author's own style, with accept / reject |
+| Writer tools that use no AI: overrides, added guns, filters, notes, compare drafts, share links, shortcuts | **Prompt tuning** against the answer keys, with before/after tables |
 
 The prompts have only had bug fixes so far, so the prompt-check numbers above are the *before* baseline.
 
+### What is left for the live sprint
+
+**Genre-aware analysis, powered by Adaption.** Our baseline's clearest weakness is genre: in *The Stopped Clock*, a detective story, the deliberate red herrings are flagged as loose ends, when in a mystery they are meant to stay unfired. In the sprint we will:
+
+1. **Build a genre benchmark with Adaption's Invent a Dataset**: short stories in four genres (detective, romance, fantasy, literary), each with an answer key (the line that plants each gun, its kind, where it fires or that it never does, and which guns are red herrings). Our own quote checker validates every generated answer key against its story.
+2. **Detect the genre with Adaption's Responses API** (a small structured call), shown to the writer as genre choices above the story box, with "Detect for me" as the default.
+3. **Tune the prompts per genre**, with worked examples drawn from the Adaption dataset, so that a mystery's red herrings are labelled "red herring (meant to stay unfired)" instead of being flagged.
+4. **Measure it**: `prompt-check` scores every genre before and after, and the tables go in this README.
+
+The full plan, with the other live features and a checklist, is in [LIVE_SPRINT.md](LIVE_SPRINT.md).
+
 ## Constraints
 
-Free only: Gemini API free tier, Vercel Hobby, GitHub. No database. Built for short stories and screenplay acts up to roughly 20,000 words.
+Free only: Gemini API free tier, Vercel Hobby, GitHub, and sponsor credits (Adaption) for the live sprint. No database. Built for short stories, novellas and screenplay acts (about 25,000 words a day on the free tier).
 
 ## License
 
