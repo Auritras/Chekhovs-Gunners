@@ -23,6 +23,7 @@ Everything below is deliberately **not** in the pre-built MVP. It will be built 
 
 | Feature | Planned approach |
 | --- | --- |
+| "How could this fire?" | For each gun that never fires, the model suggests 2-3 places in later chapters where it could pay off, each tied to a real sentence it must quote (checked like every other quote). The writer accepts one, which becomes their call (the red thread pulls up into a gold arc at that line), or ignores them all. |
 | Verifier step with confidence score | A second model pass re-reads each proposed match with both quotes and returns keep/reject plus a 0-1 confidence; low-confidence links are shown as uncertain. |
 | Cheap-twist detection | Flag payoffs with no setup (a resolution that comes from nowhere) using the existing unlinked-payoff list, then have the model judge whether it was foreshadowed in the text. |
 | Fix suggestions in the author's style | For each unfired gun or cheap twist, propose a short rewrite or added line, prompted with samples of the author's own prose; shown with accept / reject. |
@@ -41,13 +42,13 @@ Tick items off on the day. Order is a suggestion: the must-haves first, so there
 - [ ] Adaption: generate the genre benchmark and convert it into samples with answer keys
 - [ ] Adaption: genre detection through the Responses API, and the genre choices in the UI
 - [ ] Genre-aware prompts (red herrings in detective mode)
+- [ ] "How could this fire?" suggestions for loose ends
+- [ ] Cheap-twist detection
 - [ ] Prompt tuning: catch the brass bell in *The Sweet Shop* and stop flagging ending details as setups
 - [ ] Run `npm run prompt-check` again, per genre, for the "after" numbers; put the tables in the README
 
 **Should have**
-- [ ] "How could this fire?" suggestions for loose ends (see Ideas)
 - [ ] Verifier step with confidence score
-- [ ] Cheap-twist detection
 - [ ] Fix suggestions in the author's style
 - [ ] Accept / reject updates the Story tab and export
 
