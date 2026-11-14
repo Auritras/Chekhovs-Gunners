@@ -752,6 +752,23 @@ body {
   animation-timing-function: ease-in-out;
 }
 
+/* Magnetic drop zone: the story frame leans toward a file being dragged near it, and glows. */
+.magnet {
+  transition:
+    transform 160ms ease-out,
+    filter 160ms ease-out;
+}
+.magnet[data-pulling] {
+  transform: translate(var(--pull-x, 0), var(--pull-y, 0)) scale(calc(1 + var(--pull, 0) * 0.015));
+  /* A glow that leaves the frame's own inset gold rules alone. */
+  filter: drop-shadow(0 0 calc(var(--pull, 0) * 14px) var(--brass-tint));
+}
+@media (prefers-reduced-motion: reduce) {
+  .magnet[data-pulling] {
+    transform: none;
+  }
+}
+
 /* Arc map: nothing plays until the map is in view. */
 .arc-map-wait .arc-draw,
 .arc-map-wait .arc-fade,

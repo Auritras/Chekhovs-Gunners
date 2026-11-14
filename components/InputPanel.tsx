@@ -45,6 +45,53 @@ export default function InputPanel({
   const [samples, setSamples] = useState<Sample[]>([]);
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
+  // Magnetic drop zone: while a file is dragged over the page, the story frame leans toward it
+  // (stronger the closer it gets), and a drop near the frame is pulled in.
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [pull, setPull] = useState<{ x: number; y: number; strength: number } | null>(null);
+  const loadRef = useRef<(f: File) => void>(() => {});
+  useEffect(() => {
+    const REACH = 160;
+    const hasFile = (e: DragEvent) => !!e.dataTransfer?.types.includes("Files");
+    const measure = (e: DragEvent) => {
+      const r = frameRef.current?.getBoundingClientRect();
+      if (!r) return null;
+      const dx = e.clientX < r.left ? e.clientX - r.left : e.clientX > r.right ? e.clientX - r.right : 0;
+      const dy = e.clientY < r.top ? e.clientY - r.top : e.clientY > r.bottom ? e.clientY - r.bottom : 0;
+      const d = Math.hypot(dx, dy);
+      return { dx, dy, d };
+    };
+    const onOver = (e: DragEvent) => {
+      if (!hasFile(e)) return;
+      e.preventDefault(); // allow dropping anywhere, so a near miss is not opened by the browser
+      const m = measure(e);
+      if (!m) return;
+      const strength = m.d === 0 ? 1 : Math.max(0, 1 - m.d / REACH);
+      const lean = m.d === 0 ? 0 : 10 * strength;
+      setPull({ x: m.d ? (m.dx / m.d) * lean : 0, y: m.d ? (m.dy / m.d) * lean : 0, strength });
+    };
+    const onLeave = (e: DragEvent) => {
+      if (e.relatedTarget === null) setPull(null);
+    };
+    const onDropAnywhere = (e: DragEvent) => {
+      if (!hasFile(e)) return;
+      const taken = e.defaultPrevented; // the frame's own drop handler already loaded it
+      e.preventDefault();
+      setPull(null);
+      if (taken) return;
+      const m = measure(e);
+      const file = e.dataTransfer?.files[0];
+      if (m && file && m.d > 0 && m.d <= REACH) loadRef.current(file);
+    };
+    window.addEventListener("dragover", onOver);
+    window.addEventListener("dragleave", onLeave);
+    window.addEventListener("drop", onDropAnywhere);
+    return () => {
+      window.removeEventListener("dragover", onOver);
+      window.removeEventListener("dragleave", onLeave);
+      window.removeEventListener("drop", onDropAnywhere);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,6 +119,12 @@ export default function InputPanel({
     if ("error" in result) setError(ERRORS[result.error]);
     else edit(result.text);
   }
+
+  useEffect(() => {
+    loadRef.current = (f: File) => {
+      if (!busy && !disabled) void loadFile(f);
+    };
+  });
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const input = e.target;
@@ -185,10 +238,21 @@ export default function InputPanel({
       )}
 
       <div
+        ref={frameRef}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
-        className="playbill relative flex flex-col gap-2 px-5 pb-4 pt-5 sm:px-7"
+        className="playbill magnet relative flex flex-col gap-2 px-5 pb-4 pt-5 sm:px-7"
+        style={
+          pull
+            ? ({
+                "--pull-x": `${pull.x.toFixed(1)}px`,
+                "--pull-y": `${pull.y.toFixed(1)}px`,
+                "--pull": pull.strength.toFixed(2),
+              } as React.CSSProperties)
+            : undefined
+        }
+        data-pulling={pull ? "" : undefined}
       >
         <span aria-hidden className="playbill-corner -left-[5px] -top-[5px]" />
         <span aria-hidden className="playbill-corner -right-[5px] -top-[5px]" />
@@ -213,7 +277,7 @@ export default function InputPanel({
           className="max-h-[70vh] min-h-48 w-full resize-y bg-transparent [field-sizing:content] font-serif text-base leading-relaxed text-ink placeholder:text-muted focus:outline-none"
         />
 
-        {(dragging || busy) && (
+        {(dragging || busy || (pull?.strength ?? 0) > 0.6) && (
           <div
             aria-hidden={!busy}
             className="absolute inset-2 flex items-center justify-center border-2 border-dashed border-brass bg-surface/95 font-display text-2xl"
