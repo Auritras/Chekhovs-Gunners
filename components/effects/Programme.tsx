@@ -15,7 +15,31 @@ const dateFmt = (ms: number) =>
   new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).toUpperCase();
 
 /** One achievement as an admission ticket: printed when earned, a blank outline when not. */
-function Ticket({ a, no, stub, at }: { a: Achievement; no: number; stub: string; at: number | null | undefined }) {
+/** Achievements already seen stamped in the programme, so only new ones are stamped in front of the writer. */
+const SEEN_KEY = "cg-programme-seen";
+function loadSeen(): Set<string> {
+  try {
+    const data: unknown = JSON.parse(window.localStorage.getItem(SEEN_KEY) ?? "[]");
+    return new Set(Array.isArray(data) ? data.filter((x): x is string => typeof x === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function Ticket({
+  a,
+  no,
+  stub,
+  at,
+  stampDelay,
+}: {
+  a: Achievement;
+  no: number;
+  stub: string;
+  at: number | null | undefined;
+  /** For a ticket earned since the programme was last opened: when its stamp comes down (ms). */
+  stampDelay?: number;
+}) {
   const got = at !== null;
   const secret = !got && a.group === "secret";
   return (
@@ -24,6 +48,16 @@ function Ticket({ a, no, stub, at }: { a: Achievement; no: number; stub: string;
         got ? "border border-ticket-edge bg-ticket text-ink" : "border border-dashed border-muted/60 text-muted"
       }`}
     >
+      {got && (
+        // A rubber-stamped "ADMITTED", slightly crooked, in theatre-red ink.
+        <span
+          aria-hidden
+          className={`ink-stamp pointer-events-none absolute bottom-2 right-10 sm:right-11 ${stampDelay !== undefined ? "stamp-in" : ""}`}
+          style={stampDelay !== undefined ? { animationDelay: `${stampDelay}ms` } : undefined}
+        >
+          Admitted
+        </span>
+      )}
       <span className={`flex items-center pl-3 ${got ? "" : "opacity-35 grayscale"}`}>
         <EmblemTile kind={a.emblem} small />
       </span>
@@ -38,7 +72,7 @@ function Ticket({ a, no, stub, at }: { a: Achievement; no: number; stub: string;
         <span className="font-serif text-xs leading-snug">{secret ? "A secret, for the curious." : a.text}</span>
         <span className="mt-1 text-[0.65rem] uppercase tracking-[0.12em] text-ink-soft">
           No. {String(no).padStart(2, "0")}
-          {got ? (at ? ` · ${dateFmt(at)}` : " · Admitted") : " · Not yet admitted"}
+          {got ? (at ? ` · ${dateFmt(at)}` : "") : " · Not yet admitted"}
         </span>
       </span>
       {/* The tear-off stub, behind a perforation. */}
@@ -65,6 +99,8 @@ export default function Programme() {
   const [dates, setDates] = useState<Record<string, number>>({});
   const dialogRef = useRef<HTMLDialogElement>(null);
   const ticketRef = useRef<HTMLButtonElement>(null);
+  // Tickets earned since the programme was last opened: their stamps come down when it opens.
+  const [fresh, setFresh] = useState<string[]>([]);
 
   useEffect(() => {
     const read = () => {
@@ -89,6 +125,14 @@ export default function Programme() {
   }, []);
 
   function open() {
+    const now = unlockedIds();
+    const seen = loadSeen();
+    setFresh(ACHIEVEMENTS.map((a) => a.id).filter((id) => now.has(id) && !seen.has(id)));
+    try {
+      window.localStorage.setItem(SEEN_KEY, JSON.stringify([...now]));
+    } catch {
+      // Storage blocked: they are stamped again next time, which is harmless.
+    }
     dialogRef.current?.showModal();
     if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       ticketRef.current?.animate(
@@ -181,6 +225,7 @@ export default function Programme() {
                       no={no}
                       stub={act.stub}
                       at={have?.has(a.id) ? (dates[a.id] ?? undefined) : null}
+                      stampDelay={fresh.includes(a.id) ? 350 + fresh.indexOf(a.id) * 260 : undefined}
                     />
                   ))}
               </ul>

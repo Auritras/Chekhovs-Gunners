@@ -752,6 +752,52 @@ body {
   animation-timing-function: ease-in-out;
 }
 
+/* The programme's "ADMITTED" rubber stamp: red ink, double rule, a little crooked and uneven. */
+.ink-stamp {
+  transform: rotate(-9deg);
+  border: 3px double var(--curtain);
+  border-radius: 3px;
+  padding: 1px 7px;
+  font-family: var(--font-fell), serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--curtain);
+  opacity: 0.72;
+  mask-image: repeating-linear-gradient(115deg, #000 0 5px, rgb(0 0 0 / 0.78) 5px 7px);
+}
+/* On a phone the tickets are narrow: a smaller stamp. */
+@media (max-width: 639px) {
+  .ink-stamp {
+    font-size: 0.62rem;
+    padding: 0 5px;
+    border-width: 3px;
+  }
+}
+/* A newly earned ticket: the stamp comes down hard, then settles. */
+.stamp-in {
+  animation: stamp-in 380ms cubic-bezier(0.3, 0, 0.4, 1) both;
+}
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-9deg) scale(2.4);
+  }
+  70% {
+    opacity: 0.85;
+    transform: rotate(-9deg) scale(0.92);
+  }
+  100% {
+    opacity: 0.72;
+    transform: rotate(-9deg) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stamp-in {
+    animation: none;
+  }
+}
+
 /* Magnetic drop zone: the story frame leans toward a file being dragged near it, and glows. */
 .magnet {
   transition:
