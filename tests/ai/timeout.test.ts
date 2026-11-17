@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { GeminiProvider, type GenAiLike } from "@/lib/ai/provider";
+import { GeminiProvider, resetExhaustedModels, type GenAiLike } from "@/lib/ai/provider";
 import { RateLimitedError } from "@/lib/pipeline/errors";
 import { httpDeps } from "@/lib/pipeline/httpDeps";
 
@@ -50,5 +50,40 @@ describe("the browser's requests", () => {
     vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("Failed to fetch"); }));
     const err = await httpDeps().match({ setups: [], payoffs: [] }).catch((e) => e);
     expect(err).toBeInstanceOf(RateLimitedError);
+  });
+});
+
+describe("an overloaded main model", () => {
+  const overloaded = () =>
+    Object.assign(new Error('{"error":{"code":503,"message":"This model is currently experiencing high demand.","status":"UNAVAILABLE"}}'), { status: 503 });
+
+  it("hands the request to the lite model at once, and the lite model is tried first for a while", async () => {
+    resetExhaustedModels();
+    const calls: string[] = [];
+    const client: GenAiLike = {
+      models: {
+        generateContent: async ({ model }) => {
+          calls.push(model);
+          if (model === "main") throw overloaded();
+          return { text: '{"a":1}' };
+        },
+      },
+    };
+    const p = new GeminiProvider({ apiKey: "k", model: "main", fallbackModel: "lite", client });
+    expect(await p.generateJson("hi", Schema)).toEqual({ a: 1 });
+    expect(calls).toEqual(["main", "lite"]);
+    calls.length = 0;
+    expect(await p.generateJson("again", Schema)).toEqual({ a: 1 });
+    expect(calls).toEqual(["lite"]);
+    resetExhaustedModels();
+  });
+
+  it("still says 'busy, retry' when every model is overloaded", async () => {
+    resetExhaustedModels();
+    const client: GenAiLike = { models: { generateContent: async () => { throw overloaded(); } } };
+    const p = new GeminiProvider({ apiKey: "k", model: "main", fallbackModel: "lite", client });
+    const err = await p.generateJson("hi", Schema).catch((e) => e);
+    expect(err).toBeInstanceOf(RateLimitedError);
+    resetExhaustedModels();
   });
 });

@@ -147,7 +147,7 @@ The Gemini key never reaches the browser. Prompts are versioned (`x2` extract, `
 | Styling | Tailwind CSS 4, hand-drawn SVG, Web Animations API, view transitions |
 | AI | Google Gemini (`gemini-3.5-flash`, with `gemini-3.5-flash-lite` as a fallback) via `@google/genai`; Zod for structured output |
 | File input | `mammoth` (.docx), `pdfjs-dist` (.pdf, rebuilt into paragraphs) |
-| Testing | Vitest (172 unit tests), ESLint |
+| Testing | Vitest (174 unit tests), ESLint |
 | Hosting | Vercel (Hobby), serverless route handlers keep the API key on the server |
 | Storage | None on the server; the browser's localStorage for caches, the writer's calls and recent reports |
 
@@ -168,7 +168,7 @@ GEMINI_THINKING_LEVEL=medium         # default if unset; "low" is ~10x faster bu
 GEMINI_FALLBACK_MODEL=gemini-3.5-flash-lite   # default if unset; empty disables
 ```
 
-**Daily-quota fallback.** The free tier allows `gemini-3.5-flash` only 20 requests per day per project (a 4-chapter story uses about 5). When that runs out, the app switches to `gemini-3.5-flash-lite`, which has its own quota, and retries the main model an hour later. On chapter 1 of the sample the lite model at `medium` thinking took ~6 s and also found all 3 planted setups. Results are cached under the main model's name whichever model answered. The metrics scripts never fall back, so their numbers always describe one model.
+**Daily-quota fallback.** The free tier allows `gemini-3.5-flash` only 20 requests per day per project (a 4-chapter story uses about 5). When that runs out, the app switches to `gemini-3.5-flash-lite`, which has its own quota, and retries the main model an hour later. The same switch happens when the main model answers "high demand" (503) or stalls: the request moves to the lite model at once, and later chapters try the lite model first for two minutes. Every call has a 50-second limit and each request a 100-second budget, inside Vercel's 120-second cap, so a slow model never loses a chapter. On chapter 1 of the sample the lite model at `medium` thinking took ~6 s and also found all 3 planted setups. Results are cached under the main model's name whichever model answered. The metrics scripts never fall back, so their numbers always describe one model.
 
 Measured on chapter 1 of the sample (Oct 2026, free tier): `gemini-3.5-flash` at `medium` thinking took ~27 s and found all 3 planted setups; at `low` ~3 s and found 2. Newer flash models were frequently returning 503 "high demand" on the free tier, which the app now waits out and retries.
 
@@ -179,7 +179,7 @@ Measured on chapter 1 of the sample (Oct 2026, free tier): `gemini-3.5-flash` at
 | Command | What it does |
 | --- | --- |
 | `npm run dev` / `build` / `start` | Next.js dev server, production build, serve the build |
-| `npm test` | Vitest unit tests (chapterize, ledger, cache keys, quote verification, resolve, uncertainty, tension, routes, timeouts, overrides, notes, compare drafts, PDF paragraphs, rhythm, share links). 172 tests, no AI calls |
+| `npm test` | Vitest unit tests (chapterize, ledger, cache keys, quote verification, resolve, uncertainty, tension, routes, timeouts and model fallback, overrides, notes, compare drafts, PDF paragraphs, rhythm, share links). 174 tests, no AI calls |
 | `npm run lint` | ESLint |
 | `npm run build-samples` | Analyses each sample once and writes `public/samples/<slug>/result.json` (the static results the app loads instantly; until it has been run, no sample result exists) |
 | `npm run prompt-check` | Runs every sample 5 times (`-- --runs N` to change, `--only slug,slug` for a subset) against its answer key and prints a Markdown metrics table |
