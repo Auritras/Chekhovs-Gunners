@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import type { AnalysisResult, Payoff, Setup, SetupKind } from "@/lib/types";
 import type { Override, Overrides } from "@/lib/view/overrides";
 
@@ -23,6 +26,13 @@ export default function FiredList({
   /** Only guns planted or firing in this chapter. */
   chapter?: number | null;
 }) {
+  // Picking a gun type or a chapter opens the list, so the guns of that kind that do fire show
+  // alongside the ones that never do. Clearing the filter leaves it as the writer left it.
+  const listRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if ((kind !== null || chapter !== null) && listRef.current) listRef.current.open = true;
+  }, [kind, chapter]);
+
   const setups = new Map(result.setups.map((s) => [s.id, s]));
   const payoffs = new Map(result.payoffs.map((p) => [p.id, p]));
 
@@ -60,7 +70,7 @@ export default function FiredList({
     result.chapters.find((c) => c.index === n)?.title || `Chapter ${n}`;
 
   return (
-    <details id="fired" className="group scroll-mt-24 border-y border-line">
+    <details ref={listRef} id="fired" className="group scroll-mt-24 border-y border-line">
       <summary className="flex min-h-11 cursor-pointer list-none items-center gap-3 py-3 font-display text-2xl marker:hidden [&::-webkit-details-marker]:hidden">
         <span aria-hidden className="text-brass transition-transform group-open:rotate-90">
           ›
