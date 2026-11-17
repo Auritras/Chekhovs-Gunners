@@ -147,7 +147,7 @@ The Gemini key never reaches the browser. Prompts are versioned (`x2` extract, `
 | Styling | Tailwind CSS 4, hand-drawn SVG, Web Animations API, view transitions |
 | AI | Google Gemini (`gemini-3.5-flash`, with `gemini-3.5-flash-lite` as a fallback) via `@google/genai`; Zod for structured output |
 | File input | `mammoth` (.docx), `pdfjs-dist` (.pdf, rebuilt into paragraphs) |
-| Testing | Vitest (168 unit tests), ESLint |
+| Testing | Vitest (172 unit tests), ESLint |
 | Hosting | Vercel (Hobby), serverless route handlers keep the API key on the server |
 | Storage | None on the server; the browser's localStorage for caches, the writer's calls and recent reports |
 
@@ -179,7 +179,7 @@ Measured on chapter 1 of the sample (Oct 2026, free tier): `gemini-3.5-flash` at
 | Command | What it does |
 | --- | --- |
 | `npm run dev` / `build` / `start` | Next.js dev server, production build, serve the build |
-| `npm test` | Vitest unit tests (chapterize, ledger, cache keys, quote verification, resolve, uncertainty, tension, routes, overrides, notes, compare drafts, PDF paragraphs, rhythm, share links). 168 tests, no AI calls |
+| `npm test` | Vitest unit tests (chapterize, ledger, cache keys, quote verification, resolve, uncertainty, tension, routes, timeouts, overrides, notes, compare drafts, PDF paragraphs, rhythm, share links). 172 tests, no AI calls |
 | `npm run lint` | ESLint |
 | `npm run build-samples` | Analyses each sample once and writes `public/samples/<slug>/result.json` (the static results the app loads instantly; until it has been run, no sample result exists) |
 | `npm run prompt-check` | Runs every sample 5 times (`-- --runs N` to change, `--only slug,slug` for a subset) against its answer key and prints a Markdown metrics table |

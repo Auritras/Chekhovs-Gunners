@@ -30,6 +30,16 @@ export const DEFAULT_FALLBACK_MODEL = "gemini-3.5-flash-lite";
 const MAX_ATTEMPTS = 3;
 const DEFAULT_RETRY_MS = 15_000;
 const UNAVAILABLE_RETRY_MS = 10_000;
+/**
+ * One model call may take this long. Under load the free tier can stall for minutes, and Vercel
+ * kills a request after 120 s (maxDuration), which would lose the chapter. Instead the server
+ * gives up in time and answers "busy, try again" so the browser waits and retries.
+ */
+export const CALL_TIMEOUT_MS = 50_000;
+/** Total time for one request, across the attempts for invalid JSON, well inside maxDuration. */
+export const REQUEST_BUDGET_MS = 100_000;
+/** After a timeout the browser waits this long before asking again. */
+const TIMEOUT_RETRY_MS = 5_000;
 /** How long to skip a model after its daily quota runs out before probing it again. */
 const EXHAUSTED_SKIP_MS = 60 * 60 * 1000;
 
@@ -66,6 +76,8 @@ export class GeminiProvider implements ModelProvider {
   readonly fallbackModel: string | undefined;
   private client: GenAiLike;
   private now: () => number;
+  private callTimeoutMs: number;
+  private budgetMs: number;
 
   constructor(opts: {
     apiKey: string;
@@ -74,6 +86,9 @@ export class GeminiProvider implements ModelProvider {
     fallbackModel?: string;
     client?: GenAiLike;
     now?: () => number;
+    /** Tests shorten these. */
+    callTimeoutMs?: number;
+    budgetMs?: number;
   }) {
     this.model = opts.model;
     this.thinkingLevel = opts.thinkingLevel ?? DEFAULT_THINKING_LEVEL;
@@ -81,6 +96,8 @@ export class GeminiProvider implements ModelProvider {
     this.client =
       opts.client ?? (new GoogleGenAI({ apiKey: opts.apiKey }) as unknown as GenAiLike);
     this.now = opts.now ?? Date.now;
+    this.callTimeoutMs = opts.callTimeoutMs ?? CALL_TIMEOUT_MS;
+    this.budgetMs = opts.budgetMs ?? REQUEST_BUDGET_MS;
   }
 
   async generateJson<T>(prompt: string, schema: z.ZodType<T>): Promise<T> {
@@ -102,7 +119,11 @@ export class GeminiProvider implements ModelProvider {
   private async callModel<T>(model: string, prompt: string, schema: z.ZodType<T>): Promise<T> {
     const responseJsonSchema = toGeminiSchema(schema);
     let lastReason = "unknown";
+    const deadline = Date.now() + this.budgetMs;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      const left = deadline - Date.now();
+      if (left <= 1_000) throw new RateLimitedError(TIMEOUT_RETRY_MS, "Model too slow; out of time for this request");
+      const signal = AbortSignal.timeout(Math.min(this.callTimeoutMs, left));
       let text: string | undefined;
       try {
         const res = await this.client.models.generateContent({
@@ -113,10 +134,13 @@ export class GeminiProvider implements ModelProvider {
             responseJsonSchema,
             temperature: 0.2,
             ...(this.thinkingLevel ? { thinkingConfig: { thinkingLevel: this.thinkingLevel } } : {}),
+            abortSignal: signal,
           },
         });
         text = res.text;
       } catch (err) {
+        // A stalled call: ask the browser to wait a moment and try again, rather than fail.
+        if (signal.aborted) throw new RateLimitedError(TIMEOUT_RETRY_MS, "Model call timed out");
         throw classifyGeminiError(err);
       }
       try {
