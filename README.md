@@ -7,7 +7,7 @@
 Chekhov's Gunners is a writing assistant for the oldest rule in dramatic craft. Paste or upload a short story (`.txt`, `.md`, `.docx`, text `.pdf`) and it finds every **setup** (a planted object, trait, secret, promise, skill or relationship), links each one to its **payoff**, and shows which setups never fire. Every finding is backed by an exact quote from your text. **It suggests; the writer decides.** The app never edits your story.
 
 - **Live demo:** https://chekhovs-gunners.vercel.app
-- Demo video: _coming soon_
+- **Demo video (2:19):** https://drive.google.com/file/d/1coVA025XYrATpTHkt9R3ll25J1Vp8hLB/view?usp=sharing
 
 ![The landing page: a paper toy theatre, three sample stories and a miniature of a real report](docs/screenshots/landing.png)
 
